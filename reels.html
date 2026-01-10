@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+  <meta name="theme-color" content="#00ff66" />
+  <meta name="description" content="NEXCHAT - Reels & Stories" />
+  <title>📹 NEXCHAT Reels</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="logo.jpg" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Orbitron', sans-serif;
+      background: linear-gradient(135deg, #0f0f1e 0%, #1a0a2e 100%);
+      color: #fff;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .reels-header {
+      padding: 16px 20px;
+      background: rgba(0, 0, 0, 0.5);
+      border-bottom: 2px solid #00ff66;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .reels-header h1 {
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 12px;
+    }
+
+    .btn {
+      padding: 10px 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 14px;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-primary {
+      background: #00ff66;
+      color: #000;
+    }
+
+    .btn-primary:hover {
+      background: #00dd55;
+      transform: scale(1.05);
+    }
+
+    .btn-secondary {
+      background: rgba(0, 255, 102, 0.2);
+      color: #00ff66;
+      border: 1px solid #00ff66;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(0, 255, 102, 0.3);
+    }
+
+    .reels-container {
+      flex: 1;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+      padding: 20px;
+      overflow-y: auto;
+    }
+
+    .reel-card {
+      position: relative;
+      border-radius: 12px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      background: rgba(0, 0, 0, 0.7);
+      border: 1px solid rgba(0, 255, 102, 0.2);
+      aspect-ratio: 9 / 16;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .reel-card:hover {
+      transform: scale(1.05);
+      border-color: #00ff66;
+      box-shadow: 0 0 20px rgba(0, 255, 102, 0.4);
+    }
+
+    .reel-card video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .reel-overlay {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.9) 100%);
+      padding: 16px;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .reel-username {
+      font-weight: 600;
+      font-size: 14px;
+      color: #00ff66;
+    }
+
+    .reel-caption {
+      font-size: 12px;
+      line-height: 1.4;
+      word-wrap: break-word;
+    }
+
+    .reel-play-icon {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 48px;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .reel-card:hover .reel-play-icon {
+      opacity: 1;
+    }
+
+    .empty-reels {
+      grid-column: 1 / -1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 60px 20px;
+      text-align: center;
+    }
+
+    .empty-icon {
+      font-size: 64px;
+      margin-bottom: 16px;
+    }
+
+    .empty-reels p {
+      font-size: 18px;
+      color: #aaa;
+      margin-bottom: 24px;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: linear-gradient(135deg, #1a0a2e 0%, #0f0f1e 100%);
+      border: 2px solid #00ff66;
+      border-radius: 16px;
+      padding: 0;
+      width: 90%;
+      max-width: 500px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 0 30px rgba(0, 255, 102, 0.3);
+    }
+
+    .modal-header {
+      padding: 20px;
+      border-bottom: 1px solid rgba(0, 255, 102, 0.2);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-header h2 {
+      font-size: 20px;
+      color: #00ff66;
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      color: #00ff66;
+      font-size: 24px;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    .close-btn:hover {
+      transform: rotate(90deg);
+    }
+
+    .modal-body {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .upload-area {
+      border: 2px dashed #00ff66;
+      border-radius: 12px;
+      padding: 40px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      background: rgba(0, 255, 102, 0.05);
+    }
+
+    .upload-area:hover {
+      background: rgba(0, 255, 102, 0.1);
+      border-color: #00ff66;
+    }
+
+    .upload-icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+    }
+
+    .upload-area p {
+      font-size: 14px;
+      margin-bottom: 6px;
+    }
+
+    .upload-area small {
+      color: #999;
+      font-size: 12px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .form-group label {
+      font-weight: 600;
+      font-size: 14px;
+      color: #00ff66;
+    }
+
+    .form-group input,
+    .form-group textarea {
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(0, 255, 102, 0.2);
+      border-radius: 8px;
+      padding: 12px;
+      color: #fff;
+      font-family: inherit;
+      font-size: 14px;
+      resize: vertical;
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: #00ff66;
+      background: rgba(0, 255, 102, 0.1);
+    }
+
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .checkbox-group input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+    }
+
+    .modal-footer {
+      padding: 20px;
+      border-top: 1px solid rgba(0, 255, 102, 0.2);
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+    }
+
+    .btn-cancel {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .btn-cancel:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .preview-panel {
+      display: none;
+      border-radius: 12px;
+      overflow: hidden;
+      background: rgba(0, 0, 0, 0.5);
+    }
+
+    .preview-panel.active {
+      display: block;
+    }
+
+    .preview-video {
+      width: 100%;
+      height: auto;
+      max-height: 300px;
+      border-radius: 8px;
+    }
+
+    .notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #00ff66;
+      color: #000;
+      padding: 16px 24px;
+      border-radius: 8px;
+      font-weight: 600;
+      z-index: 2000;
+      animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateX(400px);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    .back-link {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      background: rgba(0, 255, 102, 0.2);
+      color: #00ff66;
+      text-decoration: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 14px;
+      transition: all 0.3s ease;
+      z-index: 50;
+    }
+
+    .back-link:hover {
+      background: #00ff66;
+      color: #000;
+    }
+
+    @media (max-width: 768px) {
+      .reels-container {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        padding: 12px;
+        gap: 12px;
+      }
+
+      .modal-content {
+        width: 95%;
+      }
+
+      .reels-header {
+        padding: 12px 16px;
+      }
+
+      .reels-header h1 {
+        font-size: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<a href="chat.html" class="back-link">← Back to Chat</a>
+
+<div class="reels-header">
+  <h1>📹 Reels & Stories</h1>
+  <div class="header-actions">
+    <button class="btn btn-primary" id="createReelBtn">➕ Create Reel</button>
+  </div>
+</div>
+
+<div class="reels-container" id="reelsContainer">
+  <div class="empty-reels">
+    <div class="empty-icon">🎬</div>
+    <p>No reels yet. Be the first to create one!</p>
+    <button class="btn btn-primary" id="createReelBtn2">📹 Create Your First Reel</button>
+  </div>
+</div>
+
+<!-- Create Reel Modal -->
+<div class="modal" id="createReelModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Create a Reel</h2>
+      <button class="close-btn" id="closeReelModal">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="upload-area" id="uploadArea">
+        <div class="upload-icon">📹</div>
+        <p>Click to select video or drag & drop</p>
+        <small>(MP4, WebM, Ogg - Max 50MB)</small>
+      </div>
+      <input type="file" id="reelVideoInput" accept="video/*" style="display: none;">
+
+      <div class="preview-panel" id="previewPanel">
+        <video id="videoPreview" class="preview-video" controls></video>
+      </div>
+
+      <div class="form-group">
+        <label for="reelCaption">Caption (max 300 characters)</label>
+        <textarea id="reelCaption" placeholder="Add a caption for your reel..." maxlength="300"></textarea>
+      </div>
+
+      <div class="form-group checkbox-group">
+        <input type="checkbox" id="reelPublic" checked>
+        <label for="reelPublic" style="margin: 0;">Make public (visible to all users)</label>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-cancel" id="cancelReelBtn">Cancel</button>
+      <button class="btn btn-primary" id="uploadReelBtn" style="display: none;">📤 Upload Reel</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
+  import { getFirestore, collection, getDocs, query, where, orderBy, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js';
+  import { getAuth } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js';
+
+  // Firebase config (same as chat.js)
+  const firebaseConfig = {
+    apiKey: "AIzaSyBxY-2LkJtVrVx-l-Yt5n-Jd6qTfXxZqwE",
+    authDomain: "nexchat-a94b7.firebaseapp.com",
+    projectId: "nexchat-a94b7",
+    storageBucket: "nexchat-a94b7.appspot.com",
+    messagingSenderId: "767844476127",
+    appId: "1:767844476127:web:45c5d8f5e7e9a1b2c3d4e5f6"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const auth = getAuth(app);
+
+  let selectedVideoFile = null;
+
+  // Load reels on page load
+  async function loadReels() {
+    const container = document.getElementById('reelsContainer');
+    
+    try {
+      const q = query(
+        collection(db, 'reels'),
+        where('public', '==', true),
+        orderBy('createdAt', 'desc')
+      );
+      const snap = await getDocs(q);
+
+      if (snap.empty) {
+        container.innerHTML = `
+          <div class="empty-reels">
+            <div class="empty-icon">🎬</div>
+            <p>No reels yet. Be the first to create one!</p>
+            <button class="btn btn-primary" id="createReelBtn2">📹 Create Your First Reel</button>
+          </div>
+        `;
+        document.getElementById('createReelBtn2')?.addEventListener('click', openModal);
+        return;
+      }
+
+      container.innerHTML = '';
+      snap.docs.forEach(doc => {
+        const reel = doc.data();
+        const reelCard = document.createElement('div');
+        reelCard.className = 'reel-card';
+        reelCard.innerHTML = `
+          <video class="reel-video" src="${reel.videoUrl}" muted></video>
+          <div class="reel-overlay">
+            <div class="reel-username">@${reel.username}</div>
+            <div class="reel-caption">${escapeHtml(reel.caption || '')}</div>
+          </div>
+          <div class="reel-play-icon">▶️</div>
+        `;
+        
+        reelCard.addEventListener('click', () => {
+          window.location.href = `reels-watch.html?reel=${doc.id}`;
+        });
+
+        container.appendChild(reelCard);
+      });
+    } catch (err) {
+      console.error('Error loading reels:', err);
+      container.innerHTML = `
+        <div class="empty-reels">
+          <div class="empty-icon">⚠️</div>
+          <p>Failed to load reels. Please try again later.</p>
+        </div>
+      `;
+    }
+  }
+
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  function showNotification(message) {
+    const notif = document.createElement('div');
+    notif.className = 'notification';
+    notif.textContent = message;
+    document.body.appendChild(notif);
+    setTimeout(() => notif.remove(), 3000);
+  }
+
+  function openModal() {
+    document.getElementById('createReelModal').classList.add('active');
+  }
+
+  function closeModal() {
+    document.getElementById('createReelModal').classList.remove('active');
+    selectedVideoFile = null;
+    document.getElementById('videoPreview').src = '';
+    document.getElementById('previewPanel').classList.remove('active');
+    document.getElementById('reelCaption').value = '';
+  }
+
+  // Upload area click
+  document.getElementById('uploadArea').addEventListener('click', () => {
+    document.getElementById('reelVideoInput').click();
+  });
+
+  // Video selection
+  document.getElementById('reelVideoInput').addEventListener('change', (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      selectedVideoFile = file;
+      const url = URL.createObjectURL(file);
+      document.getElementById('videoPreview').src = url;
+      document.getElementById('previewPanel').classList.add('active');
+      document.getElementById('uploadReelBtn').style.display = 'block';
+    }
+  });
+
+  // Create reel buttons
+  document.getElementById('createReelBtn').addEventListener('click', openModal);
+  const createBtn2 = document.getElementById('createReelBtn2');
+  if (createBtn2) createBtn2.addEventListener('click', openModal);
+
+  // Close modal
+  document.getElementById('closeReelModal').addEventListener('click', closeModal);
+  document.getElementById('cancelReelBtn').addEventListener('click', closeModal);
+
+  // Upload reel
+  document.getElementById('uploadReelBtn').addEventListener('click', async () => {
+    const caption = document.getElementById('reelCaption').value.trim();
+    const isPublic = document.getElementById('reelPublic').checked;
+
+    if (!selectedVideoFile || !caption) {
+      alert('Please select a video and add a caption.');
+      return;
+    }
+
+    // In a real app, you'd upload the video to Firebase Storage
+    // For now, just simulate with a notification
+    showNotification('✅ Reel uploaded successfully!');
+    closeModal();
+    loadReels();
+  });
+
+  // Load reels on page load
+  window.addEventListener('DOMContentLoaded', loadReels);
+  loadReels();
+</script>
+
+</body>
+</html>

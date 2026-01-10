@@ -1,0 +1,17 @@
+{
+  "appId": "com.nexchat.app",
+  "appName": "NEXCHAT",
+  "webDir": ".",
+  "bundledWebRuntime": false,
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 0
+    },
+    "PushNotifications": {
+      "presentationOptions": ["badge", "sound", "alert"]
+    }
+  },
+  "server": {
+    "androidScheme": "https"
+  }
+}

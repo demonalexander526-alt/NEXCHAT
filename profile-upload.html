@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>☄️ NEXCHAT - Setup Profile ☄️</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="profile-upload.css">
+</head>
+<body>
+
+<main class="profile-container" role="main" aria-labelledby="setupTitle">
+  <img src="logo.jpg" class="logo" alt="NEXCHAT Logo">
+  <h2 id="setupTitle">Complete Your Profile</h2>
+
+  <form id="profileForm" aria-describedby="result">
+    <!-- Username Input -->
+    <div class="form-group">
+      <label for="username" class="input-label">Choose Username</label>
+      <div class="input-wrapper">
+        <input 
+          type="text" 
+          id="username" 
+          placeholder="Your username..." 
+          required 
+          aria-required="true"
+          minlength="3"
+          maxlength="20"
+        >
+        <span class="char-count"><span id="charCount">0</span>/20</span>
+      </div>
+    </div>
+
+    <!-- Profile Picture Input -->
+    <div class="form-group">
+      <label for="profilePic" class="input-label">Profile Picture</label>
+      <input 
+        type="file" 
+        id="profilePic" 
+        accept="image/*" 
+        required 
+        aria-required="true"
+        aria-describedby="fileHelp"
+      >
+      <small id="fileHelp">Supported: JPG, PNG, GIF (Max 5MB)</small>
+    </div>
+
+    <!-- Image Preview -->
+    <div id="previewContainer" class="preview-container" aria-hidden="true" style="display: none;">
+      <img id="previewImage" alt="Preview" class="preview-img">
+      <p class="preview-label">Preview</p>
+    </div>
+
+    <button type="submit" class="auth-btn">Create Profile</button>
+  </form>
+
+  <p id="result" aria-live="polite" role="status"></p>
+
+  <!-- Profile Display (shown after successful save) -->
+  <div id="profileDisplayContainer" class="profile-display-container" style="display: none;">
+    <div class="profile-success">
+      <h3>✅ Profile Created!</h3>
+      <img id="displayProfilePic" src="" alt="Your profile" class="display-profile-pic">
+      <p class="display-username">@<span id="displayUsername"></span></p>
+      <p class="display-message">Your profile has been saved. Redirecting to chat...</p>
+    </div>
+  </div>
+</main>
+
+<script type="module">
+  import { auth, db } from "./firebase-config.js";
+  import { updateDoc, doc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+  const profileForm = document.getElementById('profileForm');
+  const result = document.getElementById('result');
+  const fileInput = document.getElementById('profilePic');
+  const usernameInput = document.getElementById('username');
+  const charCount = document.getElementById('charCount');
+  const previewImage = document.getElementById('previewImage');
+  const previewContainer = document.getElementById('previewContainer');
+
+  // Helper to wait for auth user UID
+  function getCurrentUID(timeout = 3000) {
+    return new Promise(resolve => {
+      if (auth && auth.currentUser && auth.currentUser.uid) {
+        return resolve(auth.currentUser.uid);
+      }
+      const timer = setTimeout(() => resolve(null), timeout);
+      try {
+        const unsub = auth.onAuthStateChanged(u => {
+          clearTimeout(timer);
+          unsub();
+          resolve(u ? u.uid : null);
+        });
+      } catch (e) {
+        clearTimeout(timer);
+        resolve(null);
+      }
+    });
+  }
+
+  // Character counter
+  usernameInput.addEventListener('input', () => {
+    charCount.textContent = usernameInput.value.length;
+  });
+
+  // Image preview
+  fileInput.addEventListener('change', () => {
+    const file = fileInput.files[0];
+    if (!file) return;
+    
+    // File size check (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      result.textContent = "❌ File too large! Max 5MB allowed.";
+      result.style.color = '#ff4d4d';
+      fileInput.value = '';
+      return;
+    }
+
+    const url = URL.createObjectURL(file);
+    previewImage.src = url;
+    previewImage.style.display = 'block';
+    previewContainer.setAttribute('aria-hidden', 'false');
+    previewContainer.style.display = 'flex';
+  });
+
+  // Form submission
+  profileForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    // Validation
+    if (fileInput.files.length === 0) {
+      result.textContent = "❌ Please select a profile picture!";
+      result.style.color = '#ff4d4d';
+      return;
+    }
+
+    if (!usernameInput.value.trim()) {
+      result.textContent = "❌ Please enter a username!";
+      result.style.color = '#ff4d4d';
+      return;
+    }
+
+    if (usernameInput.value.length < 3) {
+      result.textContent = "❌ Username must be at least 3 characters!";
+      result.style.color = '#ff4d4d';
+      return;
+    }
+
+    const file = fileInput.files[0];
+    const reader = new FileReader();
+
+    reader.onload = async (event) => {
+      try {
+        const profilePicData = event.target.result;
+        const uname = usernameInput.value.trim();
+
+        // Show loading state
+        result.textContent = "⏳ Creating profile...";
+        result.style.color = '#00ff66';
+
+        // Get UID
+        const uid = await getCurrentUID();
+        if (!uid) {
+          throw new Error('Authentication missing. Please sign in again.');
+        }
+
+        // Update user profile
+        await updateDoc(doc(db, 'users', uid), {
+          username: uname,
+          profilePic: profilePicData,
+          updatedAt: new Date().toISOString()
+        });
+
+        // Show profile display
+        const displayContainer = document.getElementById('profileDisplayContainer');
+        const displayProfilePic = document.getElementById('displayProfilePic');
+        const displayUsername = document.getElementById('displayUsername');
+        
+        displayProfilePic.src = profilePicData;
+        displayUsername.textContent = uname;
+        
+        // Hide form, show profile
+        profileForm.style.opacity = '0.3';
+        profileForm.style.pointerEvents = 'none';
+        result.style.display = 'none';
+        displayContainer.style.display = 'block';
+        
+        // Success message
+        console.log(`✅ Profile saved: @${uname}`);
+
+        // Redirect after 2 seconds
+        setTimeout(() => {
+          window.location.href = 'chat.html';
+        }, 2000);
+      } catch (err) {
+        console.error('Profile creation error:', err);
+        result.textContent = `❌ Error: ${err.message}`;
+        result.style.color = '#ff4d4d';
+      }
+    };
+
+    reader.onerror = () => {
+      result.textContent = "❌ Error reading file!";
+      result.style.color = '#ff4d4d';
+    };
+
+    reader.readAsDataURL(file);
+  });
+</script>
+
+<style>
+  .visually-hidden {
+    position: absolute !important;
+    height: 1px;
+    width: 1px;
+    overflow: hidden;
+    clip: rect(1px, 1px, 1px, 1px);
+    white-space: nowrap;
+  }
+</style>
+
+</body>
+</html>

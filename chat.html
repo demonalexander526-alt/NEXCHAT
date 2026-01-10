@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+  <meta name="theme-color" content="#00ff66" />
+  <meta name="description" content="NEXCHAT - Real-time messaging, voice calls, and video calls platform" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="NEXCHAT" />
+  <meta name="format-detection" content="telephone=no" />
+  <title>☄️ NEXCHAT - Advanced Chat & Call</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="logo.jpg" />
+  <link rel="apple-touch-icon" href="logo.jpg" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="chat.css">
+</head>
+<body>
+
+<div class="app">
+  <!-- MAIN CONTAINER -->
+  <div class="main-container">
+    
+    <!-- LEFT SIDEBAR - CONTACTS -->
+    <aside class="sidebar contacts-sidebar" id="contactsSidebar">
+      <div class="sidebar-header">
+        <h1 class="brand-title">☄️ NEXCHAT</h1>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <button id="soundToggleBtn" class="menu-toggle" aria-label="Toggle sound">🔔</button>
+          <button id="toggleMenuBtn" class="menu-toggle" aria-label="Toggle menu">☰</button>
+        </div>
+      </div>
+
+      <nav class="nav-list" aria-label="Main navigation">
+        <button class="nav-item" data-action="uploads">📤 Uploads</button>
+        <button class="nav-item" data-action="users">👥 Users</button>
+        <button class="nav-item" data-action="chats">💬 Chats</button>
+        <button class="nav-item" data-action="livechat">🔴 Live Chat</button>
+        <button class="nav-item" data-action="watch-reels">📹 Watch Reels</button>
+        <button class="nav-item" data-action="bank">🏦 Bank</button>
+        <button class="nav-item" data-action="profile">👤 Profile</button>
+        <button class="nav-item" data-action="settings">⚙️ Settings</button>
+        <button class="nav-item" data-action="logout">🔓 Logout</button>
+      </nav>
+
+      <!-- Compact header controls: menu + search -->
+      <div class="search-container-compact">
+        <button id="openSearchBtn" class="action-btn" aria-label="Open search">🔎</button>
+      </div>
+
+      <!-- Contacts List -->
+      <ul id="contactList" class="contacts-list" role="list" aria-label="Contact list"></ul>
+    </aside>
+
+    <!-- Search Drawer (slide-in) -->
+    <div id="searchDrawer" class="search-drawer" aria-hidden="true">
+      <div class="drawer-header">
+        <h3>Search by Email</h3>
+        <button id="closeSearchBtn" class="action-btn">✕</button>
+      </div>
+      <input type="email" id="usernameSearch" placeholder="Enter email to start chat..." class="search-input" aria-label="Search user by registered email">
+      <div style="display:flex; gap:8px;">
+        <button id="searchBtn" class="action-btn primary-btn">🔍 Search</button>
+        <button id="searchStartChatBtn" class="action-btn">💬 Open Chat</button>
+      </div>
+    </div>
+    <div id="searchOverlay" class="search-overlay" aria-hidden="true"></div>
+
+    <!-- MAIN CHAT AREA -->
+    <main class="chat-main" role="main" aria-label="Chat area">
+      
+      <!-- Navigation Tabs -->
+      <div class="chat-tabs">
+        <button class="tab-btn active" data-tab="messages" aria-selected="true">💬 Messages</button>
+        <button class="tab-btn" data-tab="reels" aria-selected="false">📹 Reels</button>
+      </div>
+      
+      <!-- Messages Tab -->
+      <div id="messagesSection" class="tab-content active">
+      <!-- Chat Header -->
+      <header class="chat-header">
+        <div class="header-left">
+          <button id="backBtn" class="action-btn warn-btn" aria-label="Go back">← Back</button>
+          <div class="header-user-info">
+            <img id="chatProfilePic" src="" alt="profile" class="profile-pic-small" />
+            <div>
+              <h2 id="chatName">Select a chat</h2>
+              <span id="statusText" class="status-badge">offline</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="header-actions">
+          <button id="callBtn" class="action-btn primary-btn" title="Voice call" aria-label="Start voice call">📞</button>
+          <button id="videoCallBtn" class="action-btn primary-btn" title="Video call" aria-label="Start video call">📹</button>
+          <button id="infoBtn" class="action-btn view-btn" title="Chat info" aria-label="Chat information">ⓘ</button>
+        </div>
+      </header>
+
+      <!-- Call Status Bar -->
+      <div id="callStatus" class="call-status-bar" style="display: none;">
+        <span id="callType" class="call-type-badge"></span>
+        <span id="callDuration" class="call-duration">00:00</span>
+        <button id="callEndBtn" class="action-btn danger-btn">📴 End Call</button>
+      </div>
+
+      <!-- Messages Area -->
+      <section id="messages" class="messages-container" role="log" aria-live="polite">
+        <div class="empty-state">
+          <div class="empty-icon">💬</div>
+          <p>Select a chat to start messaging</p>
+        </div>
+      </section>
+
+      <!-- Typing Indicator -->
+      <div id="typingIndicator" class="typing-indicator" style="display: none;">
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+        <span class="typing-text"></span>
+      </div>
+
+      <!-- Input Area -->
+      <div class="input-section">
+        <!-- Media Buttons -->
+        <div class="media-buttons">
+          <button id="attachImageBtn" class="media-btn action-btn primary-btn" title="Attach image">🖼️</button>
+          <button id="attachVideoBtn" class="media-btn action-btn primary-btn" title="Attach video">📹</button>
+          <button id="attachAudioBtn" class="media-btn action-btn primary-btn" title="Record audio">🎤</button>
+        </div>
+
+        <!-- Audio Recording Panel -->
+        <div id="audioRecordingPanel" class="recording-panel" style="display: none;">
+          <div class="recording-display">
+            <span class="recording-dot">●</span>
+            <span id="recordingTime">00:00</span>
+          </div>
+          <button id="stopRecordBtn" class="action-btn success-btn">⏹ Stop</button>
+          <button id="cancelRecordBtn" class="action-btn danger-btn">✕</button>
+        </div>
+
+        <!-- Audio Playback Panel -->
+        <div id="audioPlaybackPanel" class="playback-panel" style="display: none;">
+          <audio id="recordedAudio" controls class="audio-player"></audio>
+          <button id="sendAudioBtn" class="action-btn primary-btn">📤 Send</button>
+        </div>
+
+        <!-- Image Preview Panel -->
+        <div id="imagePreviewPanel" class="preview-panel" style="display: none;">
+          <img id="previewImage" alt="preview" class="preview-media" />
+          <div class="preview-actions">
+            <button id="cancelImageBtn" class="action-btn danger-btn">✕</button>
+            <button id="sendImageBtn" class="action-btn primary-btn">📤</button>
+          </div>
+        </div>
+
+        <!-- Video Preview Panel -->
+        <div id="videoPreviewPanel" class="preview-panel" style="display: none;">
+          <video id="previewVideo" controls class="preview-media"></video>
+          <div class="preview-actions">
+            <button id="cancelVideoBtn" class="action-btn danger-btn">✕</button>
+            <button id="sendVideoBtn" class="action-btn primary-btn">📤</button>
+          </div>
+        </div>
+
+        <!-- Message Input Form -->
+        <form id="messageForm" class="message-input-form">
+          <input 
+            type="text" 
+            id="messageText" 
+            placeholder="Type a message..." 
+            class="message-input"
+            maxlength="500"
+            aria-label="Message text"
+          >
+          <button type="button" id="emojiBtn" class="action-btn view-btn" title="Add emoji">😊</button>
+          <button type="submit" class="action-btn primary-btn">📤</button>
+        </form>
+
+        <!-- Emoji Picker -->
+        <div id="emojiPicker" class="emoji-picker" style="display: none;">
+          <div class="emoji-header">
+            <h4>Emojis</h4>
+            <button type="button" id="closeEmojiBtn" class="close-btn">✕</button>
+          </div>
+          <div class="emoji-grid" id="emojiGrid"></div>
+        </div>
+      </div>
+
+      <!-- Hidden File Inputs -->
+      <input type="file" id="imageInput" accept="image/*" style="display: none;">
+      <input type="file" id="videoInput" accept="video/*" style="display: none;">
+    </div>
+
+    <!-- Reels Tab -->
+    <div id="reelsSection" class="tab-content">
+      <div class="reels-container">
+        <div class="reels-header">
+          <h3>📹 Reels & Stories</h3>
+          <button id="createReelBtn" class="btn-create-reel" title="Create new reel">➕ Create</button>
+        </div>
+
+        <!-- Reels Feed -->
+        <div id="reelsFeed" class="reels-feed">
+          <div class="empty-reels">
+            <div class="empty-icon">🎬</div>
+            <p>No reels yet. Create one to get started!</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Create/Upload Reel Modal -->
+      <div id="createReelModal" class="modal" style="display: none;">
+        <div class="modal-content create-reel-modal">
+          <div class="modal-header">
+            <h2>Create a Reel</h2>
+            <button class="close-btn" id="closeCreateReelBtn">✕</button>
+          </div>
+          <div class="modal-body">
+            <div class="reel-upload-area" id="reelUploadArea">
+              <div class="upload-icon">📹</div>
+              <p>Click to select a video or drag & drop</p>
+              <small>(MP4, WebM, Ogg - Max 50MB)</small>
+            </div>
+            <input type="file" id="reelVideoInput" accept="video/*" style="display: none;">
+            
+            <div id="reelPreviewPanel" class="reel-preview-panel" style="display: none;">
+              <video id="reelVideoPreview" controls class="reel-preview-video"></video>
+              <div class="reel-input-group">
+                <label for="reelCaption">Caption:</label>
+                <textarea id="reelCaption" placeholder="Add a caption..." maxlength="300"></textarea>
+              </div>
+              <div class="reel-input-group">
+                <label>
+                  <input type="checkbox" id="reelPublic" checked>
+                  <span>Make public (visible to all)</span>
+                </label>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="cancel-btn" id="cancelReelBtn">Cancel</button>
+            <button type="button" class="btn-primary" id="uploadReelBtn" style="display: none;">📤 Upload</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    </main>
+  </div>
+
+  <!-- Hidden File Inputs (moved outside tabs) -->
+  <!-- (already declared above; duplicates removed) -->
+
+  <!-- MODALS -->
+  
+  <!-- Call Modal -->
+  <div id="callModal" class="modal call-modal" style="display: none;">
+    <div class="modal-content">
+      <div class="call-modal-header">
+        <h2 id="callModalTitle">Incoming Call</h2>
+      </div>
+      <div class="call-modal-body">
+        <img id="callModalProfilePic" src="" alt="caller" class="modal-profile-pic" />
+        <p id="callModalUsername" class="modal-username">Unknown</p>
+        <p id="callModalStatus" class="modal-status">Ringing...</p>
+      </div>
+      <div class="call-modal-actions">
+        <button id="declineCallBtn" class="btn-danger">📴 Decline</button>
+        <button id="acceptCallBtn" class="btn-success">☎️ Accept</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chat Info Modal -->
+  <div id="chatInfoModal" class="modal chat-info-modal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>User Info</h2>
+        <button id="closeChatInfoBtn" class="close-btn">✕</button>
+      </div>
+      <div class="modal-body">
+        <img id="chatInfoProfilePic" src="" alt="user" class="modal-profile-pic-lg" />
+        <h3 id="chatInfoUsername">Username</h3>
+        <p id="chatInfoEmail" class="email-text">email@example.com</p>
+        <p id="chatInfoStatus" class="status-text">Online</p>
+        <div class="stats">
+          <div class="stat-item">
+            <span class="stat-label">Messages</span>
+            <span id="messageCount" class="stat-value">0</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Calls</span>
+            <span id="callCount" class="stat-value">0</span>
+          </div>
+        </div>
+        <button id="blockUserBtn" class="btn-danger">🚫 Block User</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Report Modal -->
+  <div id="reportModal" class="modal report-modal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Report User</h2>
+        <button class="close-btn" onclick="document.getElementById('reportModal').style.display='none'">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="reportForm">
+          <div class="form-group">
+            <label for="reportReason">Reason:</label>
+            <select id="reportReason" required>
+              <option value="">Select a reason...</option>
+              <option value="harassment">Harassment</option>
+              <option value="spam">Spam</option>
+              <option value="inappropriate">Inappropriate Content</option>
+              <option value="scam">Scam/Fraud</option>
+              <option value="abuse">Abusive Behavior</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="reportDetails">Details:</label>
+            <textarea id="reportDetails" placeholder="Provide details..." maxlength="500"></textarea>
+          </div>
+          <button type="submit" class="btn-primary">📤 Submit Report</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div id="settingsModal" class="modal settings-modal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Settings</h2>
+        <button id="closeSettingsBtn" class="close-btn">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="setting-item">
+          <label for="notificationToggle">
+            <input type="checkbox" id="notificationToggle" checked>
+            <span>Enable Notifications</span>
+          </label>
+        </div>
+        <div class="setting-item">
+          <label for="soundToggle">
+            <input type="checkbox" id="soundToggle" checked>
+            <span>Message Sounds</span>
+          </label>
+        </div>
+        <div class="setting-item">
+          <label for="darkModeToggle">
+            <input type="checkbox" id="darkModeToggle" checked>
+            <span>Dark Mode</span>
+          </label>
+        </div>
+        <div class="setting-item">
+          <label for="autoPlayToggle">
+            <input type="checkbox" id="autoPlayToggle">
+            <span>Auto-play Audio Messages</span>
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reaction Modal -->
+  <div id="reactionModal" class="modal reaction-modal" style="display: none;">
+    <div class="reaction-grid">
+      <button class="reaction-btn" data-reaction="👍">👍</button>
+      <button class="reaction-btn" data-reaction="❤️">❤️</button>
+      <button class="reaction-btn" data-reaction="😂">😂</button>
+      <button class="reaction-btn" data-reaction="😮">😮</button>
+      <button class="reaction-btn" data-reaction="😢">😢</button>
+      <button class="reaction-btn" data-reaction="🔥">🔥</button>
+    </div>
+  </div>
+
+  <!-- Menu Overlay -->
+  <div id="menuOverlay" class="menu-overlay"></div>
+
+  <!-- Notification Container -->
+  <div id="notificationContainer" class="notification-container"></div>
+</div>
+
+<!-- Utility Styles -->
+<style>
+  .visually-hidden {
+    position: absolute !important;
+    height: 1px;
+    width: 1px;
+    overflow: hidden;
+    clip: rect(1px, 1px, 1px, 1px);
+    white-space: nowrap;
+  }
+  
+  @keyframes slideInRight {
+    from { opacity: 0; transform: translateX(100px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  
+  @keyframes callRing {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+  }
+  
+  .call-incoming {
+    animation: callRing 0.6s infinite;
+  }
+</style>
+
+<script type="module">
+  // Register service worker for PWA functionality
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').then(reg => {
+      console.log('✅ Service Worker registered');
+    }).catch(err => {
+      console.log('Service Worker registration failed:', err);
+    });
+  }
+</script>
+
+<!-- Scripts -->
+<script type="module" src="chat.js"></script>
+</body>
+</html>
