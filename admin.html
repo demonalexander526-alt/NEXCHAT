@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#00ff66">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="format-detection" content="telephone=no">
+  <title>NEXCHAT Admin Dashboard</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/x-icon" href="logo.jpg">
+  <link rel="apple-touch-icon" href="logo.jpg">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Orbitron', monospace;
+      background: #0a0f1a;
+      color: #00ff66;
+      overflow-x: hidden;
+    }
+
+    .admin-container {
+      min-height: 100vh;
+      padding: 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .admin-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      padding-bottom: 20px;
+      border-bottom: 2px solid #00ff66;
+    }
+
+    .admin-header h1 {
+      font-size: 28px;
+      text-shadow: 0 0 10px rgba(0, 255, 102, 0.5);
+    }
+
+    .admin-header button {
+      background: #ff6600;
+      color: #fff;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+
+    .admin-header button:hover {
+      background: #ff8800;
+      transform: scale(1.05);
+    }
+
+    .admin-content {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+      margin-bottom: 30px;
+    }
+
+    @media (max-width: 768px) {
+      .admin-content {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: rgba(0, 255, 102, 0.05);
+      border: 1px solid #00ff66;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 4px 12px rgba(0, 255, 102, 0.1);
+    }
+
+    .card h2 {
+      margin-bottom: 20px;
+      font-size: 20px;
+      color: #00ff66;
+      text-shadow: 0 0 8px rgba(0, 255, 102, 0.3);
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 10px 12px;
+      background: #1a1a1a;
+      border: 1px solid #00ff66;
+      border-radius: 6px;
+      color: #00ff66;
+      font-family: 'Orbitron', monospace;
+      font-size: 14px;
+    }
+
+    .form-group input::placeholder {
+      color: rgba(0, 255, 102, 0.5);
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+      outline: none;
+      box-shadow: 0 0 10px rgba(0, 255, 102, 0.3);
+    }
+
+    .btn {
+      width: 100%;
+      padding: 12px;
+      background: #00ff66;
+      color: #0a0f1a;
+      border: none;
+      border-radius: 6px;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.3s ease;
+    }
+
+    .btn:hover {
+      background: #00dd55;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 255, 102, 0.3);
+    }
+
+    .result {
+      margin-top: 15px;
+      padding: 12px;
+      border-radius: 6px;
+      background: rgba(0, 255, 102, 0.1);
+      border-left: 3px solid #00ff66;
+      font-size: 14px;
+      min-height: 20px;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .stat-item {
+      background: rgba(0, 255, 102, 0.1);
+      padding: 15px;
+      border-radius: 8px;
+      border: 1px solid #00ff66;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: #00ff66;
+      margin-bottom: 5px;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: rgba(0, 255, 102, 0.7);
+    }
+
+    .error {
+      background: rgba(255, 102, 0, 0.1);
+      border-left-color: #ff6600;
+      color: #ff6600;
+    }
+
+    .success {
+      background: rgba(0, 255, 102, 0.1);
+      border-left-color: #00ff66;
+      color: #00ff66;
+    }
+
+    .user-list {
+      max-height: 400px;
+      overflow-y: auto;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 6px;
+      padding: 10px;
+    }
+
+    .user-item {
+      padding: 10px;
+      background: rgba(0, 255, 102, 0.05);
+      border: 1px solid rgba(0, 255, 102, 0.2);
+      border-radius: 4px;
+      margin-bottom: 8px;
+      font-size: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .user-info {
+      flex: 1;
+    }
+
+    .user-name {
+      font-weight: 600;
+      color: #00ff66;
+    }
+
+    .user-tokens {
+      color: rgba(0, 255, 102, 0.7);
+      font-size: 11px;
+    }
+
+    .admin-status {
+      background: #ff6600;
+      color: #fff;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="admin-container">
+    <div class="admin-header">
+      <div>
+        <h1>👑 NEXCHAT Admin Dashboard</h1>
+        <p id="adminStatus" style="margin-top: 5px; color: rgba(0, 255, 102, 0.7);">Loading...</p>
+      </div>
+      <button onclick="window.location.href='chat.html'">← Back to Chat</button>
+    </div>
+
+    <div class="admin-content">
+      <!-- Token Minting Card -->
+      <div class="card">
+        <h2>💰 Mint Tokens</h2>
+        
+        <div class="stats">
+          <div class="stat-item">
+            <div class="stat-value" id="totalTokensValue">0</div>
+            <div class="stat-label">Total Tokens</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="totalUsersValue">0</div>
+            <div class="stat-label">Total Users</div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Select User</label>
+          <select id="userSelect">
+            <option value="">-- Loading users --</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Amount to Mint</label>
+          <input type="number" id="mintAmount" placeholder="500" min="1">
+        </div>
+
+        <button class="btn" onclick="mintTokens()">✨ Mint Tokens</button>
+        <div id="mintResult" class="result"></div>
+      </div>
+
+      <!-- System Management Card -->
+      <div class="card">
+        <h2>⚙️ System Management</h2>
+
+        <div class="form-group">
+          <label>Make User Admin</label>
+          <select id="adminUserSelect">
+            <option value="">-- Select user --</option>
+          </select>
+        </div>
+
+        <button class="btn" onclick="promoteToAdmin()" style="background: #ff6600; color: #fff;">👑 Promote to Admin</button>
+        <div id="adminResult" class="result"></div>
+
+        <hr style="border: 1px solid rgba(0, 255, 102, 0.2); margin: 20px 0;">
+
+        <button class="btn" onclick="resetAllTokens()" style="background: #cc5500; color: #fff; margin-top: 15px;">⚠️ Reset All Tokens to 1000</button>
+        <div id="resetResult" class="result"></div>
+      </div>
+    </div>
+
+    <!-- Users List Card -->
+    <div class="card">
+      <h2>👥 All Users</h2>
+      <div class="user-list" id="usersList">
+        <p style="text-align: center; color: rgba(0, 255, 102, 0.5);">Loading users...</p>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { auth, db } from "./firebase-config.js";
+    import { 
+      collection, getDocs, doc, getDoc, updateDoc, query, where,
+      serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+    let currentAdminUID = null;
+    let allUsers = [];
+
+    auth.onAuthStateChanged(async (user) => {
+      if (!user) {
+        window.location.href = "index.html";
+        return;
+      }
+
+      currentAdminUID = user.uid;
+      const userDoc = await getDoc(doc(db, "users", user.uid));
+      
+      if (!userDoc.exists() || !userDoc.data().isAdmin) {
+        document.querySelector(".admin-container").innerHTML = 
+          '<div style="text-align: center; padding: 40px; color: #ff6600;"><h2>❌ Access Denied</h2><p>You are not an admin</p><button onclick="window.location.href=\'chat.html\'" style="background: #00ff66; color: #000; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; margin-top: 20px; font-weight: 600;">Back to Chat</button></div>';
+        return;
+      }
+
+      document.getElementById("adminStatus").textContent = `Logged in as: ${userDoc.data().username || user.email}`;
+      loadAdminDashboard();
+    });
+
+    async function loadAdminDashboard() {
+      try {
+        const usersRef = collection(db, "users");
+        const querySnapshot = await getDocs(usersRef);
+        allUsers = [];
+        let totalTokens = 0;
+
+        querySnapshot.forEach(doc => {
+          const userData = doc.data();
+          allUsers.push({ id: doc.id, ...userData });
+          totalTokens += userData.tokens || 0;
+        });
+
+        document.getElementById("totalTokensValue").textContent = totalTokens.toLocaleString();
+        document.getElementById("totalUsersValue").textContent = allUsers.length;
+
+        populateUserSelects();
+        displayUsersList();
+      } catch (err) {
+        console.error("Error loading dashboard:", err);
+      }
+    }
+
+    function populateUserSelects() {
+      const mintSelect = document.getElementById("userSelect");
+      const adminSelect = document.getElementById("adminUserSelect");
+      
+      mintSelect.innerHTML = '<option value="">-- Select user --</option>';
+      adminSelect.innerHTML = '<option value="">-- Select user --</option>';
+
+      allUsers.forEach(user => {
+        const option1 = document.createElement("option");
+        option1.value = user.id;
+        option1.textContent = `${user.username || user.email} (${user.tokens || 0} tokens)`;
+        mintSelect.appendChild(option1);
+
+        const option2 = document.createElement("option");
+        option2.value = user.id;
+        option2.textContent = `${user.username || user.email}`;
+        adminSelect.appendChild(option2);
+      });
+    }
+
+    function displayUsersList() {
+      const usersList = document.getElementById("usersList");
+      usersList.innerHTML = allUsers.map(user => `
+        <div class="user-item">
+          <div class="user-info">
+            <div class="user-name">${user.username || user.email}</div>
+            <div class="user-tokens">⭐ ${user.tokens || 0} tokens | ID: ${user.id.substring(0, 8)}...</div>
+          </div>
+          ${user.isAdmin ? '<span class="admin-status">ADMIN</span>' : ''}
+        </div>
+      `).join('');
+    }
+
+    window.mintTokens = async function() {
+      const userId = document.getElementById("userSelect").value;
+      const amount = parseInt(document.getElementById("mintAmount").value || 0);
+      const resultEl = document.getElementById("mintResult");
+
+      if (!userId || !amount || amount <= 0) {
+        resultEl.textContent = "❌ Please select a user and enter a valid amount";
+        resultEl.className = "result error";
+        return;
+      }
+
+      try {
+        resultEl.textContent = "⏳ Minting tokens...";
+        resultEl.className = "result";
+
+        const userRef = doc(db, "users", userId);
+        const userDoc = await getDoc(userRef);
+        const currentTokens = userDoc.data().tokens || 0;
+
+        await updateDoc(userRef, {
+          tokens: currentTokens + amount,
+          lastMint: serverTimestamp()
+        });
+
+        const userName = userDoc.data().username || userDoc.data().email;
+        resultEl.textContent = `✅ Minted ${amount} tokens to ${userName}`;
+        resultEl.className = "result success";
+
+        document.getElementById("mintAmount").value = "";
+        loadAdminDashboard();
+
+        setTimeout(() => resultEl.textContent = "", 3000);
+      } catch (err) {
+        resultEl.textContent = `❌ Error: ${err.message}`;
+        resultEl.className = "result error";
+      }
+    };
+
+    window.promoteToAdmin = async function() {
+      const userId = document.getElementById("adminUserSelect").value;
+      const resultEl = document.getElementById("adminResult");
+
+      if (!userId) {
+        resultEl.textContent = "❌ Please select a user";
+        resultEl.className = "result error";
+        return;
+      }
+
+      try {
+        resultEl.textContent = "⏳ Promoting user...";
+        resultEl.className = "result";
+
+        const userRef = doc(db, "users", userId);
+        const userDoc = await getDoc(userRef);
+
+        await updateDoc(userRef, {
+          isAdmin: true
+        });
+
+        const userName = userDoc.data().username || userDoc.data().email;
+        resultEl.textContent = `✅ ${userName} is now an admin`;
+        resultEl.className = "result success";
+
+        loadAdminDashboard();
+        setTimeout(() => resultEl.textContent = "", 3000);
+      } catch (err) {
+        resultEl.textContent = `❌ Error: ${err.message}`;
+        resultEl.className = "result error";
+      }
+    };
+
+    window.resetAllTokens = async function() {
+      if (!confirm("⚠️ This will reset all users' tokens to 1000. Are you sure?")) return;
+
+      const resultEl = document.getElementById("resetResult");
+
+      try {
+        resultEl.textContent = "⏳ Resetting tokens...";
+        resultEl.className = "result";
+
+        const usersRef = collection(db, "users");
+        const querySnapshot = await getDocs(usersRef);
+
+        let count = 0;
+        for (const userDoc of querySnapshot.docs) {
+          await updateDoc(doc(db, "users", userDoc.id), {
+            tokens: 1000
+          });
+          count++;
+        }
+
+        resultEl.textContent = `✅ Reset tokens for ${count} users to 1000`;
+        resultEl.className = "result success";
+
+        loadAdminDashboard();
+        setTimeout(() => resultEl.textContent = "", 3000);
+      } catch (err) {
+        resultEl.textContent = `❌ Error: ${err.message}`;
+        resultEl.className = "result error";
+      }
+    };
+  </script>
+</body>
+</html>

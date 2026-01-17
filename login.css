@@ -1,0 +1,143 @@
+/* login.css */
+
+/* Import the font */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Orbitron', sans-serif;
+  background-color: #0d0d0d; /* dark background for neon effect */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+/* Login container styling */
+.login-container {
+  background: rgba(0, 0, 0, 0.85);
+  padding: 40px;
+  border-radius: 15px;
+  text-align: center;
+  box-shadow: 0 0 20px #00ff00, 0 0 40px #00ff00, 0 0 60px #00ff00;
+  animation: neonGlow 14s infinite; /* slow cycle for text/container */
+}
+
+/* Logo styling */
+.logo {
+  width: 120px;
+  height: 120px;
+  margin-bottom: 20px;
+  border-radius: 50%;
+  box-shadow: 0 0 20px #00ff00;
+  animation: neonGlow 14s infinite;
+}
+
+/* Heading styling */
+h2 {
+  color: #00ff00;
+  font-size: 1.8em;
+  margin-bottom: 30px;
+  text-shadow: 0 0 5px #00ff00, 0 0 10px #00ff00, 0 0 20px #00ff00;
+  animation: neonGlow 14s infinite;
+}
+
+/* Input fields */
+input[type="email"],
+input[type="password"] {
+  width: 100%;
+  padding: 12px;
+  margin: 10px 0;
+  border: none;
+  border-radius: 8px;
+  outline: none;
+  font-size: 1em;
+  background: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  box-shadow: 0 0 5px #00ff00;
+  transition: box-shadow 0.3s ease;
+}
+
+input[type="email"]:focus,
+input[type="password"]:focus {
+  box-shadow: 0 0 10px #00ff00, 0 0 20px #00ff00;
+}
+
+/* Button styling with independent faster glow */
+.auth-btn {
+  width: 100%;
+  padding: 12px;
+  margin-top: 15px;
+  border: none;
+  border-radius: 8px;
+  background-color: #00ff00;
+  color: #000;
+  font-weight: bold;
+  font-size: 1em;
+  cursor: pointer;
+  box-shadow: 0 0 10px #00ff00, 0 0 20px #00ff00;
+  transition: 0.3s;
+  animation: neonGlowFast 7s infinite; /* faster cycle for button */
+}
+
+.auth-btn:hover {
+  box-shadow: 0 0 20px #00ff00, 0 0 40px #00ff00, 0 0 60px #00ff00;
+}
+
+/* Switch links */
+.switch {
+  color: #fff;
+  margin-top: 15px;
+}
+
+.switch span {
+  color: #00ff00;
+  cursor: pointer;
+  text-decoration: underline;
+  animation: neonGlow 14s infinite;
+}
+
+/* Divider */
+.divider {
+  color: #888;
+  margin: 20px 0;
+  font-size: 0.9em;
+}
+
+/* Google Sign-In Container */
+.google-signin-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 15px;
+}
+
+/* Result message */
+#result {
+  color: #ff0000;
+  margin-top: 15px;
+  font-weight: bold;
+  min-height: 20px;
+}
+
+/* Neon color animation for container/text/links */
+@keyframes neonGlow {
+  0%   { color: #00ff00; box-shadow: 0 0 10px #00ff00, 0 0 20px #00ff00; }
+  14%  { color: #0000ff; box-shadow: 0 0 10px #0000ff, 0 0 20px #0000ff; }
+  28%  { color: #ff0000; box-shadow: 0 0 10px #ff0000, 0 0 20px #ff0000; }
+  42%  { color: #00ff00; box-shadow: 0 0 10px #00ff00, 0 0 20px #00ff00; }
+  57%  { color: #ffff00; box-shadow: 0 0 10px #ffff00, 0 0 20px #ffff00; }
+  71%  { color: #ff69b4; box-shadow: 0 0 10px #ff69b4, 0 0 20px #ff69b4; }
+  85%  { color: #ffffff; box-shadow: 0 0 10px #ffffff, 0 0 20px #ffffff; }
+  100% { color: #00ff00; box-shadow: 0 0 10px #00ff00, 0 0 20px #00ff00; }
+}
+
+/* Neon color animation for button (faster) */
+@keyframes neonGlowFast {
+  0%   { color: #00ff00; box-shadow: 0 0 10px #00ff00, 0 0 20px #00ff00; }
+  14%  { color: #0000ff; box-shadow: 0 0 10px #0000ff, 0 0 20px #0000ff; }
+  28%  { color: #ff0000; box-shadow: 0 0 10px #ff0000, 0 0 20px #ff0000; }
+  42%  { color: #00ff00; box-shadow: 0 0 10px #00ff00, 0 0 20px #00ff00; }
+  57%  { color: #ffff00; box-shadow: 0 0 10px #ffff00, 0 0 20px #ffff00; }
+  71%  { color: #ff69b4; box-shadow: 0 0 10px #ff69b4, 0 0 20px #ff69b4; }
+  85%  { color: #ffffff; box-shadow: 0 0 10px #ffffff, 0 0 20px #ffffff; }
+  100% { color: #00ff00; box-shadow: 0 0 10px #00ff00, 0 0 20px #00ff00; }
+}

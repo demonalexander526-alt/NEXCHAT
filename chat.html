@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#00ff66">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="NEXCHAT">
+  <meta name="format-detection" content="telephone=no">
+  <meta name="x-apple-disable-message-reformatting" content="yes">
+  <title>NEXCHAT - Stories & Messages</title>
+  <link rel="stylesheet" href="chat.css">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/x-icon" href="logo.jpg">
+  <link rel="apple-touch-icon" href="logo.jpg">
+</head>
+<body>
+  <div class="app">
+    <!-- TOP HEADER BAR -->
+    <header class="top-header">
+      <div class="header-left">
+        <h1 class="header-logo">NEXCHAT</h1>
+      </div>
+      <div class="header-center">
+        <div id="tokenDisplay" class="token-display" title="Your tokens">
+          <span class="token-icon">⭐</span>
+          <span id="tokenCount">0</span>
+        </div>
+      </div>
+      <div class="header-right">
+        <button id="profile-sticker" class="header-icon-btn profile-sticker" title="Profile" onclick="window.location.href='profile-upload.html'">👤</button>
+        <button id="shop-btn-header" class="header-icon-btn" title="Buy Tokens">🛒</button>
+        <button id="search-btn-header" class="header-icon-btn" title="Search">🔍</button>
+        <button id="settings-btn-header" class="header-icon-btn" title="Settings">⚙️</button>
+      </div>
+    </header>
+
+    <!-- REELS/CONTACTS CAROUSEL (horizontal scroll) -->
+    <div class="stories-container">
+      <div class="stories-scroll" id="storiesScroll">
+        <a href="https://linuxprogrammer862-collab.github.io/NEXCHAT/" class="story-item" target="_blank" title="My Reel">
+          <div class="story-avatar-wrapper">
+            <div class="camera-icon">🎬</div>
+          </div>
+          <p class="story-label">My Reel</p>
+        </a>
+        <!-- Reels will be populated by JS -->
+        <div id="storiesList" class="stories-list"></div>
+      </div>
+    </div>
+
+    <!-- NEX-STATUS SECTION (only visible in chat list view) -->
+    <div class="nex-status-container" id="statusContainer" style="display: none;">
+      <div class="nex-status-header">
+        <h3>📝 NEX-STATUS</h3>
+      </div>
+      <div class="status-input-area">
+        <input 
+          type="text" 
+          id="statusInput" 
+          class="status-input" 
+          placeholder="What's on your mind?" 
+          maxlength="150"
+        />
+        <button id="postStatusBtn" class="status-post-btn" title="Post Status">✓</button>
+      </div>
+      <div id="statusFeed" class="status-feed">
+        <div class="status-empty-state">
+          <p>No statuses yet</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIN CHAT LIST -->
+    <main class="chat-main">
+      <!-- CHAT LIST VIEW -->
+      <div id="chatListView" class="chat-list-view">
+        <div class="chat-list-header">
+          <h2>Messages</h2>
+          <button id="newChatBtn" class="new-chat-btn" title="New chat">✏️</button>
+        </div>
+
+        <ul id="contactList" class="chat-list">
+          <li class="empty-state">
+            <p>No chats yet</p>
+            <p class="hint">Search for friends to start chatting</p>
+          </li>
+        </ul>
+      </div>
+
+      <!-- CHAT DETAIL VIEW -->
+      <div id="chatDetailView" class="chat-detail-view" style="display: none;">
+        <!-- Chat Header -->
+        <div class="chat-detail-header">
+          <button id="backBtn" class="back-btn" title="Back to chats">‹</button>
+          <div class="chat-header-profile">
+            <img id="chatProfilePic" src="" alt="profile" class="header-avatar">
+            <div class="header-text">
+              <h3 id="chatName">User</h3>
+              <p id="statusText" class="status-dot">🟢 Online</p>
+            </div>
+          </div>
+          <button id="menuBtn" class="header-icon-btn" title="More">⋯</button>
+        </div>
+
+        <!-- Messages Area -->
+        <div class="messages-area" id="messages-area">
+          <div class="messages-list">
+            <div class="empty-state">
+              <p>No messages yet</p>
+              <p class="hint">Start the conversation!</p>
+            </div>
+          </div>
+          <div id="typingIndicator" class="typing-indicator" style="display: none;">
+            <span class="typing-dot"></span>
+            <span class="typing-dot"></span>
+            <span class="typing-dot"></span>
+          </div>
+        </div>
+
+        <!-- Chat Options Menu -->
+        <div id="chatOptionsMenu" class="options-popup" style="display: none;">
+          <button id="callBtn" class="option-item">☎️ Call</button>
+          <button id="videoCallBtn" class="option-item">📹 Video</button>
+          <button id="muteBtn" class="option-item">🔇 Mute</button>
+          <button id="blockBtn" class="option-item danger">🚫 Block</button>
+          <button id="reportBtn" class="option-item danger">⚠️ Report</button>
+          <button id="deleteBtn" class="option-item danger">🗑️ Delete</button>
+        </div>
+
+        <!-- Message Input -->
+        <div class="message-input-area">
+          <form id="message-form" class="message-form">
+            <button type="button" id="attach-btn" class="input-btn">📎</button>
+            <input 
+              type="text" 
+              id="message-input" 
+              class="message-input" 
+              placeholder="Say something..."
+              autocomplete="off"
+              maxlength="1000"
+            />
+            <button type="button" id="emoji-btn" class="input-btn">😊</button>
+            <button type="button" id="sticker-btn" class="sticker-btn" title="Post Status">✨</button>
+            <button type="submit" class="send-btn">✓</button>
+          </form>
+
+          <!-- Emoji Picker -->
+          <div id="emoji-picker" class="emoji-picker-popup" style="display: none;">
+            <div class="emoji-header">
+              <span>Emojis</span>
+              <button type="button" id="close-emoji-btn" class="close-btn">✕</button>
+            </div>
+            <div id="emoji-grid" class="emoji-grid"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SEARCH OVERLAY -->
+      <div id="search-overlay" class="search-overlay" style="display: none;">
+        <div id="search-modal" class="search-modal">
+          <div class="search-header">
+            <input 
+              type="text" 
+              id="search-input" 
+              class="search-input" 
+              placeholder="Search by UID, username, or name..." 
+              autocomplete="off"
+            />
+            <button id="browse-users-btn" class="search-action-btn" title="Browse all users">👥</button>
+            <button id="close-search-btn" class="close-btn">✕</button>
+          </div>
+          <div id="search-results" class="search-results"></div>
+        </div>
+      </div>
+
+      <!-- INFO SIDEBAR (on chat detail) -->
+      <div id="infoSidebar" class="info-panel" style="display: none;">
+        <div class="info-header">
+          <h3>Info</h3>
+          <button id="closeInfoBtn" class="close-btn">✕</button>
+        </div>
+
+        <div class="info-body">
+          <div class="user-card">
+            <img id="infoPic" src="" alt="profile" class="user-avatar-large">
+            <h3 id="infoName">User</h3>
+            <p id="infoEmail">Nexchat@gmail.com</p>
+            <p id="infoStatus">🟢 Online</p>
+          </div>
+
+          <div class="info-buttons">
+            <button id="infoCallBtn" class="info-btn">☎️ Call</button>
+            <button id="infoVideoBtn" class="info-btn">📹 Video</button>
+            <button id="infoBlockBtn" class="info-btn danger">🚫 Block</button>
+            <button id="infoReportBtn" class="info-btn danger">⚠️ Report</button>
+            <button id="infoDeleteBtn" class="info-btn danger">🗑️ Delete</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- SETTINGS MODAL -->
+      <div id="settingsModal" class="settings-modal" style="display: none;">
+        <div class="settings-modal-content">
+          <div class="settings-header">
+            <h2>⚙️ Settings</h2>
+            <button id="closeSettingsBtn" class="close-btn">✕</button>
+          </div>
+          <div class="settings-body">
+            <div class="settings-section">
+              <h3>Notifications</h3>
+              <div class="setting-item">
+                <label>
+                  <input type="checkbox" id="notifToggle" checked>
+                  Enable Notifications
+                </label>
+              </div>
+              <div class="setting-item">
+                <label>
+                  <input type="checkbox" id="soundToggle" checked>
+                  Sound Effects
+                </label>
+              </div>
+            </div>
+
+            <div class="settings-section">
+              <h3>Privacy</h3>
+              <div class="setting-item">
+                <label>
+                  <input type="checkbox" id="onlineStatusToggle" checked>
+                  Show Online Status
+                </label>
+              </div>
+              <div class="setting-item">
+                <label>
+                  <input type="checkbox" id="readReceiptsToggle" checked>
+                  Read Receipts
+                </label>
+              </div>
+            </div>
+
+            <div class="settings-section">
+              <h3>Theme</h3>
+              <div class="setting-item">
+                <label>
+                  <input type="radio" name="theme" value="light" id="themeLight">
+                  Light
+                </label>
+              </div>
+              <div class="setting-item">
+                <label>
+                  <input type="radio" name="theme" value="dark" id="themeDark" checked>
+                  Dark
+                </label>
+              </div>
+            </div>
+
+            <div class="settings-section">
+              <h3>Account</h3>
+              <div class="setting-item">
+                <label><strong>Your UID:</strong></label>
+                <p id="userUIDDisplay" style="padding: 10px; background: rgba(0, 255, 102, 0.1); border: 1px solid #00ff66; border-radius: 6px; color: #00ff66; word-break: break-all; font-family: monospace; font-size: 12px; margin: 8px 0;">Loading...</p>
+                <button id="copyUIDBtn" class="settings-action-btn" style="background: #00ff66; color: #000; margin-top: 8px;">📋 Copy UID</button>
+              </div>
+              <button id="changePasswordBtn" class="settings-action-btn">🔑 Change Password</button>
+              <button id="clearCacheBtn" class="settings-action-btn">🗑️ Clear Cache</button>
+            </div>
+
+            <div class="settings-section">
+              <h3>💳 Transfer Tokens</h3>
+              <div class="setting-item">
+                <label><strong>Recipient UID:</strong></label>
+                <input type="text" id="recipientUID" placeholder="Paste recipient's UID here..." style="width: 100%; padding: 10px; margin: 8px 0; background: #1a1a1a; border: 1px solid #00ff66; border-radius: 6px; color: #00ff66; font-size: 12px;">
+              </div>
+              <div class="setting-item">
+                <label><strong>Amount:</strong></label>
+                <input type="number" id="transferAmount" placeholder="100" min="1" style="width: 100%; padding: 10px; margin: 8px 0; background: #1a1a1a; border: 1px solid #00ff66; border-radius: 6px; color: #00ff66;">
+              </div>
+              <button id="transferTokensBtn" class="settings-action-btn" style="background: #00ff66; color: #000; width: 100%;">🚀 Send Tokens</button>
+              <p id="transferResult" style="margin-top: 10px; color: #00ff66; font-size: 12px;"></p>
+            </div>
+
+            <div class="settings-section">
+              <button id="adminPanelBtn" class="settings-action-btn" style="background: #ff6600; color: #fff; display: none;">👑 Admin Panel</button>
+            </div>
+
+            <div class="settings-section">
+              <button id="logoutSettingsBtn" class="settings-action-btn danger">🚪 Logout</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- BOTTOM NAVIGATION -->
+    <nav class="bottom-nav">
+      <button id="nav-messages" class="nav-item active" title="Messages">💬</button>
+      <button id="logout-btn" class="nav-item logout" title="Logout">🚪</button>
+    </nav>
+  </div>
+
+  <!-- NOTIFICATION CONTAINER -->
+  <div id="notificationContainer" class="notification-container"></div>
+
+  <script src="pwa-install.js"></script>
+  <script src="app-prompt.js"></script>
+  <script type="module" src="chat.js"></script>
+  <style>
+    @keyframes slideUp {
+      from { transform: translateY(0); opacity: 1; }
+      to { transform: translateY(-100%); opacity: 0; }
+    }
+  </style>
+</body>
+</html>
