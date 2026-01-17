@@ -5,6 +5,9 @@ import {
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 import { signOut, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 import { ref, get } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
+
+const storage = getStorage();
 
 const isAndroid = /Android/.test(navigator.userAgent);
 const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
@@ -29,6 +32,7 @@ function hapticFeedback(intensity = 'medium') {
 }
 
 let currentChatUser = null;
+let currentChatType = 'direct'; // 'direct' or 'group'
 let myUID = null;
 let myUsername = null;
 let myProfilePic = null;
@@ -37,6 +41,13 @@ let contactsListener = null;
 let callActive = false;
 let callStartTime = null;
 let callTimer = null;
+
+// Notification sounds - use data URLs for better compatibility
+const notificationSounds = {
+  success: 'data:audio/wav;base64,UklGRiYAAABXQVZFZm10IBAAAAABAAEAQB8AAAB9AAACABAAZGF0YQIAAAAAAA==',
+  error: 'data:audio/wav;base64,UklGRiYAAABXQVZFZm10IBAAAAABAAEAQB8AAAB9AAACABAAZGF0YQIAAAAAAA==',
+  info: 'data:audio/wav;base64,UklGRiYAAABXQVZFZm10IBAAAAABAAEAQB8AAAB9AAACABAAZGF0YQIAAAAAAA=='
+};
 
 const emojis = [
   '😊', '😂', '😍', '🤔', '😎', '😢', '❤️', '👍', '🔥', '✨',
@@ -48,7 +59,14 @@ const emojis = [
 
 function showNotif(msg, type = "info", duration = 3000) {
   const container = document.getElementById("notificationContainer");
-  if (!container) return;
+  if (!container) {
+    console.warn("⚠️ Notification container not found");
+    // Fallback to alert if container doesn't exist
+    if (type === "error") {
+      alert("❌ " + msg);
+    }
+    return;
+  }
   
   const notif = document.createElement("div");
   notif.className = `notification ${type}`;
@@ -61,14 +79,53 @@ function showNotif(msg, type = "info", duration = 3000) {
     font-weight: 500;
     animation: slideInRight 0.3s ease;
     box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    font-size: 14px;
+    max-width: 90%;
   `;
   notif.textContent = msg;
   container.appendChild(notif);
+  
+  // Play notification sound
+  playNotificationSound(type);
   
   setTimeout(() => {
     notif.style.animation = "slideOutRight 0.3s ease";
     setTimeout(() => notif.remove(), 300);
   }, duration);
+}
+
+// Play notification sound
+function playNotificationSound(type = "info") {
+  try {
+    // Create a simple beep sound using Web Audio API
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    
+    const frequencies = {
+      success: 800,
+      error: 300,
+      info: 500
+    };
+    
+    const frequency = frequencies[type] || 500;
+    const duration = 0.2;
+    
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    oscillator.frequency.value = frequency;
+    oscillator.type = 'sine';
+    
+    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+    
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + duration);
+  } catch (err) {
+    console.warn("Could not play notification sound:", err);
+  }
 }
 
 function escape(text) {
@@ -149,6 +206,53 @@ document.getElementById("backBtn")?.addEventListener("click", () => {
   showChatListView();
   goBack();
 });
+
+document.getElementById("uploadReelBtn")?.addEventListener("click", () => {
+  const modal = document.getElementById("uploadReelModal");
+  if (modal) {
+    modal.style.display = "block";
+    document.getElementById("videoTitle")?.focus();
+  }
+});
+
+// Dark Mode Toggle
+document.getElementById("darkModeToggle")?.addEventListener("click", () => {
+  const isDarkMode = document.body.classList.contains("dark-mode");
+  
+  if (isDarkMode) {
+    document.body.classList.remove("dark-mode");
+    document.body.classList.add("light-mode");
+    localStorage.setItem("darkMode", "false");
+    document.getElementById("darkModeToggle").textContent = "🌙";
+  } else {
+    document.body.classList.add("dark-mode");
+    document.body.classList.remove("light-mode");
+    localStorage.setItem("darkMode", "true");
+    document.getElementById("darkModeToggle").textContent = "☀️";
+  }
+  
+  showNotif(isDarkMode ? "☀️ Light mode enabled" : "🌙 Dark mode enabled", "info");
+});
+
+// Apply saved dark mode preference on load
+window.addEventListener("load", () => {
+  const savedDarkMode = localStorage.getItem("darkMode");
+  if (savedDarkMode === "true") {
+    document.body.classList.add("dark-mode");
+    document.getElementById("darkModeToggle").textContent = "☀️";
+  } else {
+    document.body.classList.add("light-mode");
+    document.getElementById("darkModeToggle").textContent = "🌙";
+  }
+});
+
+// Create Group Button
+document.getElementById("createGroupBtn")?.addEventListener("click", () => {
+  openCreateGroupModal();
+});
+
+// Group Creation Form Handler
+document.getElementById("createGroupForm")?.addEventListener("submit", createGroup);
 
 async function autoPopulateTestUsers() {
   try {
@@ -970,24 +1074,43 @@ async function sendMessage(e) {
 
     hapticFeedback('light');
     
-    // Send message
-    await addDoc(collection(db, "messages"), {
-      from: myUID,
-      to: currentChatUser,
-      text: text,
-      time: serverTimestamp(),
-      read: false,
-      type: "text",
-      edited: false,
-      reactions: []
-    });
+    // Send message based on chat type
+    if (currentChatType === 'group') {
+      // Group message
+      await sendGroupMessage(currentChatUser, text);
+    } else {
+      // Direct message
+      await addDoc(collection(db, "messages"), {
+        from: myUID,
+        to: currentChatUser,
+        text: text,
+        time: serverTimestamp(),
+        read: false,
+        type: "text",
+        edited: false,
+        reactions: []
+      });
 
-    // Deduct 1 token
-    const newTokens = currentTokens - 1;
-    await updateDoc(userRef, {
-      tokens: newTokens,
-      lastMessageSentAt: serverTimestamp()
-    });
+      // Deduct 1 token
+      const newTokens = currentTokens - 1;
+      await updateDoc(userRef, {
+        tokens: newTokens,
+        lastMessageSentAt: serverTimestamp()
+      });
+
+      // Track message activity
+      try {
+        await addDoc(collection(db, 'messageActivity'), {
+          userId: myUID,
+          recipientId: currentChatUser,
+          sentAt: new Date(),
+          messageLength: text.length,
+          tokensCost: 1
+        });
+      } catch (trackErr) {
+        console.warn('Warning: Could not track message activity:', trackErr);
+      }
+    }
 
     // Update token display
     const tokenDisplay = document.getElementById("tokenCount");
@@ -1121,6 +1244,12 @@ async function loadContacts() {
   contactList.innerHTML = "";
 
   try {
+    // Load user's groups
+    const groupsRef = collection(db, "groups");
+    const groupsQuery = query(groupsRef, where("members", "array-contains", user.uid));
+    const groupsSnapshot = await getDocs(groupsQuery);
+
+    // Load individual contacts
     const usersRef = collection(db, "users");
     const usersSnapshot = await getDocs(usersRef);
 
@@ -1128,51 +1257,69 @@ async function loadContacts() {
     let firstContactId = null;
     let firstContactName = null;
     let firstContactPic = null;
+    let allChats = [];
 
-    for (const userDoc of usersSnapshot.docs) {
+    // Add groups first
+    groupsSnapshot.forEach(groupDoc => {
+      const groupData = groupDoc.data();
+      allChats.push({
+        id: groupDoc.id,
+        name: groupData.name || "Unknown Group",
+        type: 'group',
+        pic: '👥',
+        lastMessage: groupData.lastMessage || 'No messages yet',
+        timestamp: groupData.lastMessageTime || 0
+      });
+    });
+
+    // Add individual contacts
+    usersSnapshot.forEach(userDoc => {
       const userData = userDoc.data();
-      if (userData.uid === myUID || userDoc.id === myUID) continue;
+      if (userData.uid === myUID || userDoc.id === myUID) return;
 
-      // Check if user has profilePic or profilePicUrl
       const profilePic = userData.profilePic || userData.profilePicUrl;
       const displayName = userData.username || userData.name || userData.email;
       
-      // Only show contacts with proper data
-      if (!displayName) continue;
+      if (!displayName) return;
 
-      // Store first contact for auto-load
-      if (!firstContact) {
-        firstContact = userDoc;
-        firstContactId = userDoc.id;
-        firstContactName = displayName;
-        firstContactPic = profilePic;
-      }
+      allChats.push({
+        id: userDoc.id,
+        name: displayName,
+        type: 'direct',
+        pic: profilePic || '👤',
+        userData: userData
+      });
+    });
 
-      // Fetch last message from this user
-      const messagesRef = collection(
-        db,
-        `users/${user.uid}/chats/${userDoc.id}/messages`
-      );
-      const messagesQuery = query(
-        messagesRef,
-        orderBy("timestamp", "desc"),
-        limit(1)
-      );
+    // Display all chats
+    for (const chat of allChats) {
+      let lastMessage = chat.lastMessage || "No messages yet";
       
-      let lastMessage = "No messages yet";
-      try {
-        const messagesSnapshot = await getDocs(messagesQuery);
-        if (messagesSnapshot.docs.length > 0) {
-          const lastMsg = messagesSnapshot.docs[0].data();
-          lastMessage =
-            lastMsg.message?.substring(0, 40) || "No messages yet";
-          if (lastMsg.message && lastMsg.message.length > 40) {
-            lastMessage += "...";
+      if (chat.type === 'direct') {
+        // Get last message for direct chats
+        try {
+          const messagesRef = collection(db, `users/${user.uid}/chats/${chat.id}/messages`);
+          const messagesQuery = query(messagesRef, orderBy("timestamp", "desc"), limit(1));
+          const messagesSnapshot = await getDocs(messagesQuery);
+          
+          if (messagesSnapshot.docs.length > 0) {
+            const lastMsg = messagesSnapshot.docs[0].data();
+            lastMessage = lastMsg.message?.substring(0, 40) || "No messages yet";
+            if (lastMsg.message && lastMsg.message.length > 40) {
+              lastMessage += "...";
+            }
           }
+        } catch (msgErr) {
+          lastMessage = "No messages yet";
         }
-      } catch (msgErr) {
-        // If messages don't exist, just use default
-        lastMessage = "No messages yet";
+
+        // Store first contact for auto-load
+        if (!firstContact) {
+          firstContact = chat;
+          firstContactId = chat.id;
+          firstContactName = chat.name;
+          firstContactPic = chat.pic;
+        }
       }
 
       const contactItem = document.createElement("div");
@@ -1180,44 +1327,47 @@ async function loadContacts() {
       
       // Create profile image HTML
       let profileHTML = '';
-      if (profilePic && (profilePic.startsWith('data:') || profilePic.startsWith('http'))) {
-        profileHTML = `<img class="chat-avatar" src="${escape(profilePic)}" alt="${escape(displayName)}">`;
+      if (chat.pic && (chat.pic.startsWith('data:') || chat.pic.startsWith('http'))) {
+        profileHTML = `<img class="chat-avatar" src="${escape(chat.pic)}" alt="${escape(chat.name)}">`;
       } else {
-        profileHTML = `<div class="chat-avatar" style="background: #00ff66; color: #000; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 18px;">${displayName.charAt(0).toUpperCase()}</div>`;
+        const bgColor = chat.type === 'group' ? '#00d4ff' : '#00ff66';
+        const textColor = '#000';
+        profileHTML = `<div class="chat-avatar" style="background: ${bgColor}; color: ${textColor}; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 18px;">${chat.pic.charAt ? chat.pic : chat.name.charAt(0).toUpperCase()}</div>`;
       }
       
       contactItem.innerHTML = `
         ${profileHTML}
         <div class="chat-item-content">
           <div class="chat-item-header">
-            <span class="chat-name">${escape(displayName)}</span>
+            <span class="chat-name">${escape(chat.name)} ${chat.type === 'group' ? '👥' : ''}</span>
           </div>
           <small class="chat-preview">${escape(lastMessage)}</small>
         </div>
+        <div class="chat-item-time">Just now</div>
       `;
       contactItem.style.cursor = "pointer";
       contactItem.onclick = () => {
-        openChat(userDoc.id, displayName, profilePic || '👤');
+        openChat(chat.id, chat.name, chat.pic, chat.type);
         showChatDetailView();
       };
       contactList.appendChild(contactItem);
     }
 
-    // If no contacts found, show empty state
+    // If no chats found, show empty state
     if (contactList.children.length === 0) {
       const emptyState = document.createElement("li");
       emptyState.className = "empty-state";
       emptyState.innerHTML = `
         <p>No chats yet</p>
-        <p class="hint">Search for friends to start chatting</p>
+        <p class="hint">Search for friends or create a group to start chatting</p>
       `;
       contactList.appendChild(emptyState);
     }
 
-    // Auto-load the first contact's chat if available
+    // Auto-load the first chat if available
     if (firstContactId && firstContactName && !currentChatUser) {
       setTimeout(() => {
-        openChat(firstContactId, firstContactName, firstContactPic || '👤');
+        openChat(firstContactId, firstContactName, firstContactPic || '👤', firstContact.type);
         showChatDetailView();
         console.log("✅ Auto-loaded first chat with:", firstContactName);
       }, 500);
@@ -1269,8 +1419,9 @@ async function loadStories() {
 // OPEN CHAT & UPDATE UI
 // ============================================================
 
-async function openChat(uid, username, profilePic) {
+async function openChat(uid, username, profilePic, chatType = 'direct') {
   currentChatUser = uid;
+  currentChatType = chatType; // Store chat type (direct or group)
   
   document.getElementById("chatName").textContent = username;
   document.getElementById("chatProfilePic").src = profilePic || "👤";
@@ -1280,53 +1431,71 @@ async function openChat(uid, username, profilePic) {
   document.getElementById("infoPic").src = profilePic || "👤";
   
   try {
-    const userDoc = await getDoc(doc(db, "users", uid));
-    let userData = {};
-    
-    if (userDoc.exists()) {
-      userData = userDoc.data();
-      document.getElementById("infoEmail").textContent = userData.email || "";
-      document.getElementById("statusText").textContent = userData.online ? "🟢 Online" : "⚫ Offline";
-      document.getElementById("infoStatus").textContent = userData.online ? "🟢 Online" : "⚫ Offline";
+    if (chatType === 'group') {
+      // Load group info
+      const groupDoc = await getDoc(doc(db, "groups", uid));
+      if (groupDoc.exists()) {
+        const groupData = groupDoc.data();
+        document.getElementById("infoEmail").textContent = `Members: ${groupData.members.length}`;
+        document.getElementById("statusText").textContent = `👥 Group Chat`;
+        document.getElementById("infoStatus").textContent = `👥 Group Chat`;
+      }
     } else {
-      // User document doesn't exist yet, but allow chatting with UID
-      console.warn("User document not found in database, but proceeding with UID:", uid);
-      document.getElementById("infoEmail").textContent = "Profile pending...";
-      document.getElementById("statusText").textContent = "⚪ Pending";
-      document.getElementById("infoStatus").textContent = "⚪ Pending";
-      showNotif("ℹ️ User profile not fully synced yet. Chat enabled via UID.", "info");
+      // Load individual user info
+      const userDoc = await getDoc(doc(db, "users", uid));
+      let userData = {};
+      
+      if (userDoc.exists()) {
+        userData = userDoc.data();
+        document.getElementById("infoEmail").textContent = userData.email || "";
+        document.getElementById("statusText").textContent = userData.online ? "🟢 Online" : "⚫ Offline";
+        document.getElementById("infoStatus").textContent = userData.online ? "🟢 Online" : "⚫ Offline";
+      } else {
+        // User document doesn't exist yet, but allow chatting with UID
+        console.warn("User document not found in database, but proceeding with UID:", uid);
+        document.getElementById("infoEmail").textContent = "Profile pending...";
+        document.getElementById("statusText").textContent = "⚪ Pending";
+        document.getElementById("infoStatus").textContent = "⚪ Pending";
+        showNotif("ℹ️ User profile not fully synced yet. Chat enabled via UID.", "info");
+      }
+      
+      // Automatically add to contacts if not already there
+      try {
+        const myUserRef = doc(db, "users", myUID);
+        const myUserDoc = await getDoc(myUserRef);
+        const myContacts = myUserDoc.data()?.contacts || [];
+        
+        if (!myContacts.includes(uid)) {
+          myContacts.push(uid);
+          await updateDoc(myUserRef, { contacts: myContacts });
+          console.log("✅ Added user to contacts");
+          
+          // Reload the contacts list to show the new conversation
+          setTimeout(() => {
+            loadContacts();
+          }, 300);
+        }
+      } catch (contactErr) {
+        console.warn("Could not update contacts:", contactErr);
+      }
     }
     
     // Show chat view
     showChatDetailView();
     
-    // Automatically add to contacts if not already there
-    try {
-      const myUserRef = doc(db, "users", myUID);
-      const myUserDoc = await getDoc(myUserRef);
-      const myContacts = myUserDoc.data()?.contacts || [];
-      
-      if (!myContacts.includes(uid)) {
-        myContacts.push(uid);
-        await updateDoc(myUserRef, { contacts: myContacts });
-        console.log("✅ Added user to contacts");
-        
-        // Reload the contacts list to show the new conversation
-        setTimeout(() => {
-          loadContacts();
-        }, 300);
-      }
-    } catch (contactErr) {
-      console.warn("Could not update contacts:", contactErr);
-    }
   } catch (err) {
-    console.error("Error loading user info:", err);
-    showNotif("❌ Error loading user info: " + err.message, "error");
+    console.error("Error loading chat info:", err);
+    showNotif("❌ Error loading chat info: " + err.message, "error");
     currentChatUser = null;
     return;
   }
 
-  loadMessages();
+  // Load appropriate messages based on chat type
+  if (chatType === 'group') {
+    loadGroupMessages(uid);
+  } else {
+    loadMessages();
+  }
 }
 
 document.getElementById("menuBtn")?.addEventListener("click", () => {
@@ -1704,12 +1873,19 @@ document.getElementById("settingsBtn")?.addEventListener("click", () => {
 });
 
 window.logoutUser = async function() {
+  if (!confirm("🚪 Are you sure you want to exit NEXCHAT?")) {
+    return;
+  }
+
   try {
     if (myUID) {
       await updateDoc(doc(db, "users", myUID), { online: false });
     }
     await signOut(auth);
-    window.location.href = "index.html";
+    showNotif("👋 See you soon!", "success", 1000);
+    setTimeout(() => {
+      window.location.href = "index.html";
+    }, 500);
   } catch (err) {
     showNotif("Logout error: " + err.message, "error");
   }
@@ -1720,6 +1896,78 @@ document.getElementById("logout-btn")?.addEventListener("click", logoutUser);
 document.getElementById("nav-messages")?.addEventListener("click", () => {
   showChatListView();
   showNotif("Messages", "info", 800);
+});
+
+// NEX-REELS button - shows reels view and deducts 100 tokens for 1 hour access
+document.getElementById("nav-reels")?.addEventListener("click", async (e) => {
+  try {
+    // Check if user has sufficient tokens (100 tokens for 1 hour access)
+    const userRef = doc(db, "users", myUID);
+    const userDoc = await getDoc(userRef);
+    
+    if (!userDoc.exists()) {
+      showNotif("❌ User profile not found", "error");
+      return;
+    }
+    
+    const currentTokens = userDoc.data()?.tokens ?? 0;
+    
+    // Check if user accessed reels in last hour
+    const lastReelsAccess = userDoc.data()?.lastReelsAccessTime;
+    const now = Date.now();
+    const oneHourMs = 60 * 60 * 1000;
+    
+    // If they accessed within last hour, allow free access; otherwise charge 100 tokens
+    if (!lastReelsAccess || (now - lastReelsAccess.toDate?.().getTime()) > oneHourMs) {
+      // New access period - charge 100 tokens
+      if (currentTokens < 100) {
+        showNotif("❌ Insufficient tokens! You need 100 tokens to access NEX-REELS for 1 hour. 💳", "error");
+        return;
+      }
+      
+      // Deduct tokens
+      const newTokens = currentTokens - 100;
+      await updateDoc(userRef, {
+        tokens: newTokens,
+        lastReelsAccessTime: serverTimestamp()
+      });
+      
+      // Update token display
+      const tokenDisplay = document.getElementById("tokenCount");
+      if (tokenDisplay) {
+        tokenDisplay.textContent = newTokens;
+      }
+      
+      showNotif(`🎬 NEX-REELS Access Granted (-100 tokens, ${newTokens} remaining)`, "success");
+    } else {
+      // Still within 1 hour window - free access
+      const timeRemaining = Math.ceil((oneHourMs - (now - lastReelsAccess.toDate?.().getTime())) / 60000);
+      showNotif(`🎬 Access still valid for ${timeRemaining} more minutes`, "info");
+    }
+    
+    // Show reels view
+    const listView = document.getElementById("chatListView");
+    const detailView = document.getElementById("chatDetailView");
+    const reelsView = document.getElementById("reelsView");
+    const statusContainer = document.getElementById("statusContainer");
+    const bottomNav = document.querySelector(".bottom-nav");
+    
+    if (listView) listView.style.display = "none";
+    if (detailView) detailView.style.display = "none";
+    if (reelsView) reelsView.style.display = "flex";
+    if (statusContainer) statusContainer.style.display = "none";
+    if (bottomNav) {
+      document.querySelectorAll(".nav-item").forEach(btn => btn.classList.remove("active"));
+      e.target.closest(".nav-item").classList.add("active");
+    }
+    
+    loadReels();
+    showNotif("🎬 Loading Reels", "info", 800);
+    
+  } catch (error) {
+    console.error('Error accessing reels:', error);
+    showNotif('Error accessing reels: ' + error.message, 'error');
+  }
 });
 
 // Profile and Reels buttons are now direct links in HTML
@@ -2282,6 +2530,266 @@ window.debugReloadAndSearch = async function() {
   }
 };
 
+async function loadReels() {
+  try {
+    const videoFeed = document.getElementById("videoFeed");
+    if (!videoFeed) return;
+    
+    videoFeed.innerHTML = '<p style="text-align: center; color: #888; padding: 20px;">Loading videos...</p>';
+    
+    const videosQuery = query(
+      collection(db, 'videos'), 
+      orderBy('createdAt', 'desc'), 
+      limit(50)
+    );
+    
+    onSnapshot(videosQuery, (snap) => {
+      videoFeed.innerHTML = '';
+      
+      if (snap.docs.length === 0) {
+        videoFeed.innerHTML = '<p style="text-align: center; color: #888; padding: 40px;">No videos yet. Be the first to upload! 🎬</p>';
+        return;
+      }
+      
+      snap.docs.forEach(doc => {
+        const video = doc.data();
+        const videoItem = document.createElement('div');
+        videoItem.className = 'video-item';
+        
+        // Format creation time
+        let timeStr = 'now';
+        if (video.createdAt) {
+          const diff = Math.floor((Date.now() - video.createdAt.toDate?.().getTime() || 0) / 1000);
+          if (diff < 60) timeStr = 'just now';
+          else if (diff < 3600) timeStr = Math.floor(diff / 60) + 'm ago';
+          else if (diff < 86400) timeStr = Math.floor(diff / 3600) + 'h ago';
+          else timeStr = Math.floor(diff / 86400) + 'd ago';
+        }
+        
+        videoItem.innerHTML = `
+          <div class="video-item-header">
+            <div class="video-item-avatar" style="width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 14px;">${video.author?.charAt(0)?.toUpperCase() || '🎬'}</div>
+            <div class="video-item-info">
+              <div class="video-item-author" style="font-weight: 600; color: #333; margin-bottom: 2px;">@${video.author || 'Unknown'}</div>
+              <div class="video-item-time" style="font-size: 12px; color: #999;">${timeStr}</div>
+            </div>
+          </div>
+          <div style="background: #f0f0f0; padding: 12px; border-radius: 8px; margin: 10px 0; min-height: 100px; display: flex; align-items: center; justify-content: center; color: #999; font-size: 14px;">
+            📹 Video Thumbnail (${video.videoUrl ? '✓' : '×'})
+          </div>
+          <div class="video-item-title" style="font-size: 15px; font-weight: 600; margin: 8px 0; color: #222;">${video.title || 'Untitled Video'}</div>
+          <div class="video-item-description" style="font-size: 13px; color: #666; margin-bottom: 12px; line-height: 1.4;">${video.description || ''}</div>
+          <div class="video-item-actions" style="display: flex; gap: 8px; margin-top: 10px;">
+            <button class="video-action-btn" style="flex: 1; padding: 8px; border: 1px solid #ddd; background: white; border-radius: 6px; cursor: pointer; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 4px; transition: all 0.2s;">❤️ ${video.likes || 0}</button>
+            <button class="video-action-btn" style="flex: 1; padding: 8px; border: 1px solid #ddd; background: white; border-radius: 6px; cursor: pointer; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 4px; transition: all 0.2s;">💬 ${video.comments?.length || 0}</button>
+            <button class="video-action-btn" style="flex: 1; padding: 8px; border: 1px solid #ddd; background: white; border-radius: 6px; cursor: pointer; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 4px; transition: all 0.2s;">🔗 Share</button>
+          </div>
+        `;
+        videoFeed.appendChild(videoItem);
+      });
+    }, (error) => {
+      console.error('Error loading videos:', error);
+      videoFeed.innerHTML = '<p style="color: #ff6600; text-align: center; padding: 20px;">Error loading videos</p>';
+      showNotif('Error loading videos: ' + error.message, 'error');
+    });
+  } catch (error) {
+    console.error('Error in loadReels:', error);
+    showNotif('Error: ' + error.message, 'error');
+  }
+}
+
+// Check for video like milestones and reward tokens (1k likes = 1.5k tokens)
+async function checkVideoLikeMilestones() {
+  try {
+    if (!myUID) return;
+    
+    // Get all videos uploaded by user
+    const videosQuery = query(
+      collection(db, 'videos'),
+      where('authorId', '==', myUID)
+    );
+    
+    const videosSnap = await getDocs(videosQuery);
+    
+    videosSnap.docs.forEach(async (docSnapshot) => {
+      const video = docSnapshot.data();
+      const likes = video.likes || 0;
+      
+      // Check if video has 1k likes and hasn't been rewarded yet
+      if (likes >= 1000 && !video.tokensAwarded) {
+        try {
+          // Award 1.5k tokens to user
+          const userRef = doc(db, 'users', myUID);
+          const userDoc = await getDoc(userRef);
+          
+          if (userDoc.exists()) {
+            const currentTokens = userDoc.data()?.tokens ?? 0;
+            const rewardTokens = 1500;
+            const newTokens = currentTokens + rewardTokens;
+            
+            // Update user tokens
+            await updateDoc(userRef, {
+              tokens: newTokens
+            });
+            
+            // Mark video as rewarded
+            await updateDoc(docSnapshot.ref, {
+              tokensAwarded: true,
+              tokensAwardedAt: new Date(),
+              tokenRewardAmount: rewardTokens
+            });
+            
+            // Update token display
+            const tokenDisplay = document.getElementById("tokenCount");
+            if (tokenDisplay) {
+              tokenDisplay.textContent = newTokens;
+            }
+            
+            showNotif(`🎉 Milestone! Your video hit 1k likes! +1.5k tokens (${newTokens} total)`, "success", 3000);
+            console.log(`✅ Rewarded ${rewardTokens} tokens for video with 1k likes`);
+          }
+        } catch (error) {
+          console.error('Error rewarding tokens:', error);
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Error checking video milestones:', error);
+  }
+}
+
+// Check milestones every minute when viewing reels
+setInterval(() => {
+  if (document.getElementById('reelsView')?.style.display === 'flex') {
+    checkVideoLikeMilestones();
+  }
+}, 60000);
+
+// Handle video upload form submission
+document.addEventListener('DOMContentLoaded', function() {
+  const uploadForm = document.getElementById('uploadReelForm');
+  if (uploadForm) {
+    uploadForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const videoTitle = document.getElementById('videoTitle');
+      const videoDescription = document.getElementById('videoDescription');
+      const videoFile = document.getElementById('videoFile');
+      const videoThumbnail = document.getElementById('videoThumbnail');
+      const uploadButton = uploadForm.querySelector('button[type="submit"]');
+      const resultDiv = document.getElementById('uploadReelResult');
+      
+      if (!videoTitle.value.trim()) {
+        showNotif('Please enter a title', 'error');
+        return;
+      }
+      
+      if (!videoFile.files[0]) {
+        showNotif('Please select a video file', 'error');
+        return;
+      }
+      
+      const file = videoFile.files[0];
+      const maxSize = 500 * 1024 * 1024; // 500MB
+      
+      if (file.size > maxSize) {
+        showNotif('Video file too large (max 500MB)', 'error');
+        return;
+      }
+      
+      try {
+        uploadButton.disabled = true;
+        uploadButton.textContent = '⏳ Uploading...';
+        resultDiv.style.display = 'block';
+        resultDiv.textContent = '⏳ Uploading video...';
+        resultDiv.style.backgroundColor = '#e3f2fd';
+        resultDiv.style.color = '#1976d2';
+        
+        // Upload video file
+        const timestamp = Date.now();
+        const videoPath = `videos/${myUID}/${timestamp}_${file.name}`;
+        const videoRef = storageRef(storage, videoPath);
+        
+        const uploadTask = uploadBytes(videoRef, file);
+        const snapshot = await uploadTask;
+        const videoUrl = await getDownloadURL(snapshot.ref);
+        
+        console.log('✅ Video uploaded:', videoUrl);
+        
+        // Upload thumbnail if provided
+        let thumbnailUrl = '';
+        if (videoThumbnail.files[0]) {
+          const thumbnailFile = videoThumbnail.files[0];
+          if (thumbnailFile.size < 5 * 1024 * 1024) { // 5MB max for thumbnail
+            const thumbPath = `thumbnails/${myUID}/${timestamp}_${thumbnailFile.name}`;
+            const thumbRef = storageRef(storage, thumbPath);
+            const thumbSnapshot = await uploadBytes(thumbRef, thumbnailFile);
+            thumbnailUrl = await getDownloadURL(thumbSnapshot.ref);
+          }
+        }
+        
+        // Create video document in Firestore
+        const videoData = {
+          title: videoTitle.value.trim(),
+          description: videoDescription.value.trim(),
+          author: myUsername || 'Anonymous',
+          authorId: myUID,
+          videoUrl: videoUrl,
+          thumbnailUrl: thumbnailUrl,
+          createdAt: new Date(),
+          likes: 0,
+          comments: [],
+          views: 0,
+          shares: 0
+        };
+        
+        const videoDoc = await addDoc(collection(db, 'videos'), videoData);
+        console.log('✅ Video document created:', videoDoc.id);
+        
+        // Track video upload
+        try {
+          await addDoc(collection(db, 'videoActivity'), {
+            userId: myUID,
+            videoTitle: title.value.trim(),
+            uploadedAt: new Date(),
+            videoLength: file.size,
+            activityType: 'upload'
+          });
+        } catch (trackErr) {
+          console.warn('Warning: Could not track video upload:', trackErr);
+        }
+        
+        // Clear form
+        uploadForm.reset();
+        
+        // Show success
+        resultDiv.style.backgroundColor = '#e8f5e9';
+        resultDiv.style.color = '#2e7d32';
+        resultDiv.textContent = '✅ Video uploaded successfully! 🎉';
+        uploadButton.disabled = false;
+        uploadButton.textContent = '🚀 Upload Reel';
+        
+        showNotif('Video uploaded successfully! 🎬', 'success');
+        
+        // Close modal after 2 seconds
+        setTimeout(() => {
+          document.getElementById('uploadReelModal').style.display = 'none';
+          resultDiv.style.display = 'none';
+        }, 2000);
+        
+      } catch (error) {
+        console.error('Error uploading video:', error);
+        resultDiv.style.backgroundColor = '#ffebee';
+        resultDiv.style.color = '#c62828';
+        resultDiv.textContent = '❌ Error: ' + error.message;
+        uploadButton.disabled = false;
+        uploadButton.textContent = '🚀 Upload Reel';
+        showNotif('Error uploading video: ' + error.message, 'error');
+      }
+    });
+  }
+});
+
 function initializeApp() {
   // Initialize emoji picker
   initializeEmojiPicker();
@@ -2398,6 +2906,39 @@ function initializeApp() {
       }
     } else {
       window.location.href = "index.html";
+    }
+  });
+  
+  // Prevent accidental exit
+  let allowExit = false;
+  
+  window.addEventListener("beforeunload", (e) => {
+    if (!allowExit && myUID) {
+      e.preventDefault();
+      e.returnValue = "Are you sure you want to leave NEXCHAT?";
+      return "Are you sure you want to leave NEXCHAT?";
+    }
+    
+    if (myUID) {
+      // Unsubscribe from token snapshot listener
+      if (window.tokenSnapshotUnsubscribe) {
+        window.tokenSnapshotUnsubscribe();
+      }
+      
+      if (messageListener) {
+        messageListener();
+      }
+      if (contactsListener) {
+        contactsListener();
+      }
+      try {
+        updateDoc(doc(db, "users", myUID), {
+          online: false,
+          lastSeen: serverTimestamp()
+        }).catch(() => {});
+      } catch (err) {
+        console.warn("Could not mark user as offline:", err);
+      }
     }
   });
   
@@ -2572,7 +3113,16 @@ async function loadStatuses() {
 
 async function postStatus() {
   const statusInput = document.getElementById("statusInput");
-  if (!statusInput || !myUID) return;
+  
+  if (!statusInput) {
+    showNotif("Status input not found", "error");
+    return;
+  }
+  
+  if (!myUID) {
+    showNotif("❌ Please log in first to post a status", "error");
+    return;
+  }
   
   const text = statusInput.value.trim();
   
@@ -2587,6 +3137,9 @@ async function postStatus() {
   }
   
   try {
+    const postBtn = document.getElementById("postStatusBtn");
+    if (postBtn) postBtn.disabled = true;
+    
     // Get list of users this person has chatted with
     const chattedUsers = await getChattedUsers(myUID);
     
@@ -2607,9 +3160,13 @@ async function postStatus() {
     statusInput.value = "";
     showNotif("✅ Status posted! (Visible only to users you've chatted with)", "success", 2000);
     hapticFeedback('success');
+    
+    if (postBtn) postBtn.disabled = false;
   } catch (err) {
     console.error("Error posting status:", err);
     showNotif("Error posting status: " + err.message, "error");
+    const postBtn = document.getElementById("postStatusBtn");
+    if (postBtn) postBtn.disabled = false;
   }
 }
 
@@ -2912,6 +3469,203 @@ document.getElementById("infoReportBtn")?.addEventListener("click", (e) => {
   e.stopPropagation();
   openReportModal();
 });
+
+// ==================== GROUP CREATION FUNCTIONS ====================
+async function openCreateGroupModal() {
+  const modal = document.getElementById('createGroupModal');
+  modal.style.display = 'block';
+  await loadGroupMembersList();
+}
+
+async function loadGroupMembersList() {
+  const membersList = document.getElementById('groupMembersList');
+  membersList.innerHTML = '';
+
+  try {
+    const contactsSnap = await getDocs(collection(db, 'users'));
+    let contactsHtml = '';
+
+    contactsSnap.forEach(doc => {
+      const user = doc.data();
+      if (doc.id !== myUID && !user.blocked?.includes(myUID)) {
+        const username = user.username || user.email || 'Unknown';
+        contactsHtml += `
+          <div style="padding: 8px; border-bottom: 1px solid #333; display: flex; align-items: center;">
+            <input type="checkbox" class="member-checkbox" data-uid="${doc.id}" data-username="${username}" style="margin-right: 10px;">
+            <span>${username}</span>
+          </div>
+        `;
+      }
+    });
+
+    if (contactsHtml) {
+      membersList.innerHTML = contactsHtml;
+    } else {
+      membersList.innerHTML = '<p style="color: #888; text-align: center;">No contacts available</p>';
+    }
+  } catch (error) {
+    console.error('Error loading members:', error);
+    membersList.innerHTML = '<p style="color: #ff6b6b; text-align: center;">Error loading contacts</p>';
+  }
+}
+
+async function createGroup(e) {
+  e.preventDefault();
+  
+  const name = document.getElementById('groupName').value.trim();
+  const description = document.getElementById('groupDescription').value.trim();
+  const resultDiv = document.getElementById('groupCreateResult');
+  
+  if (!name) {
+    resultDiv.style.display = 'block';
+    resultDiv.style.background = '#ff6b6b';
+    resultDiv.style.color = '#fff';
+    resultDiv.textContent = '❌ Group name required';
+    return;
+  }
+
+  try {
+    const selectedCheckboxes = document.querySelectorAll('.member-checkbox:checked');
+    if (selectedCheckboxes.length === 0) {
+      resultDiv.style.display = 'block';
+      resultDiv.style.background = '#ff6b6b';
+      resultDiv.style.color = '#fff';
+      resultDiv.textContent = '❌ Select at least one member';
+      return;
+    }
+
+    const members = [myUID];
+    selectedCheckboxes.forEach(cb => members.push(cb.dataset.uid));
+
+    // Create group in Firestore
+    const groupRef = await addDoc(collection(db, 'groups'), {
+      name: name,
+      description: description,
+      creatorId: myUID,
+      members: members,
+      admins: [myUID],
+      createdAt: serverTimestamp(),
+      lastMessage: '',
+      lastMessageTime: serverTimestamp()
+    });
+
+    showNotif(`✅ Group "${name}" created!`, 'success');
+    
+    // Reset form
+    document.getElementById('createGroupForm').reset();
+    document.getElementById('createGroupModal').style.display = 'none';
+    
+    // Reload chat list to show new group
+    loadChatList();
+    
+    // Open the new group
+    selectChat(groupRef.id, 'group');
+    
+  } catch (error) {
+    console.error('Error creating group:', error);
+    resultDiv.style.display = 'block';
+    resultDiv.style.background = '#ff6b6b';
+    resultDiv.style.color = '#fff';
+    resultDiv.textContent = `❌ Error: ${error.message}`;
+  }
+}
+
+async function loadGroupMessages(groupId) {
+  const messagesDiv = document.getElementById('messages');
+  messagesDiv.innerHTML = '<p style="text-align: center; color: #888;">Loading group messages...</p>';
+
+  try {
+    const q = query(
+      collection(db, 'groupMessages'),
+      where('groupId', '==', groupId),
+      orderBy('timestamp', 'asc'),
+      limit(50)
+    );
+
+    onSnapshot(q, (snapshot) => {
+      let html = '';
+      snapshot.forEach(doc => {
+        const msg = doc.data();
+        const userSnap = snapshot.docs.find(d => d.id === msg.from)?.data() || { username: 'Unknown', email: msg.from };
+        const sender = userSnap.username || userSnap.email || 'Unknown';
+        const isOwn = msg.from === myUID;
+
+        const time = msg.timestamp ? new Date(msg.timestamp.toDate()).toLocaleTimeString([], { 
+          hour: '2-digit', 
+          minute: '2-digit' 
+        }) : '';
+
+        html += `
+          <div style="margin: 10px 0; padding: 8px;">
+            <div style="font-size: 12px; color: ${isOwn ? '#00ff66' : '#ff9500'}; margin-bottom: 4px;">
+              ${sender} ${time}
+            </div>
+            <div style="background: ${isOwn ? '#00ff6633' : '#333'}; padding: 10px; border-radius: 8px; word-wrap: break-word;">
+              ${msg.text}
+            </div>
+          </div>
+        `;
+      });
+
+      messagesDiv.innerHTML = html;
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    });
+  } catch (error) {
+    console.error('Error loading group messages:', error);
+    messagesDiv.innerHTML = `<p style="color: #ff6b6b;">Error loading messages: ${error.message}</p>`;
+  }
+}
+
+async function sendGroupMessage(groupId, text) {
+  if (!text.trim() || !myUID) return;
+
+  try {
+    // Cost 1 token
+    if (tokens < 1) {
+      showNotif('❌ Not enough tokens (need 1)', 'error');
+      return;
+    }
+
+    // Deduct token
+    await updateDoc(doc(db, 'users', myUID), {
+      tokens: increment(-1)
+    });
+
+    // Send message
+    await addDoc(collection(db, 'groupMessages'), {
+      groupId: groupId,
+      from: myUID,
+      text: text,
+      timestamp: serverTimestamp(),
+      edited: false
+    });
+
+    // Track message activity
+    try {
+      await addDoc(collection(db, 'messageActivity'), {
+        senderId: myUID,
+        type: 'group_message',
+        groupId: groupId,
+        messageLength: text.length,
+        cost: 1,
+        timestamp: serverTimestamp()
+      });
+    } catch (e) {
+      console.log('Activity tracking skipped:', e.message);
+    }
+
+    showNotif('✓ Message sent', 'success', 1500);
+    
+    // Update group last message
+    await updateDoc(doc(db, 'groups', groupId), {
+      lastMessage: text,
+      lastMessageTime: serverTimestamp()
+    });
+
+  } catch (error) {
+    showNotif(`Error: ${error.message}`, 'error');
+  }
+}
 
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", initializeApp);

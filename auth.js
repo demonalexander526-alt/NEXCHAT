@@ -8,7 +8,7 @@ import {
   signInWithCredential,
   GoogleAuthProvider
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-import { setDoc, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+import { setDoc, doc, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 import { ref, set } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
 const randomStickers = [
@@ -37,6 +37,52 @@ const randomStickers = [
 
 function getRandomSticker() {
   return randomStickers[Math.floor(Math.random() * randomStickers.length)];
+}
+
+// IP and VPN Detection function
+async function detectIPAndVPN() {
+  try {
+    console.log("🔍 Detecting IP and VPN...");
+    
+    // Fetch IP data from free API
+    const response = await fetch('https://ipapi.co/json/', { timeout: 5000 });
+    const data = await response.json();
+    
+    const ipInfo = {
+      ip: data.ip,
+      country: data.country_name,
+      city: data.city,
+      isp: data.org,
+      isVPN: data.is_vpn === true || data.org?.toLowerCase().includes('vpn'),
+      latitude: data.latitude,
+      longitude: data.longitude,
+      timezone: data.timezone
+    };
+    
+    console.log("📍 IP Info:", ipInfo);
+    return ipInfo;
+  } catch (err) {
+    console.warn("⚠️ Could not detect IP:", err);
+    return null;
+  }
+}
+
+// Check if IP already registered
+async function checkIPRegistration(ipAddress) {
+  try {
+    const usersRef = collection(db, "users");
+    const q = query(usersRef, where("registrationIP", "==", ipAddress));
+    const snap = await getDocs(q);
+    
+    if (snap.docs.length > 0) {
+      console.warn("⚠️ IP already registered!");
+      return snap.docs.map(doc => doc.data().email);
+    }
+    return null;
+  } catch (err) {
+    console.warn("Could not check IP registration:", err);
+    return null;
+  }
 }
 
 // Helper to show result message
@@ -84,6 +130,28 @@ if (registerForm){
     }
     
     try{
+      showResult('⏳ Detecting your IP and VPN status...', false);
+      
+      // Get IP and VPN info
+      const ipInfo = await detectIPAndVPN();
+      
+      // Check for VPN
+      if (ipInfo && ipInfo.isVPN) {
+        showResult('🔒 I CAN SEE YOU!! VPN detected - Registration blocked for security', true);
+        console.warn("🚫 VPN detected, blocking registration");
+        return;
+      }
+      
+      // Check if IP already registered
+      if (ipInfo) {
+        const existingUsers = await checkIPRegistration(ipInfo.ip);
+        if (existingUsers) {
+          showResult(`🔒 I CAN SEE YOU!! This IP (${ipInfo.ip}) already has accounts: ${existingUsers.join(', ')}`, true);
+          console.warn("🚫 Duplicate IP detected, blocking registration");
+          return;
+        }
+      }
+      
       showResult('⏳ Creating account...', false);
       
       const cred = await createUserWithEmailAndPassword(auth, email, pass);
@@ -102,7 +170,12 @@ if (registerForm){
         online: true,
         profilePic: randomSticker,
         profilePicUrl: randomSticker,
-        uid: cred.user.uid
+        uid: cred.user.uid,
+        registrationIP: ipInfo?.ip || 'unknown',
+        registrationCountry: ipInfo?.country || 'unknown',
+        registrationCity: ipInfo?.city || 'unknown',
+        registrationISP: ipInfo?.isp || 'unknown',
+        registrationTimestamp: new Date().toISOString()
       };
 
       // Add timeout to catch connection issues
@@ -114,6 +187,7 @@ if (registerForm){
       await Promise.race([savePromise, timeoutPromise]);
       
       console.log('✅ User data saved successfully to Firestore:', cred.user.uid);
+      console.log('📍 Registration IP:', ipInfo?.ip);
       
       // Also save to Realtime Database so you can see it there
       try {

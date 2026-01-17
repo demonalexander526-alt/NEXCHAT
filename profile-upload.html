@@ -15,7 +15,7 @@
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
   <title>☄️ NEXCHAT - Setup Profile ☄️</title>
-  <link rel="stylesheet" href="profile-upload.css?v=1.0">
+  <link rel="stylesheet" href="Profile-upload.css?v=1.0">
   <link rel="icon" type="image/x-icon" href="logo.jpg">
   <link rel="apple-touch-icon" href="logo.jpg">
   <style>
@@ -43,24 +43,6 @@
   <h2 id="setupTitle">Complete Your Profile</h2>
 
   <form id="profileForm" aria-describedby="result" novalidate>
-    <!-- Username Input -->
-    <div class="form-group">
-      <label for="username" class="form-label">Choose Username</label>
-      <div class="input-wrapper">
-        <input 
-          type="text" 
-          id="username" 
-          placeholder="Your username..." 
-          required 
-          aria-required="true"
-          minlength="3"
-          maxlength="20"
-          autocomplete="username"
-        >
-        <span class="char-count"><span id="charCount">0</span>/20</span>
-      </div>
-    </div>
-
     <!-- Profile Picture Input -->
     <div class="form-group">
       <label for="profilePic" class="form-label">Profile Picture</label>
@@ -82,7 +64,7 @@
       <p class="preview-text">Preview</p>
     </div>
 
-    <button type="submit" class="auth-btn">Create Profile</button>
+    <button type="submit" class="auth-btn">🖼️ Upload Profile Picture</button>
   </form>
 
   <p id="result" aria-live="polite" role="status"></p>
@@ -121,8 +103,6 @@
   const profileForm = document.getElementById('profileForm');
   const result = document.getElementById('result');
   const fileInput = document.getElementById('profilePic');
-  const usernameInput = document.getElementById('username');
-  const charCount = document.getElementById('charCount');
   const previewImage = document.getElementById('previewImage');
   const previewContainer = document.getElementById('previewContainer');
   const timerContainer = document.getElementById('timerContainer');
@@ -218,11 +198,6 @@
     });
   }
 
-  // Character counter
-  usernameInput.addEventListener('input', () => {
-    charCount.textContent = usernameInput.value.length;
-  });
-
   // Image preview
   fileInput.addEventListener('change', () => {
     const file = fileInput.files[0];
@@ -257,18 +232,6 @@
       return;
     }
 
-    if (!usernameInput.value.trim()) {
-      result.textContent = "❌ Please enter a username!";
-      result.style.color = '#ff4d4d';
-      return;
-    }
-
-    if (usernameInput.value.length < 3) {
-      result.textContent = "❌ Username must be at least 3 characters!";
-      result.style.color = '#ff4d4d';
-      return;
-    }
-
     const file = fileInput.files[0];
     
     // File size check (5MB max)
@@ -284,12 +247,10 @@
 
     reader.onload = async (event) => {
       try {
-        const uname = usernameInput.value.trim();
-
         // Show loading state
         result.textContent = "⏳ Uploading profile picture...";
         result.style.color = '#00ff66';
-        console.log('📝 Starting profile creation for:', uname);
+        console.log('📝 Starting profile picture upload...');
 
         // Get UID
         let uid;
@@ -331,7 +292,6 @@
           try {
             console.log(`💾 Saving profile to Firestore (attempt ${4 - retries})...`);
             await setDoc(doc(db, 'users', uid), {
-              username: uname,
               profilePicUrl: profilePicUrl,
               profilePic: profilePicUrl,
               updatedAt: new Date().toISOString(),

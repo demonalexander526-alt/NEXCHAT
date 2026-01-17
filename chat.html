@@ -10,8 +10,9 @@
   <meta name="apple-mobile-web-app-title" content="NEXCHAT">
   <meta name="format-detection" content="telephone=no">
   <meta name="x-apple-disable-message-reformatting" content="yes">
-  <title>NEXCHAT - Stories & Messages</title>
+  <title>NEXCHAT - Messages & Reels</title>
   <link rel="stylesheet" href="chat.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/x-icon" href="logo.jpg">
   <link rel="apple-touch-icon" href="logo.jpg">
@@ -31,6 +32,7 @@
       </div>
       <div class="header-right">
         <button id="profile-sticker" class="header-icon-btn profile-sticker" title="Profile" onclick="window.location.href='profile-upload.html'">👤</button>
+        <button id="darkModeToggle" class="header-icon-btn" title="Dark/Light Mode">🌙</button>
         <button id="shop-btn-header" class="header-icon-btn" title="Buy Tokens">🛒</button>
         <button id="search-btn-header" class="header-icon-btn" title="Search">🔍</button>
         <button id="settings-btn-header" class="header-icon-btn" title="Settings">⚙️</button>
@@ -80,6 +82,7 @@
         <div class="chat-list-header">
           <h2>Messages</h2>
           <button id="newChatBtn" class="new-chat-btn" title="New chat">✏️</button>
+          <button id="createGroupBtn" class="new-chat-btn" title="Create group">👥</button>
         </div>
 
         <ul id="contactList" class="chat-list">
@@ -201,6 +204,77 @@
         </div>
       </div>
 
+      <!-- REELS PAGE VIEW -->
+      <div id="reelsView" class="reels-view" style="display: none;">
+        <div class="reels-header">
+          <h2>NEX-REELS 🎬</h2>
+          <button id="uploadReelBtn" class="new-chat-btn" title="Upload Reel">⬆️</button>
+        </div>
+        <div id="videoFeed" class="video-feed">
+          <p style="text-align: center; padding: 40px; color: #888;">Loading videos...</p>
+        </div>
+      </div>
+
+      <!-- UPLOAD REEL MODAL -->
+      <div id="uploadReelModal" class="modal" style="display: none;">
+        <div class="modal-content">
+          <span class="close-modal" onclick="document.getElementById('uploadReelModal').style.display='none'">&times;</span>
+          <h2>🎬 Upload a Reel</h2>
+
+      <!-- CREATE GROUP MODAL -->
+      <div id="createGroupModal" class="modal" style="display: none;">
+        <div class="modal-content">
+          <span class="close-modal" onclick="document.getElementById('createGroupModal').style.display='none'">&times;</span>
+          <h2>👥 Create Group</h2>
+          <form id="createGroupForm">
+            <div class="form-group">
+              <label>Group Name</label>
+              <input type="text" id="groupName" placeholder="Group name..." maxlength="50" required>
+            </div>
+            <div class="form-group">
+              <label>Group Description</label>
+              <textarea id="groupDescription" placeholder="Group description..." maxlength="200" rows="3"></textarea>
+            </div>
+            <div class="form-group">
+              <label>Add Members (select from contacts)</label>
+              <div id="groupMembersList" style="max-height: 200px; overflow-y: auto; border: 1px solid #00ff66; border-radius: 6px; padding: 10px;">
+                <p style="color: #888; text-align: center;">Loading contacts...</p>
+              </div>
+            </div>
+            <button type="submit" class="btn-primary">✓ Create Group</button>
+            <div id="groupCreateResult" style="margin-top: 15px; padding: 10px; border-radius: 6px; text-align: center; display: none;"></div>
+          </form>
+        </div>
+      </div>
+
+      <!-- UPLOAD REEL MODAL -->
+      <div id="uploadReelModal" class="modal" style="display: none;">
+        <div class="modal-content">
+          <span class="close-modal" onclick="document.getElementById('uploadReelModal').style.display='none'">&times;</span>
+          <h2>🎬 Upload a Reel</h2>
+          <form id="uploadReelForm">
+            <div class="form-group">
+              <label>Title</label>
+              <input type="text" id="videoTitle" placeholder="Reel title" maxlength="100" required>
+            </div>
+            <div class="form-group">
+              <label>Description</label>
+              <textarea id="videoDescription" placeholder="Describe your reel..." maxlength="500" rows="3"></textarea>
+            </div>
+            <div class="form-group">
+              <label>Video File</label>
+              <input type="file" id="videoFile" accept="video/*" required>
+            </div>
+            <div class="form-group">
+              <label>Thumbnail (Optional)</label>
+              <input type="file" id="videoThumbnail" accept="image/*">
+            </div>
+            <button type="submit" class="btn-primary">🚀 Upload Reel</button>
+          </form>
+          <div id="uploadReelResult" style="margin-top: 15px; padding: 10px; border-radius: 6px; text-align: center; display: none;"></div>
+        </div>
+      </div>
+
       <!-- SETTINGS MODAL -->
       <div id="settingsModal" class="settings-modal" style="display: none;">
         <div class="settings-modal-content">
@@ -297,6 +371,7 @@
     <!-- BOTTOM NAVIGATION -->
     <nav class="bottom-nav">
       <button id="nav-messages" class="nav-item active" title="Messages">💬</button>
+      <button id="nav-reels" class="nav-item" title="NEX-REELS">🎬</button>
       <button id="logout-btn" class="nav-item logout" title="Logout">🚪</button>
     </nav>
   </div>
