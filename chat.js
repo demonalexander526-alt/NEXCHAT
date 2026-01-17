@@ -1,7 +1,7 @@
 import { auth, db, rtdb } from "./firebase-config.js";
 import {
   collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, setDoc,
-  query, where, onSnapshot, serverTimestamp, orderBy, limit, Timestamp
+  query, where, onSnapshot, serverTimestamp, orderBy, limit, Timestamp, increment
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 import { signOut, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 import { ref, get } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
@@ -202,39 +202,7 @@ function showChatDetailView() {
   }
 }
 
-document.getElementById("backBtn")?.addEventListener("click", () => {
-  showChatListView();
-  goBack();
-});
-
-document.getElementById("uploadReelBtn")?.addEventListener("click", () => {
-  const modal = document.getElementById("uploadReelModal");
-  if (modal) {
-    modal.style.display = "block";
-    document.getElementById("videoTitle")?.focus();
-  }
-});
-
-// Dark Mode Toggle
-document.getElementById("darkModeToggle")?.addEventListener("click", () => {
-  const isDarkMode = document.body.classList.contains("dark-mode");
-  
-  if (isDarkMode) {
-    document.body.classList.remove("dark-mode");
-    document.body.classList.add("light-mode");
-    localStorage.setItem("darkMode", "false");
-    document.getElementById("darkModeToggle").textContent = "🌙";
-  } else {
-    document.body.classList.add("dark-mode");
-    document.body.classList.remove("light-mode");
-    localStorage.setItem("darkMode", "true");
-    document.getElementById("darkModeToggle").textContent = "☀️";
-  }
-  
-  showNotif(isDarkMode ? "☀️ Light mode enabled" : "🌙 Dark mode enabled", "info");
-});
-
-// Apply saved dark mode preference on load
+// Dark Mode Preference Loading
 window.addEventListener("load", () => {
   const savedDarkMode = localStorage.getItem("darkMode");
   if (savedDarkMode === "true") {
@@ -245,14 +213,6 @@ window.addEventListener("load", () => {
     document.getElementById("darkModeToggle").textContent = "🌙";
   }
 });
-
-// Create Group Button
-document.getElementById("createGroupBtn")?.addEventListener("click", () => {
-  openCreateGroupModal();
-});
-
-// Group Creation Form Handler
-document.getElementById("createGroupForm")?.addEventListener("submit", createGroup);
 
 async function autoPopulateTestUsers() {
   try {
@@ -1074,6 +1034,8 @@ async function sendMessage(e) {
 
     hapticFeedback('light');
     
+    let newTokens = currentTokens - 1;
+    
     // Send message based on chat type
     if (currentChatType === 'group') {
       // Group message
@@ -1092,7 +1054,6 @@ async function sendMessage(e) {
       });
 
       // Deduct 1 token
-      const newTokens = currentTokens - 1;
       await updateDoc(userRef, {
         tokens: newTokens,
         lastMessageSentAt: serverTimestamp()
@@ -1139,24 +1100,40 @@ function loadMessages() {
   
   messagesDiv.innerHTML = "<p style='text-align: center; color: #888; padding: 20px;'>Loading messages...</p>";
 
+  // Query for messages sent by current user to chat user OR from chat user to current user
   const q = query(
     collection(db, "messages"),
+    where("from", "==", myUID),
+    where("to", "==", currentChatUser),
+    orderBy("time", "asc"),
+    limit(100)
+  );
+
+  const q2 = query(
+    collection(db, "messages"),
+    where("from", "==", currentChatUser),
+    where("to", "==", myUID),
     orderBy("time", "asc"),
     limit(100)
   );
   
-  messageListener = onSnapshot(q, (snap) => {
-    messagesDiv.innerHTML = "";
+  let messages1 = [];
+  let messages2 = [];
+  let loaded1 = false;
+  let loaded2 = false;
+
+  const updateMessages = () => {
+    if (!loaded1 || !loaded2) return;
     
-    const relevantMessages = snap.docs.filter(docSnap => {
-      const m = docSnap.data();
-      return (
-        (m.from === myUID && m.to === currentChatUser) ||
-        (m.from === currentChatUser && m.to === myUID)
-      );
+    const allMessages = [...messages1, ...messages2].sort((a, b) => {
+      const timeA = a.time?.toDate?.() || new Date(0);
+      const timeB = b.time?.toDate?.() || new Date(0);
+      return timeA - timeB;
     });
 
-    if (relevantMessages.length === 0) {
+    messagesDiv.innerHTML = "";
+    
+    if (allMessages.length === 0) {
       messagesDiv.innerHTML = `
         <div class="empty-state">
           <div class="empty-icon">💭</div>
@@ -1167,8 +1144,7 @@ function loadMessages() {
       return;
     }
 
-    relevantMessages.forEach(docSnap => {
-      const m = docSnap.data();
+    allMessages.forEach((m) => {
       const isOwn = m.from === myUID;
       
       const div = document.createElement("div");
@@ -1215,16 +1191,25 @@ function loadMessages() {
       
       div.appendChild(bubble);
       messagesDiv.appendChild(div);
-      
-      // Mark as read
-      if (!isOwn && !m.read) {
-        updateDoc(docSnap.ref, { read: true }).catch(() => {});
-      }
     });
     
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
+  };
+
+  messageListener = onSnapshot(q, (snap) => {
+    messages1 = snap.docs.map(docSnap => ({...docSnap.data(), docId: docSnap.id}));
+    loaded1 = true;
+    updateMessages();
   }, (err) => {
-    showNotif("Error loading messages: " + err.message, "error");
+    console.error("Error loading outgoing messages:", err);
+  });
+
+  onSnapshot(q2, (snap) => {
+    messages2 = snap.docs.map(docSnap => ({...docSnap.data(), docId: docSnap.id}));
+    loaded2 = true;
+    updateMessages();
+  }, (err) => {
+    console.error("Error loading incoming messages:", err);
   });
 }
 
@@ -2793,6 +2778,47 @@ document.addEventListener('DOMContentLoaded', function() {
 function initializeApp() {
   // Initialize emoji picker
   initializeEmojiPicker();
+  
+  // Attach event listeners
+  document.getElementById("backBtn")?.addEventListener("click", () => {
+    showChatListView();
+    goBack();
+  });
+
+  document.getElementById("uploadReelBtn")?.addEventListener("click", () => {
+    const modal = document.getElementById("uploadReelModal");
+    if (modal) {
+      modal.style.display = "block";
+      document.getElementById("videoTitle")?.focus();
+    }
+  });
+
+  // Dark Mode Toggle
+  document.getElementById("darkModeToggle")?.addEventListener("click", () => {
+    const isDarkMode = document.body.classList.contains("dark-mode");
+    
+    if (isDarkMode) {
+      document.body.classList.remove("dark-mode");
+      document.body.classList.add("light-mode");
+      localStorage.setItem("darkMode", "false");
+      document.getElementById("darkModeToggle").textContent = "🌙";
+    } else {
+      document.body.classList.add("dark-mode");
+      document.body.classList.remove("light-mode");
+      localStorage.setItem("darkMode", "true");
+      document.getElementById("darkModeToggle").textContent = "☀️";
+    }
+    
+    showNotif(isDarkMode ? "☀️ Light mode enabled" : "🌙 Dark mode enabled", "info");
+  });
+
+  // Create Group Button
+  document.getElementById("createGroupBtn")?.addEventListener("click", () => {
+    openCreateGroupModal();
+  });
+
+  // Group Creation Form Handler
+  document.getElementById("createGroupForm")?.addEventListener("submit", createGroup);
   
   // Auto-populate test users if database is empty
   autoPopulateTestUsers();
