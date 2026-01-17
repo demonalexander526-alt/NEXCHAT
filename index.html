@@ -40,15 +40,56 @@
   <p id="result"></p>
 </div>
 
-<script src="app-prompt.js"></script>
-<script src="pwa-install.js"></script>
-<script type="module" src="firebase-config.js"></script>
-<script type="module" src="auth.js"></script>
+<footer class="app-footer">
+  <p>CREATED BY <span class="dev-name">DEMON ALEX</span> | POWERED BY <span class="dev-team">NEX_DEV TEAMS</span></p>
+</footer>
+
 <style>
+  .app-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(0, 255, 102, 0.05);
+    border-top: 1px solid rgba(0, 255, 102, 0.3);
+    text-align: center;
+    padding: 12px 20px;
+    font-size: 11px;
+    color: rgba(0, 255, 102, 0.6);
+    font-family: 'Orbitron', monospace;
+    z-index: 100;
+  }
+  
+  .app-footer p {
+    margin: 0;
+    letter-spacing: 1px;
+  }
+  
+  .dev-name {
+    color: #ff6600;
+    font-weight: 600;
+    text-shadow: 0 0 5px rgba(255, 102, 0, 0.5);
+  }
+  
+  .dev-team {
+    color: #00ff66;
+    font-weight: 600;
+    text-shadow: 0 0 5px rgba(0, 255, 102, 0.5);
+  }
+  
+  .login-container {
+    margin-bottom: 70px;
+  }
+
   @keyframes slideUp {
     from { transform: translateY(0); opacity: 1; }
     to { transform: translateY(-100%); opacity: 0; }
   }
 </style>
+
+<script src="app-prompt.js"></script>
+<script src="pwa-install.js"></script>
+<script type="module" src="firebase-config.js"></script>
+<script type="module" src="auth.js"></script>
 </body>
 </html>

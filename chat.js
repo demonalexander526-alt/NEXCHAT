@@ -995,8 +995,11 @@ function openQuickStatusModal() {
 async function sendMessage(e) {
   if (e) e.preventDefault();
   
+  console.log("📤 Send message triggered"); // Debug log
+  
   if (!currentChatUser) {
     showNotif("Select a chat first", "error");
+    console.warn("❌ No chat selected");
     return;
   }
 
@@ -1039,9 +1042,11 @@ async function sendMessage(e) {
     // Send message based on chat type
     if (currentChatType === 'group') {
       // Group message
+      console.log("📤 Sending group message to:", currentChatUser);
       await sendGroupMessage(currentChatUser, text);
     } else {
       // Direct message
+      console.log("📤 Sending direct message to:", currentChatUser);
       await addDoc(collection(db, "messages"), {
         from: myUID,
         to: currentChatUser,
@@ -1083,9 +1088,10 @@ async function sendMessage(e) {
     hapticFeedback('success');
     showNotif(`✓ Message sent (-1 token, ${newTokens} remaining)`, "success", 2000);
     document.getElementById("emoji-picker").style.display = "none";
+    console.log("✅ Message sent successfully");
   } catch (err) {
     hapticFeedback('heavy');
-    console.error("Error sending message:", err);
+    console.error("❌ Error sending message:", err);
     showNotif("Error sending message: " + err.message, "error");
   }
 }
@@ -1213,7 +1219,14 @@ function loadMessages() {
   });
 }
 
-document.getElementById("message-form")?.addEventListener("submit", sendMessage);
+// Attach message form listener
+const messageForm = document.getElementById("message-form");
+if (messageForm) {
+  messageForm.addEventListener("submit", sendMessage);
+  console.log("✅ Message form listener attached");
+} else {
+  console.warn("⚠️ Message form element not found");
+}
 
 // ============================================================
 // CONTACTS & USER MANAGEMENT
@@ -1483,13 +1496,26 @@ async function openChat(uid, username, profilePic, chatType = 'direct') {
   }
 }
 
-document.getElementById("menuBtn")?.addEventListener("click", () => {
+document.getElementById("menuBtn")?.addEventListener("click", (e) => {
+  e.stopPropagation();
   const menu = document.getElementById("chatOptionsMenu");
   if (menu) {
-    menu.style.display = menu.style.display === "none" ? "block" : "none";
+    const isVisible = menu.style.display !== "none";
+    menu.style.display = isVisible ? "none" : "block";
   }
 });
 
+// Close menu when clicking outside
+document.addEventListener("click", (e) => {
+  const menu = document.getElementById("chatOptionsMenu");
+  const menuBtn = document.getElementById("menuBtn");
+  
+  if (menu && menuBtn && !menu.contains(e.target) && !menuBtn.contains(e.target)) {
+    menu.style.display = "none";
+  }
+});
+
+// Mute button functionality (if needed)
 document.getElementById("muteBtn")?.addEventListener("click", async () => {
   if (!currentChatUser) return;
   showNotif("🔇 Chat muted", "success");
@@ -1750,10 +1776,12 @@ function endCall() {
 
 document.getElementById("callBtn")?.addEventListener("click", () => {
   startCall(false);
+  document.getElementById("chatOptionsMenu").style.display = "none";
 });
 
 document.getElementById("videoCallBtn")?.addEventListener("click", () => {
   startCall(true);
+  document.getElementById("chatOptionsMenu").style.display = "none";
 });
 
 document.getElementById("infoCallBtn")?.addEventListener("click", () => {
@@ -2779,6 +2807,25 @@ function initializeApp() {
   // Initialize emoji picker
   initializeEmojiPicker();
   
+  // Dashboard Back Button
+  document.getElementById("dashboardBackBtn")?.addEventListener("click", goBackToDashboard);
+  
+  // Message form and send button listeners
+  const messageForm = document.getElementById("message-form");
+  if (messageForm) {
+    messageForm.addEventListener("submit", sendMessage);
+    console.log("✅ Message form listener attached in init");
+  }
+  
+  const sendBtn = document.querySelector(".send-btn");
+  if (sendBtn) {
+    sendBtn.addEventListener("click", (e) => {
+      console.log("📤 Send button clicked");
+      e.preventDefault();
+      sendMessage(e);
+    });
+  }
+  
   // Attach event listeners
   document.getElementById("backBtn")?.addEventListener("click", () => {
     showChatListView();
@@ -2793,24 +2840,96 @@ function initializeApp() {
     }
   });
 
-  // Dark Mode Toggle
-  document.getElementById("darkModeToggle")?.addEventListener("click", () => {
+  // Dark Mode Sliding Toggle
+  const darkModeToggle = document.getElementById("darkModeToggle");
+  let isSliding = false;
+  let startX = 0;
+  let currentX = 0;
+
+  // Initialize toggle state from localStorage
+  const savedDarkMode = localStorage.getItem("darkMode") === "true";
+  if (savedDarkMode) {
+    darkModeToggle?.classList.add("active");
+    document.body.classList.add("dark-mode");
+  } else {
+    darkModeToggle?.classList.remove("active");
+    document.body.classList.add("light-mode");
+  }
+
+  // Mouse/Touch events for sliding
+  darkModeToggle?.addEventListener("mousedown", (e) => {
+    isSliding = true;
+    startX = e.clientX;
+    darkModeToggle.style.cursor = "grabbing";
+  });
+
+  darkModeToggle?.addEventListener("touchstart", (e) => {
+    isSliding = true;
+    startX = e.touches[0].clientX;
+  });
+
+  document.addEventListener("mousemove", (e) => {
+    if (!isSliding || !darkModeToggle) return;
+    currentX = e.clientX - startX;
+  });
+
+  document.addEventListener("touchmove", (e) => {
+    if (!isSliding || !darkModeToggle) return;
+    currentX = e.touches[0].clientX - startX;
+  });
+
+  // Mouse/Touch up - complete the toggle
+  document.addEventListener("mouseup", () => {
+    if (!isSliding || !darkModeToggle) return;
+    isSliding = false;
+    darkModeToggle.style.cursor = "pointer";
+
+    // If dragged more than 15px, toggle
+    if (Math.abs(currentX) > 15) {
+      toggleDarkMode();
+    }
+    currentX = 0;
+  });
+
+  document.addEventListener("touchend", () => {
+    if (!isSliding || !darkModeToggle) return;
+    isSliding = false;
+
+    // If dragged more than 15px, toggle
+    if (Math.abs(currentX) > 15) {
+      toggleDarkMode();
+    }
+    currentX = 0;
+  });
+
+  // Click handler for direct toggle
+  darkModeToggle?.addEventListener("click", () => {
+    if (!isSliding) {
+      toggleDarkMode();
+    }
+  });
+
+  // Toggle dark mode function
+  function toggleDarkMode() {
     const isDarkMode = document.body.classList.contains("dark-mode");
-    
+    const toggle = document.getElementById("darkModeToggle");
+
     if (isDarkMode) {
+      // Switch to light mode
       document.body.classList.remove("dark-mode");
       document.body.classList.add("light-mode");
       localStorage.setItem("darkMode", "false");
-      document.getElementById("darkModeToggle").textContent = "🌙";
+      toggle?.classList.remove("active");
+      showNotif("☀️ Light mode enabled", "info");
     } else {
+      // Switch to dark mode
       document.body.classList.add("dark-mode");
       document.body.classList.remove("light-mode");
       localStorage.setItem("darkMode", "true");
-      document.getElementById("darkModeToggle").textContent = "☀️";
+      toggle?.classList.add("active");
+      showNotif("🌙 Dark mode enabled", "info");
     }
-    
-    showNotif(isDarkMode ? "☀️ Light mode enabled" : "🌙 Dark mode enabled", "info");
-  });
+  }
 
   // Create Group Button
   document.getElementById("createGroupBtn")?.addEventListener("click", () => {
@@ -3597,7 +3716,12 @@ async function createGroup(e) {
 }
 
 async function loadGroupMessages(groupId) {
-  const messagesDiv = document.getElementById('messages');
+  const messagesDiv = document.getElementById('messages-area');
+  if (!messagesDiv) {
+    console.error("Messages area not found!");
+    return;
+  }
+  
   messagesDiv.innerHTML = '<p style="text-align: center; color: #888;">Loading group messages...</p>';
 
   try {
@@ -3633,7 +3757,7 @@ async function loadGroupMessages(groupId) {
         `;
       });
 
-      messagesDiv.innerHTML = html;
+      messagesDiv.innerHTML = html || '<p style="text-align: center; color: #888;">No messages yet</p>';
       messagesDiv.scrollTop = messagesDiv.scrollHeight;
     });
   } catch (error) {
@@ -3698,4 +3822,16 @@ if (document.readyState === "loading") {
 } else {
   initializeApp();
 }
+
+// Function to go back to dashboard
+function goBackToDashboard() {
+  // Check if there's a previous page in history
+  if (window.history.length > 1) {
+    window.history.back();
+  } else {
+    // Otherwise redirect to index.html (main dashboard)
+    window.location.href = 'index.html';
+  }
+}
+
 

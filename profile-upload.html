@@ -46,6 +46,16 @@
     <!-- Profile Picture Input -->
     <div class="form-group">
       <label for="profilePic" class="form-label">Profile Picture</label>
+      <div class="upload-options">
+        <button type="button" class="upload-btn camera-btn" id="cameraBtn" title="Take a photo">
+          <span class="btn-icon">📷</span>
+          <span class="btn-text">Camera</span>
+        </button>
+        <button type="button" class="upload-btn gallery-btn" id="galleryBtn" title="Choose from storage">
+          <span class="btn-icon">🖼️</span>
+          <span class="btn-text">Gallery</span>
+        </button>
+      </div>
       <input 
         type="file" 
         id="profilePic" 
@@ -53,7 +63,7 @@
         required 
         aria-required="true"
         aria-describedby="fileHelp"
-        capture="environment"
+        style="display: none;"
       >
       <small id="fileHelp">Supported: JPG, PNG, GIF (Max 5MB)</small>
     </div>
@@ -107,6 +117,23 @@
   const previewContainer = document.getElementById('previewContainer');
   const timerContainer = document.getElementById('timerContainer');
   const timerCount = document.getElementById('timerCount');
+  const cameraBtn = document.getElementById('cameraBtn');
+  const galleryBtn = document.getElementById('galleryBtn');
+
+  // ============================================================
+  // UPLOAD SOURCE SELECTION (CAMERA vs GALLERY)
+  // ============================================================
+  cameraBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    fileInput.setAttribute('capture', 'environment');
+    fileInput.click();
+  });
+
+  galleryBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    fileInput.removeAttribute('capture');
+    fileInput.click();
+  });
 
   // ============================================================
   // AUTO-REDIRECT TIMER (30 SECONDS)

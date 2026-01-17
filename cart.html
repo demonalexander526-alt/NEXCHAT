@@ -458,6 +458,24 @@
       </p>
     </div>
 
+    <div class="payment-methods" style="background: linear-gradient(135deg, rgba(255, 102, 0, 0.1) 0%, rgba(255, 102, 0, 0.05) 100%); border-color: #ff6600;">
+      <h3 style="color: #ff6600;">📱 Install NEXCHAT App</h3>
+      <p style="margin-bottom: 15px; font-size: 13px; color: rgba(255, 102, 0, 0.8);">Get the full NEXCHAT experience on your mobile device!</p>
+      <div class="payment-options">
+        <div class="payment-option" style="border-color: #ff6600; background: rgba(255, 102, 0, 0.05);" onclick="downloadAPK()">
+          <div class="payment-icon">📥</div>
+          <div class="payment-name">Download APK</div>
+        </div>
+        <div class="payment-option" style="border-color: #ff6600; background: rgba(255, 102, 0, 0.05);" onclick="openPlayStore()">
+          <div class="payment-icon">🎮</div>
+          <div class="payment-name">Google Play</div>
+        </div>
+      </div>
+      <p style="margin-top: 15px; font-size: 11px; color: rgba(255, 102, 0, 0.7); text-align: center;">
+        💾 App size: ~45MB | Requires Android 8.0+
+      </p>
+    </div>
+
     <div class="faq-section">
       <h3>❓ FAQ</h3>
       <div class="faq-item">
@@ -643,7 +661,7 @@ Amount: ₦${amount.toLocaleString()}
 Reference: ${reference}
 
 Please transfer to:
-Account Name: NEXCHAT Ltd
+Account Name: idowu 
 Account Number: 9054345858
 Bank: opay 
 
@@ -683,6 +701,30 @@ Tokens will be added within 2 hours!
         document.getElementById("loadingSpinner").style.display = "none";
         document.getElementById("paymentForm").style.display = "block";
       }
+    }
+
+    function downloadAPK() {
+      // Create a download link for the APK file
+      const apkUrl = "nexchat.apk"; // Change this to your actual APK file path
+      const link = document.createElement("a");
+      link.href = apkUrl;
+      link.download = "nexchat.apk";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Alternative: If APK is hosted on a server
+      // window.open("https://your-server.com/nexchat.apk", "_blank");
+    }
+
+    function openPlayStore() {
+      // Open NEXCHAT on Google Play Store
+      // Replace with your actual Play Store link when app is published
+      const playStoreUrl = "https://play.google.com/store/apps/details?id=com.nexchat.app";
+      window.open(playStoreUrl, "_blank");
+      
+      // Fallback message if app isn't on Play Store yet
+      alert("🚀 NEXCHAT will be available on Google Play Store soon!\n\nFor now, you can download the APK directly.");
     }
   </script>
 </body>

@@ -22,6 +22,7 @@
     <!-- TOP HEADER BAR -->
     <header class="top-header">
       <div class="header-left">
+        <button id="dashboardBackBtn" class="back-button" title="Back to Dashboard">← </button>
         <h1 class="header-logo">NEXCHAT</h1>
       </div>
       <div class="header-center">
@@ -33,7 +34,16 @@
       <div class="header-right-scroll">
         <div class="header-right">
           <button id="profile-sticker" class="header-icon-btn profile-sticker" title="Profile" onclick="window.location.href='profile-upload.html'">👤</button>
-          <button id="darkModeToggle" class="header-icon-btn" title="Dark/Light Mode">🌙</button>
+          
+          <!-- Dark Mode Sliding Toggle Switch -->
+          <div class="toggle-switch-container" title="Dark/Light Mode">
+            <div class="toggle-switch" id="darkModeToggle">
+              <div class="toggle-slider"></div>
+              <span class="toggle-label dark-label">🌙</span>
+              <span class="toggle-label light-label">☀️</span>
+            </div>
+          </div>
+          
           <button id="shop-btn-header" class="header-icon-btn" title="Buy Tokens">🛒</button>
           <button id="search-btn-header" class="header-icon-btn" title="Search">🔍</button>
           <button id="settings-btn-header" class="header-icon-btn" title="Settings">⚙️</button>
@@ -107,7 +117,7 @@
               <p id="statusText" class="status-dot">🟢 Online</p>
             </div>
           </div>
-          <button id="menuBtn" class="header-icon-btn" title="More">⋯</button>
+          <button id="menuBtn" class="three-dots-menu" title="More options">⋯</button>
         </div>
 
         <!-- Messages Area -->
@@ -126,13 +136,14 @@
         </div>
 
         <!-- Chat Options Menu -->
-        <div id="chatOptionsMenu" class="options-popup" style="display: none;">
-          <button id="callBtn" class="option-item">☎️ Call</button>
-          <button id="videoCallBtn" class="option-item">📹 Video</button>
-          <button id="muteBtn" class="option-item">🔇 Mute</button>
-          <button id="blockBtn" class="option-item danger">🚫 Block</button>
-          <button id="reportBtn" class="option-item danger">⚠️ Report</button>
-          <button id="deleteBtn" class="option-item danger">🗑️ Delete</button>
+        <div id="chatOptionsMenu" class="chat-options-dropdown" style="display: none;">
+          <div class="dropdown-header">Options</div>
+          <button id="callBtn" class="option-item call-option">☎️ Call User</button>
+          <button id="videoCallBtn" class="option-item video-option">📹 Video Call</button>
+          <div class="dropdown-divider"></div>
+          <button id="blockBtn" class="option-item danger">🚫 Block User</button>
+          <button id="reportBtn" class="option-item danger">⚠️ Report User</button>
+          <button id="deleteBtn" class="option-item danger">🗑️ Delete Chat</button>
         </div>
 
         <!-- Message Input -->
@@ -381,6 +392,11 @@
   <!-- NOTIFICATION CONTAINER -->
   <div id="notificationContainer" class="notification-container"></div>
 
+  <!-- FOOTER ATTRIBUTION -->
+  <footer class="app-footer">
+    <p>CREATED BY <span class="dev-name">DEMON ALEX</span> | POWERED BY <span class="dev-team">NEX_DEV TEAMS</span></p>
+  </footer>
+
   <script src="pwa-install.js"></script>
   <script src="app-prompt.js"></script>
   <script type="module" src="chat.js"></script>
@@ -388,6 +404,292 @@
     @keyframes slideUp {
       from { transform: translateY(0); opacity: 1; }
       to { transform: translateY(-100%); opacity: 0; }
+    }
+
+    .app-footer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(0, 255, 102, 0.05);
+      border-top: 1px solid rgba(0, 255, 102, 0.3);
+      text-align: center;
+      padding: 12px 20px;
+      font-size: 11px;
+      color: rgba(0, 255, 102, 0.6);
+      font-family: 'Orbitron', monospace;
+      z-index: 100;
+    }
+    
+    .app-footer p {
+      margin: 0;
+      letter-spacing: 1px;
+    }
+    
+    .dev-name {
+      color: #ff6600;
+      font-weight: 600;
+      text-shadow: 0 0 5px rgba(255, 102, 0, 0.5);
+    }
+    
+    .dev-team {
+      color: #00ff66;
+      font-weight: 600;
+      text-shadow: 0 0 5px rgba(0, 255, 102, 0.5);
+    }
+
+    .bottom-nav {
+      margin-bottom: 60px;
+    }
+
+    .back-button {
+      background: transparent;
+      border: none;
+      color: #00ff66;
+      font-size: 24px;
+      cursor: pointer;
+      padding: 5px 10px;
+      margin-right: 10px;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 40px;
+      width: 40px;
+      border-radius: 50%;
+    }
+
+    .back-button:hover {
+      background: rgba(0, 255, 102, 0.1);
+      transform: scale(1.1);
+      box-shadow: 0 0 10px rgba(0, 255, 102, 0.3);
+    }
+
+    .back-button:active {
+      transform: scale(0.95);
+    }
+
+    /* Dark Mode Toggle Switch Styles */
+    .toggle-switch-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 8px;
+    }
+
+    .toggle-switch {
+      position: relative;
+      width: 60px;
+      height: 30px;
+      background: linear-gradient(135deg, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.2) 100%);
+      border: 2px solid #00ff66;
+      border-radius: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      padding: 2px;
+      transition: all 0.3s ease;
+      user-select: none;
+    }
+
+    .toggle-switch:hover {
+      box-shadow: 0 0 10px rgba(0, 255, 102, 0.4);
+      border-color: #00ff66;
+    }
+
+    .toggle-switch.active {
+      background: linear-gradient(135deg, rgba(0, 255, 102, 0.2) 0%, rgba(0, 255, 102, 0.1) 100%);
+    }
+
+    .toggle-slider {
+      position: absolute;
+      width: 26px;
+      height: 26px;
+      background: #00ff66;
+      border-radius: 50%;
+      top: 2px;
+      left: 2px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 2px 8px rgba(0, 255, 102, 0.3);
+    }
+
+    .toggle-switch.active .toggle-slider {
+      left: 32px;
+      background: #00ff66;
+      box-shadow: 0 2px 8px rgba(0, 255, 102, 0.5);
+    }
+
+    .toggle-label {
+      position: absolute;
+      font-size: 14px;
+      font-weight: bold;
+      transition: opacity 0.3s ease;
+      user-select: none;
+    }
+
+    .dark-label {
+      left: 6px;
+      opacity: 1;
+    }
+
+    .toggle-switch.active .dark-label {
+      opacity: 0.3;
+    }
+
+    .light-label {
+      right: 6px;
+      opacity: 0.3;
+    }
+
+    .toggle-switch.active .light-label {
+      opacity: 1;
+    }
+
+    @media (max-width: 768px) {
+      .toggle-switch {
+        width: 55px;
+        height: 28px;
+      }
+
+      .toggle-slider {
+        width: 24px;
+        height: 24px;
+      }
+
+      .toggle-switch.active .toggle-slider {
+        left: 29px;
+      }
+
+      .toggle-label {
+        font-size: 12px;
+      }
+    }
+
+    /* 3-Dot Menu Button Styles */
+    .three-dots-menu {
+      background: transparent;
+      border: 2px solid #00ff66;
+      color: #00ff66;
+      font-size: 20px;
+      cursor: pointer;
+      padding: 6px 10px;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      letter-spacing: 3px;
+      font-weight: bold;
+    }
+
+    .three-dots-menu:hover {
+      background: rgba(0, 255, 102, 0.1);
+      box-shadow: 0 0 10px rgba(0, 255, 102, 0.3);
+      transform: scale(1.05);
+    }
+
+    .three-dots-menu:active {
+      transform: scale(0.95);
+    }
+
+    /* Chat Options Dropdown Menu */
+    .chat-options-dropdown {
+      position: absolute;
+      top: 60px;
+      right: 10px;
+      background: linear-gradient(135deg, rgba(20, 20, 30, 0.98) 0%, rgba(30, 30, 40, 0.98) 100%);
+      border: 2px solid #00ff66;
+      border-radius: 12px;
+      min-width: 200px;
+      box-shadow: 0 10px 40px rgba(0, 255, 102, 0.2), 0 0 20px rgba(0, 255, 102, 0.1);
+      z-index: 1000;
+      padding: 8px 0;
+      backdrop-filter: blur(10px);
+      animation: dropdownSlideDown 0.3s ease-out;
+    }
+
+    @keyframes dropdownSlideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .dropdown-header {
+      padding: 10px 16px;
+      color: #00ff66;
+      font-size: 12px;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      border-bottom: 1px solid rgba(0, 255, 102, 0.2);
+    }
+
+    .option-item {
+      width: 100%;
+      padding: 12px 16px;
+      background: transparent;
+      border: none;
+      color: #00ff66;
+      text-align: left;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: inherit;
+    }
+
+    .option-item:hover {
+      background: rgba(0, 255, 102, 0.1);
+      padding-left: 20px;
+      text-shadow: 0 0 10px rgba(0, 255, 102, 0.4);
+    }
+
+    .option-item.danger {
+      color: #ff6b6b;
+    }
+
+    .option-item.danger:hover {
+      background: rgba(255, 107, 107, 0.1);
+      text-shadow: 0 0 10px rgba(255, 107, 107, 0.4);
+    }
+
+    .call-option::before {
+      content: '';
+      display: inline-block;
+      width: 4px;
+      height: 4px;
+      background: #00ff66;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .video-option::before {
+      content: '';
+      display: inline-block;
+      width: 4px;
+      height: 4px;
+      background: #00ff66;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .dropdown-divider {
+      height: 1px;
+      background: rgba(0, 255, 102, 0.2);
+      margin: 6px 0;
+    }
+
+    /* Adjust chat detail header for menu positioning */
+    .chat-detail-header {
+      position: relative;
     }
   </style>
 </body>
