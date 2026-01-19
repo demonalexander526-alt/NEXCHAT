@@ -3885,8 +3885,18 @@ async function setupInitialization() {
 
           // Get tokens from user data - should be 2000 for new users from registration
           const tokenCount = userData.tokens ?? 0;
+          console.log("💰 Token count from Firebase:", tokenCount);
+          console.log("💰 User data:", userData);
+          
           const tokenDisplay = document.getElementById("tokenCount");
-          if (tokenDisplay) tokenDisplay.textContent = tokenCount;
+          console.log("💰 Token display element:", tokenDisplay);
+          
+          if (tokenDisplay) {
+            tokenDisplay.textContent = tokenCount;
+            console.log("✅ Token display updated to:", tokenCount);
+          } else {
+            console.error("❌ Token display element not found!");
+          }
 
           console.log("✅ User data loaded. Username:", myUsername, "Tokens:", tokenCount);
 
@@ -6168,17 +6178,6 @@ console.log("✅ Functions exposed to global window");
 // DYNAMICALLY ADDED FUNCTIONS
 // ===================================
 
-async function toggleDarkMode() {
-  if (typeof switchDarkMode === 'function') {
-    switchDarkMode();
-  } else {
-    const isDark = document.body.classList.toggle("dark-mode");
-    document.body.classList.toggle("light-mode", !isDark);
-    const toggle = document.getElementById("darkModeToggle");
-    if (toggle) toggle.classList.toggle("active", isDark);
-    localStorage.setItem("darkMode", isDark);
-  }
-}
 
 async function loadGroups() {
   const groupsList = document.getElementById("groupsList");
