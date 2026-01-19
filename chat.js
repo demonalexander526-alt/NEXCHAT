@@ -31,29 +31,7 @@ function hapticFeedback(intensity = 'medium') {
   }
 }
 
-// Auth State Listener
-onAuthStateChanged(auth, async (user) => {
-  if (user) {
-    myUID = user.uid;
-    myUsername = user.displayName || user.email.split('@')[0];
-    myProfilePic = user.photoURL;
-
-    console.log("✅ User authenticated:", myUID);
-
-    // Setup listeners that require auth
-    setupAuthListeners();
-
-    // Initial data load
-    if (typeof loadContacts === 'function') loadContacts();
-    if (typeof loadStatusFeed === 'function') loadStatusFeed();
-    if (typeof loadGroups === 'function') loadGroups();
-
-    monitorConnectivity();
-  } else {
-    console.log("❌ User not authenticated, redirecting...");
-    window.location.href = 'index.html';
-  }
-});
+// Note: Auth state is handled in setupInitialization() function instead
 
 let currentChatUser = null;
 let currentChatType = 'direct'; // 'direct' or 'group'
@@ -2169,15 +2147,6 @@ function loadMessages() {
   });
 }
 
-// Attach message form listener
-const messageForm = document.getElementById("message-form");
-if (messageForm) {
-  messageForm.addEventListener("submit", sendMessage);
-  console.log("✅ Message form listener attached");
-} else {
-  console.warn("⚠️ Message form element not found");
-}
-
 // ============================================================
 // CONTACTS & USER MANAGEMENT
 // ============================================================
@@ -3888,129 +3857,7 @@ function toggleDarkMode() {
   }
 }
 
-let basicListenersInitialized = false;
 
-// Setup basic event listeners that don't require Firebase auth
-function initializeBasicListeners() {
-  // Guard to prevent duplicate initialization
-  if (basicListenersInitialized) {
-    console.log("ℹ️ Basic listeners already initialized, skipping...");
-    return;
-  }
-  basicListenersInitialized = true;
-
-  // Dashboard back button
-  document.getElementById("dashboardBackBtn")?.addEventListener("click", goBackToDashboard);
-
-  // Message form
-  const messageForm = document.getElementById("message-form");
-  if (messageForm) {
-    messageForm.addEventListener("submit", sendMessage);
-  }
-
-  const sendBtn = document.querySelector(".send-btn");
-  if (sendBtn) {
-    sendBtn.addEventListener("click", (e) => {
-      e.preventDefault();
-      sendMessage(e);
-    });
-  }
-
-  // Back button
-  document.getElementById("backBtn")?.addEventListener("click", () => {
-    showChatListView();
-    goBack();
-  });
-
-  // Dark mode toggle
-  const darkModeToggle = document.getElementById("darkModeToggle");
-  if (darkModeToggle) {
-    darkModeToggle.addEventListener("click", toggleDarkMode);
-  }
-
-  // Poll button
-  document.getElementById("poll-btn")?.addEventListener("click", (e) => {
-    e.preventDefault();
-    if (currentChatType === 'group') {
-      document.getElementById("pollModal").style.display = "block";
-    } else {
-      showNotif("📊 Polls are only available in group chats", "info");
-    }
-  });
-
-  // Poll form
-  document.getElementById("pollForm")?.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const question = document.getElementById("pollQuestion").value.trim();
-    const optionsText = document.getElementById("pollOptions").value.trim();
-    if (!question || !optionsText) {
-      showNotif("Please fill in all poll fields", "error");
-      return;
-    }
-    const options = optionsText.split('\n').map(o => o.trim()).filter(o => o);
-    if (options.length < 2) {
-      showNotif("Poll must have at least 2 options", "error");
-      return;
-    }
-    await createPoll(currentChatUser, question, options);
-    document.getElementById("pollModal").style.display = "none";
-    document.getElementById("pollForm").reset();
-  });
-
-  // New Chat Button (+) on tabs
-  document.getElementById("newChatFromTab")?.addEventListener("click", () => {
-    openSearch();
-  });
-
-  // Create New Group Button
-  document.getElementById("createNewGroupBtn")?.addEventListener("click", () => {
-    openCreateGroupModal();
-  });
-
-  console.log("✅ Basic listeners initialized");
-}
-
-let appAfterAuthInitialized = false;
-
-// Setup post-auth event listeners
-function initializeAppAfterAuth() {
-  // Guard to prevent duplicate initialization
-  if (appAfterAuthInitialized) {
-    console.log("ℹ️ App after auth already initialized, skipping...");
-    return;
-  }
-  appAfterAuthInitialized = true;
-
-  // Fullscreen button
-  document.getElementById("fullscreen-btn-header")?.addEventListener("click", toggleFullscreen);
-
-  // Search
-  document.getElementById("search-btn-header")?.addEventListener("click", openSearch);
-  document.getElementById("close-search-btn")?.addEventListener("click", closeSearch);
-  document.getElementById("newChatBtn")?.addEventListener("click", openSearch);
-  document.getElementById("browse-users-btn")?.addEventListener("click", (e) => {
-    e.preventDefault();
-    browseAllUsers();
-  });
-  document.getElementById("search-submit-btn")?.addEventListener("click", searchUser);
-  document.getElementById("search-input")?.addEventListener("keypress", (e) => {
-    if (e.key === "Enter") searchUser();
-  });
-
-  // Settings
-  document.getElementById("settings-btn-header")?.addEventListener("click", () => {
-    document.getElementById("settingsModal").style.display = "block";
-  });
-  document.getElementById("closeSettingsBtn")?.addEventListener("click", () => {
-    saveSettingsPreferences();
-    closeSettingsModal();
-  });
-
-  // Emojis
-
-
-  console.log("✅ Post-auth listeners initialized");
-}
 
 // Initialize app after DOM is ready
 if (document.readyState === "loading") {
@@ -4020,8 +3867,8 @@ if (document.readyState === "loading") {
 }
 
 async function setupInitialization() {
-  // Setup basic listeners that don't depend on auth
-  initializeBasicListeners();
+  // Setup initial listeners on DOM ready
+  initializeBasicUI();
 
   // Setup auth listener for post-auth initialization
   auth.onAuthStateChanged(async (user) => {
@@ -4152,10 +3999,6 @@ async function setupInitialization() {
           if (window.loadUserBackgroundOnAuth) {
             window.loadUserBackgroundOnAuth();
           }
-          // Initialize app event listeners after auth
-          initializeAppAfterAuth();
-          // Also attach auth-dependent button listeners
-          setupAuthListeners();
         } catch (contactErr) {
           console.error("Error loading contacts:", contactErr);
         }
@@ -5992,9 +5835,121 @@ function initializeBasicUI() {
   // Message form and send button listeners
   const messageForm = document.getElementById("message-form");
   if (messageForm) {
-    messageForm.addEventListener("submit", sendMessage);
+    messageForm.addEventListener("submit", (e) => {
+      console.log("📤 Message form submitted via enter key");
+      sendMessage(e);
+    });
     console.log("✅ Message form listener attached");
+  } else {
+    console.warn("⚠️ Message form element not found");
   }
+
+  // Header Buttons - Search
+  document.getElementById('search-btn-header')?.addEventListener('click', openSearch);
+  document.getElementById('close-search-btn')?.addEventListener('click', closeSearch);
+  document.getElementById('newChatBtn')?.addEventListener('click', openSearch);
+  document.getElementById('browse-users-btn')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    browseAllUsers();
+  });
+  document.getElementById('search-submit-btn')?.addEventListener('click', searchUser);
+  document.getElementById('search-input')?.addEventListener('keypress', (e) => {
+    if (e.key === "Enter") searchUser();
+  });
+
+  // Header Buttons - Settings
+  document.getElementById('settings-btn-header')?.addEventListener('click', () => {
+    const modal = document.getElementById('settingsModal');
+    if (modal) {
+      modal.style.display = 'block';
+      const uidDisplay = document.getElementById('userUIDDisplay');
+      if (uidDisplay) uidDisplay.textContent = myUID || 'Loading...';
+    }
+  });
+  document.getElementById('closeSettingsBtn')?.addEventListener('click', () => {
+    saveSettingsPreferences();
+    closeSettingsModal();
+  });
+
+  // Header Buttons - Fullscreen
+  document.getElementById('fullscreen-btn-header')?.addEventListener('click', toggleFullscreen);
+
+  // Create Group
+  document.getElementById('createNewGroupBtn')?.addEventListener('click', () => {
+    const modal = document.getElementById('createGroupModal');
+    if (modal) {
+      modal.style.display = 'block';
+      if (typeof loadGroupMembersList === 'function') loadGroupMembersList();
+    }
+  });
+
+  // Create Group Form
+  const createGroupForm = document.getElementById('createGroupForm');
+  if (createGroupForm) {
+    createGroupForm.addEventListener('submit', createGroup);
+  }
+
+  // Status Upload
+  document.getElementById('uploadStatusImageBtn')?.addEventListener('click', () => {
+    document.getElementById('statusImageInput')?.click();
+  });
+
+  document.getElementById('statusImageInput')?.addEventListener('change', (e) => {
+    if (e.target.files && e.target.files[0]) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = document.getElementById('myStatusPic');
+        if (img) img.src = e.target.result;
+      };
+      reader.readAsDataURL(e.target.files[0]);
+    }
+  });
+
+  document.getElementById('postStatusBtn')?.addEventListener('click', async () => {
+    const textInput = document.getElementById('statusInput');
+    const imageInput = document.getElementById('statusImageInput');
+
+    if (!textInput) return;
+
+    const text = textInput.value;
+    const file = imageInput?.files ? imageInput.files[0] : null;
+
+    await handleStatusPost(text, file);
+  });
+
+  // Chat Options Menu
+  document.getElementById('menuBtn')?.addEventListener('click', () => {
+    const menu = document.getElementById('chatOptionsMenu');
+    if (menu) menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+  });
+
+  // File Attachment
+  document.getElementById('attach-btn')?.addEventListener('click', () => {
+    document.getElementById('file-input')?.click();
+  });
+
+  // Settings Modal Close
+  document.getElementById('closeSettingsBtn')?.addEventListener('click', () => {
+    document.getElementById('settingsModal').style.display = 'none';
+  });
+
+  // Logout from Settings
+  document.getElementById('logoutSettingsBtn')?.addEventListener('click', () => {
+    signOut(auth).then(() => {
+      window.location.href = 'index.html';
+    });
+  });
+
+  // Logout from Main Nav
+  document.getElementById('logout-btn')?.addEventListener('click', () => {
+    if (confirm('Are you sure you want to logout?')) {
+      signOut(auth).then(() => {
+        window.location.href = 'index.html';
+      });
+    }
+  });
+
+  console.log("✅ All header button listeners attached");
 
   const sendBtn = document.querySelector(".send-btn");
   if (sendBtn) {
@@ -6148,115 +6103,7 @@ function goBackToDashboard() {
 
 
 
-function setupAuthListeners() {
-  // Guard to prevent duplicate initialization
-  if (authListenersInitialized) {
-    console.log("ℹ️ Auth listeners already initialized, skipping...");
-    return;
-  }
-  authListenersInitialized = true;
 
-  console.log("🛠️ Setting up auth-dependent event listeners...");
-
-  // Header Buttons
-  document.getElementById('search-btn-header')?.addEventListener('click', openSearch);
-
-  document.getElementById('settings-btn-header')?.addEventListener('click', () => {
-    const modal = document.getElementById('settingsModal');
-    if (modal) {
-      modal.style.display = 'block';
-      const uidDisplay = document.getElementById('userUIDDisplay');
-      if (uidDisplay) uidDisplay.textContent = myUID;
-    }
-  });
-
-  document.getElementById('fullscreen-btn-header')?.addEventListener('click', () => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen();
-    } else {
-      if (document.exitFullscreen) {
-        document.exitFullscreen();
-      }
-    }
-  });
-
-  // Create Group
-  document.getElementById('createNewGroupBtn')?.addEventListener('click', () => {
-    const modal = document.getElementById('createGroupModal');
-    if (modal) {
-      modal.style.display = 'block';
-      if (typeof loadGroupMembersList === 'function') loadGroupMembersList();
-    }
-  });
-
-  const createGroupForm = document.getElementById('createGroupForm');
-  if (createGroupForm) {
-    // Remove old listener if any to prevent duplicates? 
-    // Cloning node or simple addEventListener (it allows multiple, but we only run this once on auth)
-    createGroupForm.addEventListener('submit', createGroup);
-  }
-
-  // Status
-  document.getElementById('uploadStatusImageBtn')?.addEventListener('click', () => {
-    document.getElementById('statusImageInput')?.click();
-  });
-
-  document.getElementById('statusImageInput')?.addEventListener('change', (e) => {
-    if (e.target.files && e.target.files[0]) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const img = document.getElementById('myStatusPic');
-        if (img) img.src = e.target.result;
-      };
-      reader.readAsDataURL(e.target.files[0]);
-    }
-  });
-
-  document.getElementById('postStatusBtn')?.addEventListener('click', async () => {
-    const textInput = document.getElementById('statusInput');
-    const imageInput = document.getElementById('statusImageInput');
-
-    if (!textInput) return;
-
-    const text = textInput.value;
-    const file = imageInput?.files ? imageInput.files[0] : null;
-
-    await handleStatusPost(text, file);
-  });
-
-  // Chat Options
-  document.getElementById('menuBtn')?.addEventListener('click', () => {
-    const menu = document.getElementById('chatOptionsMenu');
-    if (menu) menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
-  });
-
-  // Attachments
-  document.getElementById('attach-btn')?.addEventListener('click', () => {
-    document.getElementById('file-input')?.click();
-  });
-
-  // Settings Close
-  document.getElementById('closeSettingsBtn')?.addEventListener('click', () => {
-    document.getElementById('settingsModal').style.display = 'none';
-  });
-
-  document.getElementById('logoutSettingsBtn')?.addEventListener('click', () => {
-    signOut(auth).then(() => {
-      window.location.href = 'index.html';
-    });
-  });
-
-  // Logout Main Nav
-  document.getElementById('logout-btn')?.addEventListener('click', () => {
-    if (confirm('Are you sure you want to logout?')) {
-      signOut(auth).then(() => {
-        window.location.href = 'index.html';
-      });
-    }
-  });
-
-  console.log("✅ Auth listeners attached");
-}
 
 async function handleStatusPost(text, file) {
   let imageUrl = null;
