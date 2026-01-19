@@ -859,12 +859,15 @@ function handleNavigation(section) {
   }
 }
 
-function showChatContextMenu(event, chatId) {
+async function showChatContextMenu(event, chatId) {
   // Remove any existing context menu
   const existingMenu = document.querySelector(".chat-context-menu");
   if (existingMenu) {
     existingMenu.remove();
   }
+
+  // Check if chat is muted
+  const isMuted = await isChatMuted(chatId);
 
   // Create context menu
   const menu = document.createElement("div");
@@ -878,95 +881,85 @@ function showChatContextMenu(event, chatId) {
     border-radius: 8px;
     z-index: 1000;
     box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-    min-width: 150px;
+    min-width: 180px;
   `;
 
-  const archiveBtn = document.createElement("button");
-  archiveBtn.textContent = "📦 Archive";
-  archiveBtn.style.cssText = `
-    width: 100%;
-    padding: 10px;
-    background: transparent;
-    border: none;
-    color: #00ff66;
-    cursor: pointer;
-    text-align: left;
-    font-size: 14px;
-    transition: all 0.2s;
-  `;
-  archiveBtn.onclick = async () => {
-    await archiveChat(chatId);
-    menu.remove();
-  };
-  archiveBtn.onmouseover = () => {
-    archiveBtn.style.background = "rgba(0, 255, 102, 0.1)";
-  };
-  archiveBtn.onmouseout = () => {
-    archiveBtn.style.background = "transparent";
-  };
-
-  const deleteBtn = document.createElement("button");
-  deleteBtn.textContent = "🗑️ Delete";
-  deleteBtn.style.cssText = `
-    width: 100%;
-    padding: 10px;
-    background: transparent;
-    border: none;
-    color: #ff6b6b;
-    cursor: pointer;
-    text-align: left;
-    font-size: 14px;
-    border-top: 1px solid #333;
-    transition: all 0.2s;
-  `;
-  deleteBtn.onclick = async () => {
-    // TODO: Implement delete chat
-    showNotif("❌ Delete feature coming soon", "info");
-    menu.remove();
-  };
-  deleteBtn.onmouseover = () => {
-    deleteBtn.style.background = "rgba(255, 107, 107, 0.1)";
-  };
-  deleteBtn.onmouseout = () => {
-    deleteBtn.style.background = "transparent";
+  const createMenuBtn = (text, color = "#00ff66", borderTop = false) => {
+    const btn = document.createElement("button");
+    btn.textContent = text;
+    btn.style.cssText = `
+      width: 100%;
+      padding: 10px;
+      background: transparent;
+      border: none;
+      color: ${color};
+      cursor: pointer;
+      text-align: left;
+      font-size: 14px;
+      transition: all 0.2s;
+      ${borderTop ? 'border-top: 1px solid #333;' : ''}
+    `;
+    btn.onmouseover = () => {
+      btn.style.background = `${color}20`;
+    };
+    btn.onmouseout = () => {
+      btn.style.background = "transparent";
+    };
+    return btn;
   };
 
-  const favoriteBtn = document.createElement("button");
+  // FAVORITE BUTTON
   const isFavorite = document.querySelector(`li[data-chat-id="${chatId}"]`)?.dataset.favorite === "true";
-  favoriteBtn.textContent = isFavorite ? "💔 Unfavorite" : "⭐ Favorite";
-  favoriteBtn.style.cssText = `
-    width: 100%;
-    padding: 10px;
-    background: transparent;
-    border: none;
-    color: #ffd700;
-    cursor: pointer;
-    text-align: left;
-    font-size: 14px;
-    border-bottom: 1px solid #333;
-    transition: all 0.2s;
-  `;
+  const favoriteBtn = createMenuBtn(isFavorite ? "💔 Unfavorite" : "⭐ Favorite", "#ffd700");
   favoriteBtn.onclick = async () => {
     await toggleFavorite(chatId);
     menu.remove();
   };
-  favoriteBtn.onmouseover = () => {
-    favoriteBtn.style.background = "rgba(255, 215, 0, 0.1)";
-  };
-  favoriteBtn.onmouseout = () => {
-    favoriteBtn.style.background = "transparent";
-  };
-
   menu.appendChild(favoriteBtn);
+
+  // MUTE / UNMUTE BUTTON
+  const muteBtn = createMenuBtn(
+    isMuted ? "🔊 Unmute" : "🔇 Mute",
+    isMuted ? "#00ff66" : "#ffa500",
+    true
+  );
+  muteBtn.onclick = async () => {
+    if (isMuted) {
+      await unmuteChat(chatId);
+    } else {
+      await muteChat(chatId);
+    }
+    menu.remove();
+  };
+  menu.appendChild(muteBtn);
+
+  // ARCHIVE BUTTON
+  const archiveBtn = createMenuBtn("📦 Archive", "#00ff66", true);
+  archiveBtn.onclick = async () => {
+    await archiveChat(chatId);
+    menu.remove();
+  };
   menu.appendChild(archiveBtn);
+
+  // DELETE BUTTON
+  const deleteBtn = createMenuBtn("🗑️ Delete", "#ff6b6b", true);
+  deleteBtn.onclick = async () => {
+    if (confirm("Are you sure you want to delete this chat? This will remove it from your list.")) {
+      await deleteChat(chatId);
+      menu.remove();
+    }
+  };
   menu.appendChild(deleteBtn);
+
   document.body.appendChild(menu);
 
   // Close menu when clicking elsewhere
   setTimeout(() => {
-    document.addEventListener("click", function closeMenu() {
-      menu.remove();
-      document.removeEventListener("click", closeMenu);
+    document.addEventListener("click", function closeMenu(e) {
+      if (!menu.contains(e.target)) {
+        menu.remove();
+        document.removeEventListener("click", closeMenu);
+      }
     });
   }, 0);
 }
@@ -1003,6 +996,59 @@ async function toggleFavorite(chatId) {
   } catch (err) {
     console.error("Error toggling favorite:", err);
     showNotif("❌ Failed to update favorite", "error");
+  }
+}
+
+// MUTE / UNMUTE CHAT FUNCTIONS
+async function muteChat(chatId) {
+  try {
+    const userRef = doc(db, "users", myUID);
+    await updateDoc(userRef, {
+      mutedChats: arrayUnion(chatId)
+    });
+    showNotif("🔇 Chat muted", "success", 1500);
+    if (typeof loadContacts === 'function') loadContacts();
+  } catch (err) {
+    console.error("Error muting chat:", err);
+    showNotif("❌ Failed to mute chat", "error");
+  }
+}
+
+async function unmuteChat(chatId) {
+  try {
+    const userRef = doc(db, "users", myUID);
+    const userDoc = await getDoc(userRef);
+    
+    if (userDoc.exists()) {
+      let mutedChats = userDoc.data().mutedChats || [];
+      mutedChats = mutedChats.filter(id => id !== chatId);
+      
+      await updateDoc(userRef, {
+        mutedChats: mutedChats
+      });
+      showNotif("🔊 Chat unmuted", "success", 1500);
+      if (typeof loadContacts === 'function') loadContacts();
+    }
+  } catch (err) {
+    console.error("Error unmuting chat:", err);
+    showNotif("❌ Failed to unmute chat", "error");
+  }
+}
+
+// Check if chat is muted
+async function isChatMuted(chatId) {
+  try {
+    const userRef = doc(db, "users", myUID);
+    const userDoc = await getDoc(userRef);
+    
+    if (userDoc.exists()) {
+      const mutedChats = userDoc.data().mutedChats || [];
+      return mutedChats.includes(chatId);
+    }
+    return false;
+  } catch (err) {
+    console.error("Error checking mute status:", err);
+    return false;
   }
 }
 
@@ -5850,6 +5896,12 @@ window.sendMessage = sendMessage;
 window.loadContacts = loadContacts;
 window.switchDarkMode = switchDarkMode;
 window.applyFilter = applyFilter;
+window.muteChat = muteChat;
+window.unmuteChat = unmuteChat;
+window.archiveChat = archiveChat;
+window.unarchiveChat = unarchiveChat;
+window.deleteChat = deleteChat;
+window.showChatContextMenu = showChatContextMenu;
 
 console.log("✅ Functions exposed to global window");
 
@@ -5882,6 +5934,7 @@ async function loadGroups() {
       const groupId = docSnap.id;
       const li = document.createElement("li");
       li.className = "chat-list-item";
+      li.setAttribute('data-chat-id', groupId);
       li.innerHTML = `
         <div class="chat-avatar-container"><div class="chat-avatar group-avatar">👥</div></div>
         <div class="chat-info"><h3>${escape(group.name)}</h3></div>
@@ -5890,6 +5943,23 @@ async function loadGroups() {
         await openChat(groupId, group.name, "👥", "group");
         if (typeof showChatDetailView === 'function') showChatDetailView();
       });
+      // Right-click context menu
+      li.addEventListener("contextmenu", (e) => {
+        e.preventDefault();
+        if (typeof showChatContextMenu === 'function') showChatContextMenu(e, groupId);
+      });
+      // Long-press handler (250ms hold)
+      let longPressTimer;
+      li.addEventListener("touchstart", () => {
+        longPressTimer = setTimeout(() => {
+          const touchEvent = new MouseEvent('contextmenu', {
+            clientX: event.touches[0].clientX,
+            clientY: event.touches[0].clientY
+          });
+          if (typeof showChatContextMenu === 'function') showChatContextMenu(touchEvent, groupId);
+        }, 250);
+      });
+      li.addEventListener("touchend", () => clearTimeout(longPressTimer));
       groupsList.appendChild(li);
     });
   } catch (err) {
@@ -5923,6 +5993,7 @@ async function loadContacts() {
 
       const li = document.createElement("li");
       li.className = "chat-list-item";
+      li.setAttribute('data-chat-id', uid);
       let avatar = pic ? `<img src="${pic}" class="chat-avatar" onerror="this.src='logo.jpg'">` : `<div class="chat-avatar">${name.charAt(0)}</div>`;
 
       li.innerHTML = `
@@ -5934,6 +6005,23 @@ async function loadContacts() {
         await openChat(uid, name, pic, "direct");
         if (typeof showChatDetailView === 'function') showChatDetailView();
       });
+      // Right-click context menu
+      li.addEventListener("contextmenu", (e) => {
+        e.preventDefault();
+        if (typeof showChatContextMenu === 'function') showChatContextMenu(e, uid);
+      });
+      // Long-press handler (250ms hold)
+      let longPressTimer;
+      li.addEventListener("touchstart", () => {
+        longPressTimer = setTimeout(() => {
+          const touchEvent = new MouseEvent('contextmenu', {
+            clientX: event.touches[0].clientX,
+            clientY: event.touches[0].clientY
+          });
+          if (typeof showChatContextMenu === 'function') showChatContextMenu(touchEvent, uid);
+        }, 250);
+      });
+      li.addEventListener("touchend", () => clearTimeout(longPressTimer));
 
       contactList.appendChild(li);
     });

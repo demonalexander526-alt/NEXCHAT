@@ -3621,3 +3621,37 @@ body.light-mode .chat-list {
 .top-header {
   margin-top: 0;
 }
+
+/* ============================================================
+   CHAT CONTEXT MENU STYLES
+   ============================================================ */
+.chat-context-menu {
+  animation: slideIn 0.2s ease-out;
+  backdrop-filter: blur(10px);
+  overflow: hidden;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.chat-context-menu button {
+  font-family: inherit;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+.chat-context-menu button:first-child {
+  border-radius: 8px 8px 0 0;
+}
+
+.chat-context-menu button:last-child {
+  border-radius: 0 0 8px 8px;
+}
