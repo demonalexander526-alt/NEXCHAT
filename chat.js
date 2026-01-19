@@ -5849,6 +5849,7 @@ window.openChat = openChat;
 window.sendMessage = sendMessage;
 window.loadContacts = loadContacts;
 window.switchDarkMode = switchDarkMode;
+window.applyFilter = applyFilter;
 
 console.log("✅ Functions exposed to global window");
 

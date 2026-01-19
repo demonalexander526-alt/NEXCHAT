@@ -114,7 +114,11 @@ setTimeout(() => {
       if (filter) {
         filterTabs.forEach(t => t.classList.remove("active"));
         tab.classList.add("active");
-        applyFilter(filter);
+        if (typeof window.applyFilter === 'function') {
+          window.applyFilter(filter);
+        } else {
+          console.warn('applyFilter not yet available');
+        }
       }
     });
   });
