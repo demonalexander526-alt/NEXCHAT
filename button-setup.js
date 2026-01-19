@@ -37,25 +37,49 @@ setTimeout(() => {
   // ============ HEADER BUTTONS ============
   const backBtn = document.getElementById("dashboardBackBtn");
   if (backBtn) {
-    backBtn.addEventListener("click", goBackToDashboard);
+    backBtn.addEventListener("click", () => {
+      if (typeof window.goBackToDashboard === 'function') {
+        window.goBackToDashboard();
+      } else {
+        console.warn('goBackToDashboard not yet available');
+      }
+    });
     console.log("✅ Back button");
   }
 
   const searchBtn = document.getElementById("search-btn-header");
   if (searchBtn) {
-    searchBtn.addEventListener("click", openSearch);
+    searchBtn.addEventListener("click", () => {
+      if (typeof window.openSearch === 'function') {
+        window.openSearch();
+      } else {
+        console.warn('openSearch not yet available');
+      }
+    });
     console.log("✅ Search button");
   }
 
   const settingsBtn = document.getElementById("settings-btn-header");
   if (settingsBtn) {
-    settingsBtn.addEventListener("click", openSettingsModal);
+    settingsBtn.addEventListener("click", () => {
+      if (typeof window.openSettingsModal === 'function') {
+        window.openSettingsModal();
+      } else {
+        console.warn('openSettingsModal not yet available');
+      }
+    });
     console.log("✅ Settings button");
   }
 
   const fullscreenBtn = document.getElementById("fullscreen-btn-header");
   if (fullscreenBtn) {
-    fullscreenBtn.addEventListener("click", toggleFullscreen);
+    fullscreenBtn.addEventListener("click", () => {
+      if (typeof window.toggleFullscreen === 'function') {
+        window.toggleFullscreen();
+      } else {
+        console.warn('toggleFullscreen not yet available');
+      }
+    });
     console.log("✅ Fullscreen button");
   }
 
