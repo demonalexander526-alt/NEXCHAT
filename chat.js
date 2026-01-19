@@ -3835,30 +3835,6 @@ function renderPoll(pollId, poll) {
   return pollHTML;
 }
 
-// Toggle dark mode function
-function toggleDarkMode() {
-  const isDarkMode = document.body.classList.contains("dark-mode");
-  const toggle = document.getElementById("darkModeToggle");
-
-  if (isDarkMode) {
-    // Switch to light mode
-    document.body.classList.remove("dark-mode");
-    document.body.classList.add("light-mode");
-    localStorage.setItem("darkMode", "false");
-    toggle?.classList.remove("active");
-    showNotif("☀️ Light mode enabled", "info");
-  } else {
-    // Switch to dark mode
-    document.body.classList.add("dark-mode");
-    document.body.classList.remove("light-mode");
-    localStorage.setItem("darkMode", "true");
-    toggle?.classList.add("active");
-    showNotif("🌙 Dark mode enabled", "info");
-  }
-}
-
-
-
 // Initialize app after DOM is ready
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", setupInitialization);
