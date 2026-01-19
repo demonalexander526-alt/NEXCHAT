@@ -1,8 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
   <meta name="theme-color" content="#00ff66">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -17,12 +19,13 @@
   <link rel="icon" type="image/x-icon" href="logo.jpg">
   <link rel="apple-touch-icon" href="logo.jpg">
 </head>
+
 <body>
   <div class="app">
     <!-- TOP HEADER BAR -->
     <header class="top-header">
       <div class="header-left">
-          <button id="dashboardBackBtn" class="back-button" title="Back to Dashboard">← </button>
+        <button id="dashboardBackBtn" class="back-button" title="Back to Dashboard">← </button>
         <h1 class="header-logo">NEXCHAT</h1>
       </div>
       <div class="header-center">
@@ -33,8 +36,9 @@
       </div>
       <div class="header-right-scroll">
         <div class="header-right">
-          <button id="profile-sticker" class="header-icon-btn profile-sticker" title="Profile" onclick="window.location.href='profile-upload.html'">👤</button>
-          
+          <button id="profile-sticker" class="header-icon-btn profile-sticker" title="Profile"
+            onclick="window.location.href='profile-upload.html'">👤</button>
+
           <!-- Dark Mode Sliding Toggle Switch -->
           <div class="toggle-switch-container" title="Dark/Light Mode">
             <div class="toggle-switch" id="darkModeToggle">
@@ -43,9 +47,10 @@
               <span class="toggle-label light-label">☀️</span>
             </div>
           </div>
-          
+
           <button id="fullscreen-btn-header" class="header-icon-btn" title="Fullscreen">⛶</button>
-          <button id="shop-btn-header" class="header-icon-btn" title="Buy Tokens" onclick="window.location.href='cart.html'">🛒</button>
+          <button id="shop-btn-header" class="header-icon-btn" title="Buy Tokens"
+            onclick="window.location.href='cart.html'">🛒</button>
           <button id="search-btn-header" class="header-icon-btn" title="Search">🔍</button>
           <button id="settings-btn-header" class="header-icon-btn" title="Settings">⚙️</button>
         </div>
@@ -61,20 +66,9 @@
       <div class="status-input-area">
         <div class="my-status-card">
           <img id="myStatusPic" src="" alt="Your status" class="status-avatar">
-          <input 
-            type="file" 
-            id="statusImageInput" 
-            style="display: none;" 
-            accept="image/*"
-          />
+          <input type="file" id="statusImageInput" style="display: none;" accept="image/*" />
           <button id="uploadStatusImageBtn" class="upload-status-btn" title="Upload image">📸</button>
-          <input 
-            type="text" 
-            id="statusInput" 
-            class="status-input" 
-            placeholder="What's on your mind?" 
-            maxlength="150"
-          />
+          <input type="text" id="statusInput" class="status-input" placeholder="What's on your mind?" maxlength="150" />
           <button id="postStatusBtn" class="status-post-btn" title="Post Status">✓</button>
         </div>
       </div>
@@ -105,13 +99,7 @@
       <div id="chatListView" class="chat-list-view">
         <!-- Search Bar -->
         <div class="search-container">
-          <input 
-            type="text" 
-            id="searchInput" 
-            class="search-bar" 
-            placeholder="Search chats..."
-            autocomplete="off"
-          />
+          <input type="text" id="searchInput" class="search-bar" placeholder="Search chats..." autocomplete="off" />
         </div>
 
         <!-- Filter Tabs -->
@@ -151,7 +139,8 @@
         <!-- Chat Header -->
         <div class="chat-detail-header">
           <button id="backBtn" class="back-btn" title="Back to chats">‹</button>
-          <div class="chat-header-profile" id="chatHeaderProfile" style="cursor: pointer; position: relative;" title="Click to open group settings">
+          <div class="chat-header-profile" id="chatHeaderProfile" style="cursor: pointer; position: relative;"
+            title="Click to open group settings">
             <img id="chatProfilePic" src="" alt="profile" class="header-avatar">
             <div class="header-text">
               <h3 id="chatName">User</h3>
@@ -181,7 +170,8 @@
           <div class="dropdown-header">Options</div>
           <button id="callBtn" class="option-item call-option">☎️ Call User</button>
           <button id="videoCallBtn" class="option-item video-option">📹 Video Call</button>
-          <button id="groupAdminBtn" class="option-item" style="display: none; background: #00d4ff; color: #000;">👥 Manage Members</button>
+          <button id="groupAdminBtn" class="option-item" style="display: none; background: #00d4ff; color: #000;">👥
+            Manage Members</button>
           <div class="dropdown-divider"></div>
           <button id="blockBtn" class="option-item danger">🚫 Block User</button>
           <button id="unblockBtn" class="option-item success" style="display: none;">✅ Unblock User</button>
@@ -193,26 +183,15 @@
         <div class="message-input-area">
           <form id="message-form" class="message-form">
             <button type="button" id="attach-btn" class="input-btn" title="Attach file">📎</button>
-            <input 
-              type="file" 
-              id="file-input" 
-              style="display: none;" 
-              accept="image/*,video/*,.pdf,.doc,.docx"
-            />
-            <input 
-              type="text" 
-              id="message-input" 
-              class="message-input" 
-              placeholder="Say something..."
-              autocomplete="off"
-              maxlength="1000"
-            />
+            <input type="file" id="file-input" style="display: none;" accept="image/*,video/*,.pdf,.doc,.docx" />
+            <input type="text" id="message-input" class="message-input" placeholder="Say something..."
+              autocomplete="off" maxlength="1000" />
             <button type="button" id="emoji-btn" class="input-btn">😊</button>
             <button type="button" id="poll-btn" class="input-btn" title="Create Poll" style="display: none;">📊</button>
             <button type="button" id="sticker-btn" class="sticker-btn" title="Post Status">✨</button>
             <button type="submit" class="send-btn">✓</button>
           </form>
-          
+
           <!-- File attachment preview -->
           <div id="attachment-preview" class="attachment-preview" style="display: none;">
             <div class="attachment-item">
@@ -224,7 +203,8 @@
           <!-- Poll Modal -->
           <div id="pollModal" class="modal" style="display: none;">
             <div class="modal-content">
-              <span class="close-modal" onclick="document.getElementById('pollModal').style.display='none'">&times;</span>
+              <span class="close-modal"
+                onclick="document.getElementById('pollModal').style.display='none'">&times;</span>
               <h2>📊 Create a Poll</h2>
               <form id="pollForm">
                 <div class="form-group">
@@ -233,7 +213,8 @@
                 </div>
                 <div class="form-group">
                   <label>Options (one per line)</label>
-                  <textarea id="pollOptions" placeholder="Option 1&#10;Option 2&#10;Option 3" rows="4" required></textarea>
+                  <textarea id="pollOptions" placeholder="Option 1&#10;Option 2&#10;Option 3" rows="4"
+                    required></textarea>
                 </div>
                 <button type="submit" class="btn-primary">✓ Create Poll</button>
               </form>
@@ -255,13 +236,8 @@
       <div id="search-overlay" class="search-overlay" style="display: none;">
         <div id="search-modal" class="search-modal">
           <div class="search-header">
-            <input 
-              type="text" 
-              id="search-input" 
-              class="search-input" 
-              placeholder="Search by UID, username, or name..." 
-              autocomplete="off"
-            />
+            <input type="text" id="search-input" class="search-input" placeholder="Search by UID, username, or name..."
+              autocomplete="off" />
             <button id="browse-users-btn" class="search-action-btn" title="Browse all users">👥</button>
             <button id="close-search-btn" class="close-btn">✕</button>
           </div>
@@ -346,7 +322,8 @@
               <span class="section-icon">📌</span>
               <div class="section-content">
                 <div class="section-label">Kept messages</div>
-                <div class="section-value" id="keptMessagesValue">Only admins can keep or unkeep messages in this group.</div>
+                <div class="section-value" id="keptMessagesValue">Only admins can keep or unkeep messages in this group.
+                </div>
               </div>
             </div>
           </div>
@@ -375,7 +352,8 @@
       <!-- STATUS VIEWER MODAL -->
       <div id="statusViewerModal" class="modal" style="display: none;">
         <div class="status-viewer-content">
-          <button id="closeStatusViewerBtn" class="close-btn" style="position: absolute; top: 16px; right: 16px; z-index: 10;">✕</button>
+          <button id="closeStatusViewerBtn" class="close-btn"
+            style="position: absolute; top: 16px; right: 16px; z-index: 10;">✕</button>
           <div class="status-viewer-image-container">
             <img id="statusViewerImage" src="" alt="Status" class="status-viewer-image">
           </div>
@@ -403,7 +381,8 @@
       <!-- CREATE GROUP MODAL -->
       <div id="createGroupModal" class="modal" style="display: none;">
         <div class="modal-content">
-          <span class="close-modal" onclick="document.getElementById('createGroupModal').style.display='none'">&times;</span>
+          <span class="close-modal"
+            onclick="document.getElementById('createGroupModal').style.display='none'">&times;</span>
           <h2>👥 Create Group</h2>
           <form id="createGroupForm">
             <div class="form-group">
@@ -417,15 +396,19 @@
             <div class="form-group">
               <label>Add Members (select from contacts)</label>
               <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                <button type="button" id="addAllContactsBtn" class="btn-secondary" style="flex: 1;">✓ Add All Contacts</button>
-                <button type="button" id="clearAllContactsBtn" class="btn-secondary" style="flex: 1;">✗ Clear All</button>
+                <button type="button" id="addAllContactsBtn" class="btn-secondary" style="flex: 1;">✓ Add All
+                  Contacts</button>
+                <button type="button" id="clearAllContactsBtn" class="btn-secondary" style="flex: 1;">✗ Clear
+                  All</button>
               </div>
-              <div id="groupMembersList" style="max-height: 200px; overflow-y: auto; border: 1px solid #00ff66; border-radius: 6px; padding: 10px;">
+              <div id="groupMembersList"
+                style="max-height: 200px; overflow-y: auto; border: 1px solid #00ff66; border-radius: 6px; padding: 10px;">
                 <p style="color: #888; text-align: center;">Loading contacts...</p>
               </div>
             </div>
             <button type="submit" class="btn-primary">✓ Create Group</button>
-            <div id="groupCreateResult" style="margin-top: 15px; padding: 10px; border-radius: 6px; text-align: center; display: none;"></div>
+            <div id="groupCreateResult"
+              style="margin-top: 15px; padding: 10px; border-radius: 6px; text-align: center; display: none;"></div>
           </form>
         </div>
       </div>
@@ -492,19 +475,27 @@
               <h3>🖼️ Background Image</h3>
               <div class="setting-item">
                 <label><strong>Change Chat Background</strong></label>
-                <input type="file" id="backgroundImageInput" accept="image/*" style="width: 100%; padding: 10px; margin: 8px 0; background: #1a1a1a; border: 1px solid #00ff66; border-radius: 6px; color: #00ff66;">
+                <input type="file" id="backgroundImageInput" accept="image/*"
+                  style="width: 100%; padding: 10px; margin: 8px 0; background: #1a1a1a; border: 1px solid #00ff66; border-radius: 6px; color: #00ff66;">
               </div>
-              <button id="uploadBackgroundBtn" class="settings-action-btn" style="background: #00ff66; color: #000; width: 100%;">📸 Upload Background</button>
-              <button id="removeBackgroundBtn" class="settings-action-btn" style="background: #ff6b6b; color: #fff; width: 100%; margin-top: 8px;">🗑️ Remove Background</button>
-              <div id="backgroundPreview" style="width: 100%; height: 100px; margin-top: 12px; border-radius: 8px; border: 2px solid #00ff66; background-size: cover; background-position: center;"></div>
+              <button id="uploadBackgroundBtn" class="settings-action-btn"
+                style="background: #00ff66; color: #000; width: 100%;">📸 Upload Background</button>
+              <button id="removeBackgroundBtn" class="settings-action-btn"
+                style="background: #ff6b6b; color: #fff; width: 100%; margin-top: 8px;">🗑️ Remove Background</button>
+              <div id="backgroundPreview"
+                style="width: 100%; height: 100px; margin-top: 12px; border-radius: 8px; border: 2px solid #00ff66; background-size: cover; background-position: center;">
+              </div>
             </div>
 
             <div class="settings-section">
               <h3>Account</h3>
               <div class="setting-item">
                 <label><strong>Your UID:</strong></label>
-                <p id="userUIDDisplay" style="padding: 10px; background: rgba(0, 255, 102, 0.1); border: 1px solid #00ff66; border-radius: 6px; color: #00ff66; word-break: break-all; font-family: monospace; font-size: 12px; margin: 8px 0;">Loading...</p>
-                <button id="copyUIDBtn" class="settings-action-btn" style="background: #00ff66; color: #000; margin-top: 8px;">📋 Copy UID</button>
+                <p id="userUIDDisplay"
+                  style="padding: 10px; background: rgba(0, 255, 102, 0.1); border: 1px solid #00ff66; border-radius: 6px; color: #00ff66; word-break: break-all; font-family: monospace; font-size: 12px; margin: 8px 0;">
+                  Loading...</p>
+                <button id="copyUIDBtn" class="settings-action-btn"
+                  style="background: #00ff66; color: #000; margin-top: 8px;">📋 Copy UID</button>
               </div>
               <button id="changePasswordBtn" class="settings-action-btn">🔑 Change Password</button>
               <button id="clearCacheBtn" class="settings-action-btn">🗑️ Clear Cache</button>
@@ -514,18 +505,22 @@
               <h3>💳 Transfer Tokens</h3>
               <div class="setting-item">
                 <label><strong>Recipient UID:</strong></label>
-                <input type="text" id="recipientUID" placeholder="Paste recipient's UID here..." style="width: 100%; padding: 10px; margin: 8px 0; background: #1a1a1a; border: 1px solid #00ff66; border-radius: 6px; color: #00ff66; font-size: 12px;">
+                <input type="text" id="recipientUID" placeholder="Paste recipient's UID here..."
+                  style="width: 100%; padding: 10px; margin: 8px 0; background: #1a1a1a; border: 1px solid #00ff66; border-radius: 6px; color: #00ff66; font-size: 12px;">
               </div>
               <div class="setting-item">
                 <label><strong>Amount:</strong></label>
-                <input type="number" id="transferAmount" placeholder="100" min="1" style="width: 100%; padding: 10px; margin: 8px 0; background: #1a1a1a; border: 1px solid #00ff66; border-radius: 6px; color: #00ff66;">
+                <input type="number" id="transferAmount" placeholder="100" min="1"
+                  style="width: 100%; padding: 10px; margin: 8px 0; background: #1a1a1a; border: 1px solid #00ff66; border-radius: 6px; color: #00ff66;">
               </div>
-              <button id="transferTokensBtn" class="settings-action-btn" style="background: #00ff66; color: #000; width: 100%;">🚀 Send Tokens</button>
+              <button id="transferTokensBtn" class="settings-action-btn"
+                style="background: #00ff66; color: #000; width: 100%;">🚀 Send Tokens</button>
               <p id="transferResult" style="margin-top: 10px; color: #00ff66; font-size: 12px;"></p>
             </div>
 
             <div class="settings-section">
-              <button id="adminPanelBtn" class="settings-action-btn" style="background: #ff6600; color: #fff; display: none;">👑 Admin Panel</button>
+              <button id="adminPanelBtn" class="settings-action-btn"
+                style="background: #ff6600; color: #fff; display: none;">👑 Admin Panel</button>
             </div>
 
             <div class="settings-section">
@@ -551,12 +546,17 @@
   <script src="pwa-install.js"></script>
   <script src="app-prompt.js"></script>
   <script type="module" src="chat.js"></script>
-  <script src="button-setup.js"></script>
-  <script src="diagnostics.js"></script>
   <style>
     @keyframes slideUp {
-      from { transform: translateY(0); opacity: 1; }
-      to { transform: translateY(-100%); opacity: 0; }
+      from {
+        transform: translateY(0);
+        opacity: 1;
+      }
+
+      to {
+        transform: translateY(-100%);
+        opacity: 0;
+      }
     }
 
     .bottom-nav {
@@ -732,6 +732,7 @@
         opacity: 0;
         transform: translateY(-10px);
       }
+
       to {
         opacity: 1;
         transform: translateY(0);
@@ -778,9 +779,9 @@
     .option-item.danger:hover {
       background: rgba(255, 107, 107, 0.1);
       text-shadow: 0 0 10px rgba(255, 107, 107, 0.4);
-    }can u  s
+    }
 
-    .call-option::before {
+    can u s .call-option::before {
       content: '';
       display: inline-block;
       width: 4px;
@@ -812,4 +813,5 @@
     }
   </style>
 </body>
+
 </html>

@@ -1075,6 +1075,11 @@ function openSearch() {
   console.log("✅ Search opened and input focused");
 }
 
+// Alias for the browse button
+function browseAllUsers() {
+  loadAllUsers();
+}
+
 async function loadAllUsers() {
   console.log("📱 Loading all users and groups...");
   console.log("📌 myUID at loadAllUsers:", myUID);
@@ -3803,8 +3808,17 @@ function toggleDarkMode() {
   }
 }
 
+let basicListenersInitialized = false;
+
 // Setup basic event listeners that don't require Firebase auth
 function initializeBasicListeners() {
+  // Guard to prevent duplicate initialization
+  if (basicListenersInitialized) {
+    console.log("ℹ️ Basic listeners already initialized, skipping...");
+    return;
+  }
+  basicListenersInitialized = true;
+
   // Dashboard back button
   document.getElementById("dashboardBackBtn")?.addEventListener("click", goBackToDashboard);
 
@@ -3866,8 +3880,20 @@ function initializeBasicListeners() {
   console.log("✅ Basic listeners initialized");
 }
 
+let appAfterAuthInitialized = false;
+
 // Setup post-auth event listeners
 function initializeAppAfterAuth() {
+  // Guard to prevent duplicate initialization
+  if (appAfterAuthInitialized) {
+    console.log("ℹ️ App after auth already initialized, skipping...");
+    return;
+  }
+  appAfterAuthInitialized = true;
+
+  // Fullscreen button
+  document.getElementById("fullscreen-btn-header")?.addEventListener("click", toggleFullscreen);
+
   // Search
   document.getElementById("search-btn-header")?.addEventListener("click", openSearch);
   document.getElementById("close-search-btn")?.addEventListener("click", closeSearch);
@@ -4038,6 +4064,8 @@ async function setupInitialization() {
           }
           // Initialize app event listeners after auth
           initializeAppAfterAuth();
+          // Also attach auth-dependent button listeners
+          setupAuthListeners();
         } catch (contactErr) {
           console.error("Error loading contacts:", contactErr);
         }
@@ -5816,8 +5844,17 @@ if (document.readyState === "loading") {
   checkGroupJoinLink();
 }
 
+let basicUIInitialized = false;
+
 // Initialize basic UI elements that don't depend on Firebase data
 function initializeBasicUI() {
+  // Guard to prevent duplicate initialization
+  if (basicUIInitialized) {
+    console.log("ℹ️ Basic UI already initialized, skipping...");
+    return;
+  }
+  basicUIInitialized = true;
+
   // Initialize emoji picker
   initializeEmojiPicker();
 
@@ -6017,7 +6054,16 @@ function goBackToDashboard() {
   window.location.href = 'chat.html';
 }
 
+let authListenersInitialized = false;
+
 function setupAuthListeners() {
+  // Guard to prevent duplicate initialization
+  if (authListenersInitialized) {
+    console.log("ℹ️ Auth listeners already initialized, skipping...");
+    return;
+  }
+  authListenersInitialized = true;
+
   console.log("🛠️ Setting up auth-dependent event listeners...");
 
   // Header Buttons
