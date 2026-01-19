@@ -75,6 +75,12 @@ const notificationSounds = {
   info: 'data:audio/wav;base64,UklGRiYAAABXQVZFZm10IBAAAAABAAEAQB8AAAB9AAACABAAZGF0YQIAAAAAAA=='
 };
 
+// ============ GLOBAL STATE ============
+let basicUIInitialized = false;
+let authListenersInitialized = false;
+let offlineDB = null;
+let settingsInitialized = false;
+
 const emojis = [
   '😊', '😂', '😍', '🤔', '😎', '😢', '❤️', '👍', '🔥', '✨',
   '🎉', '🎊', '😴', '😤', '😡', '😳', '😌', '🤐', '😷', '🤒',
@@ -947,6 +953,33 @@ function showChatContextMenu(event, chatId) {
     deleteBtn.style.background = "transparent";
   };
 
+  const favoriteBtn = document.createElement("button");
+  const isFavorite = document.querySelector(`li[data-chat-id="${chatId}"]`)?.dataset.favorite === "true";
+  favoriteBtn.textContent = isFavorite ? "💔 Unfavorite" : "⭐ Favorite";
+  favoriteBtn.style.cssText = `
+    width: 100%;
+    padding: 10px;
+    background: transparent;
+    border: none;
+    color: #ffd700;
+    cursor: pointer;
+    text-align: left;
+    font-size: 14px;
+    border-bottom: 1px solid #333;
+    transition: all 0.2s;
+  `;
+  favoriteBtn.onclick = async () => {
+    await toggleFavorite(chatId);
+    menu.remove();
+  };
+  favoriteBtn.onmouseover = () => {
+    favoriteBtn.style.background = "rgba(255, 215, 0, 0.1)";
+  };
+  favoriteBtn.onmouseout = () => {
+    favoriteBtn.style.background = "transparent";
+  };
+
+  menu.appendChild(favoriteBtn);
   menu.appendChild(archiveBtn);
   menu.appendChild(deleteBtn);
   document.body.appendChild(menu);
@@ -958,6 +991,41 @@ function showChatContextMenu(event, chatId) {
       document.removeEventListener("click", closeMenu);
     });
   }, 0);
+}
+
+async function toggleFavorite(chatId) {
+  try {
+    const userRef = doc(db, "users", myUID);
+    const userDoc = await getDoc(userRef);
+
+    if (userDoc.exists()) {
+      let favorites = userDoc.data().favorites || [];
+      const index = favorites.indexOf(chatId);
+
+      if (index === -1) {
+        favorites.push(chatId);
+        showNotif("⭐ Added to favorites", "success", 1500);
+      } else {
+        favorites.splice(index, 1);
+        showNotif("💔 Removed from favorites", "info", 1500);
+      }
+
+      await updateDoc(userRef, { favorites });
+
+      // Update UI immediately if possible
+      const item = document.querySelector(`li[data-chat-id="${chatId}"]`);
+      if (item) {
+        item.dataset.favorite = (index === -1) ? "true" : "false";
+        // Reload contacts to ensure sort/filter consistency
+        setTimeout(loadContacts, 500);
+      } else {
+        loadContacts();
+      }
+    }
+  } catch (err) {
+    console.error("Error toggling favorite:", err);
+    showNotif("❌ Failed to update favorite", "error");
+  }
 }
 
 // Dark Mode Preference Loading
@@ -2172,8 +2240,8 @@ async function loadContacts() {
     // Load all messages received by current user
     try {
       const receivedMessagesRef = collection(db, "messages");
-      const receivedQuery = query(receivedMessagesRef, where("to", "==", user.uid));
-      const receivedSnapshot = await getDocs(receivedMessagesRef);
+      const receivedQuery = query(receivedMessagesRef, where("to", "==", myUID));
+      const receivedSnapshot = await getDocs(receivedQuery);
 
       receivedSnapshot.forEach(msgDoc => {
         const msg = msgDoc.data();
@@ -2206,6 +2274,7 @@ async function loadContacts() {
       // Get current user's blocked list
       if (userDoc.id === myUID) {
         blockedUsers = userData.blockedUsers || [];
+        window.myFavorites = userData.favorites || []; // Store globally for easy access
       }
     });
 
@@ -2252,7 +2321,7 @@ async function loadContacts() {
         try {
           const sentMsgs = await getDocs(query(
             collection(db, "messages"),
-            where("from", "==", user.uid),
+            where("from", "==", myUID),
             where("to", "==", chat.id),
             orderBy("time", "desc"),
             limit(1)
@@ -2261,7 +2330,7 @@ async function loadContacts() {
           const receivedMsgs = await getDocs(query(
             collection(db, "messages"),
             where("from", "==", chat.id),
-            where("to", "==", user.uid),
+            where("to", "==", myUID),
             orderBy("time", "desc"),
             limit(1)
           ));
@@ -2292,7 +2361,7 @@ async function loadContacts() {
             timestamp = latestTime;
 
             // Check if we sent or received the last message
-            if (latestMsg.from === user.uid) {
+            if (latestMsg.from === myUID) {
               // We sent it
               chat.messageDelivered = true;
               chat.messageRead = latestMsg.read === true;
@@ -2334,6 +2403,12 @@ async function loadContacts() {
       const contactItem = document.createElement("div");
       contactItem.className = "chat-list-item";
 
+      // Determine if favorite
+      const isFav = window.myFavorites && window.myFavorites.includes(chat.id);
+      if (isFav) {
+        contactItem.classList.add("favorite-chat");
+      }
+
       // Create profile image HTML
       let profileHTML = '';
       if (chat.pic && (chat.pic.startsWith('data:') || chat.pic.startsWith('http'))) {
@@ -2364,7 +2439,7 @@ async function loadContacts() {
         ${profileHTML}
         <div class="chat-item-content ${unreadClass}">
           <div class="chat-item-header">
-            <span class="chat-name">${escape(chat.name)} ${chat.type === 'group' ? '👥' : ''}</span>
+            <span class="chat-name">${escape(chat.name)} ${chat.type === 'group' ? '👥' : ''} ${isFav ? '⭐' : ''}</span>
           </div>
           <div class="chat-preview">
             <span class="read-receipt">${readReceipt}</span>
@@ -2380,7 +2455,7 @@ async function loadContacts() {
       // Add data attributes for filtering
       contactItem.setAttribute("data-chat-id", chat.id);
       contactItem.setAttribute("data-unread", chat.unread ? "true" : "false");
-      contactItem.setAttribute("data-favorite", "false"); // TODO: Implement favorites
+      contactItem.setAttribute("data-favorite", isFav ? "true" : "false");
       contactItem.setAttribute("data-is-group", chat.type === 'group' ? "true" : "false");
 
       contactItem.style.cursor = "pointer";
@@ -2412,6 +2487,8 @@ async function loadContacts() {
     }
 
     // Auto-load the first chat if available
+    // Auto-load the first chat if available
+    /* REMOVED: User requested to disable auto-select
     if (firstContactId && firstContactName && !currentChatUser) {
       setTimeout(() => {
         openChat(firstContactId, firstContactName, firstContactPic || '👤', firstContact.type);
@@ -2419,6 +2496,7 @@ async function loadContacts() {
         console.log("✅ Auto-loaded first chat with:", firstContactName);
       }, 500);
     }
+    */
   } catch (err) {
     console.error("Error loading contacts:", err);
     showNotif("Error loading contacts: " + err.message, "error");
@@ -2476,13 +2554,15 @@ async function openChat(uid, username, profilePic, chatType = 'direct') {
 
       if (userDoc.exists()) {
         userData = userDoc.data();
-        document.getElementById("infoEmail").textContent = userData.email || "";
+        const infoEmail = document.getElementById("infoEmail");
+        if (infoEmail) infoEmail.textContent = userData.email || "";
         document.getElementById("statusText").textContent = userData.online ? "🟢 Online" : "⚫ Offline";
         document.getElementById("infoStatus").textContent = userData.online ? "🟢 Online" : "⚫ Offline";
       } else {
         // User document doesn't exist yet, but allow chatting with UID
         console.warn("User document not found in database, but proceeding with UID:", uid);
-        document.getElementById("infoEmail").textContent = "Profile pending...";
+        const infoEmail = document.getElementById("infoEmail");
+        if (infoEmail) infoEmail.textContent = "Profile pending...";
         document.getElementById("statusText").textContent = "⚪ Pending";
         document.getElementById("infoStatus").textContent = "⚪ Pending";
         showNotif("ℹ️ User profile not fully synced yet. Chat enabled via UID.", "info");
@@ -3183,7 +3263,7 @@ async function uploadFileToStorage(file, chatId, isGroup = false) {
   }
 }
 
-let settingsInitialized = false;
+
 
 async function transferTokens() {
   const recipientUID = document.getElementById("recipientUID")?.value.trim();
@@ -3875,6 +3955,16 @@ function initializeBasicListeners() {
     await createPoll(currentChatUser, question, options);
     document.getElementById("pollModal").style.display = "none";
     document.getElementById("pollForm").reset();
+  });
+
+  // New Chat Button (+) on tabs
+  document.getElementById("newChatFromTab")?.addEventListener("click", () => {
+    openSearch();
+  });
+
+  // Create New Group Button
+  document.getElementById("createNewGroupBtn")?.addEventListener("click", () => {
+    openCreateGroupModal();
   });
 
   console.log("✅ Basic listeners initialized");
@@ -4574,11 +4664,13 @@ async function loadStatuses() {
         if (status.expiresAt) {
           const expiryTime = status.expiresAt?.toDate?.() || new Date(status.expiresAt);
           if (new Date() > expiryTime) {
-            // Auto-delete expired status
-            try {
-              await deleteDoc(doc(db, "statuses", docSnap.id));
-            } catch (err) {
-              console.warn("Could not delete expired status:", err);
+            // Auto-delete expired status (only if it's mine)
+            if (status.userId === myUID) {
+              try {
+                await deleteDoc(doc(db, "statuses", docSnap.id));
+              } catch (err) {
+                console.warn("Could not delete expired status:", err);
+              }
             }
             continue;
           }
@@ -5508,7 +5600,7 @@ function checkGroupJoinLink() {
 // ============================================================
 
 // Initialize IndexedDB for offline message storage
-let offlineDB = null;
+
 
 async function initOfflineDB() {
   return new Promise((resolve, reject) => {
@@ -5844,7 +5936,7 @@ if (document.readyState === "loading") {
   checkGroupJoinLink();
 }
 
-let basicUIInitialized = false;
+
 
 // Initialize basic UI elements that don't depend on Firebase data
 function initializeBasicUI() {
@@ -6024,7 +6116,7 @@ function initializeBasicUI() {
 
     // If dragged more than 15px, toggle
     if (Math.abs(currentX) > 15) {
-      toggleDarkMode();
+      switchDarkMode();
     }
     currentX = 0;
   });
@@ -6035,7 +6127,7 @@ function initializeBasicUI() {
 
     // If dragged more than 15px, toggle
     if (Math.abs(currentX) > 15) {
-      toggleDarkMode();
+      switchDarkMode();
     }
     currentX = 0;
   });
@@ -6043,7 +6135,7 @@ function initializeBasicUI() {
   // Click handler for direct toggle
   darkModeToggle?.addEventListener("click", () => {
     if (!isSliding) {
-      toggleDarkMode();
+      switchDarkMode();
     }
   });
 }
@@ -6054,7 +6146,7 @@ function goBackToDashboard() {
   window.location.href = 'chat.html';
 }
 
-let authListenersInitialized = false;
+
 
 function setupAuthListeners() {
   // Guard to prevent duplicate initialization
@@ -6184,6 +6276,31 @@ async function handleStatusPost(text, file) {
 }
 
 
+// ============ GLOBAL UTILITY FUNCTIONS ============
+
+function switchDarkMode() {
+  const body = document.body;
+  const toggle = document.getElementById("darkModeToggle");
+  const isDark = body.classList.contains("dark-mode");
+
+  if (isDark) {
+    body.classList.remove("dark-mode");
+    body.classList.add("light-mode");
+    toggle?.classList.remove("active");
+    localStorage.setItem("darkMode", "false");
+    // Also update settings preference if possible
+    saveSettingsPreferences();
+    showNotif("☀️ Light Mode Enabled", "success");
+  } else {
+    body.classList.remove("light-mode");
+    body.classList.add("dark-mode");
+    toggle?.classList.add("active");
+    localStorage.setItem("darkMode", "true");
+    saveSettingsPreferences();
+    showNotif("🌙 Dark Mode Enabled", "success");
+  }
+}
+
 // ============================================================
 // EXPOSE FUNCTIONS GLOBALLY FOR ONCLICK HANDLERS
 // ============================================================
@@ -6193,5 +6310,9 @@ window.openSearch = openSearch;
 window.openSettingsModal = openSettingsModal;
 window.goBackToDashboard = goBackToDashboard;
 window.showNotif = showNotif;
+window.openChat = openChat;
+window.sendMessage = sendMessage;
+window.loadContacts = loadContacts;
+window.switchDarkMode = switchDarkMode;
 
-console.log("? Functions exposed to global window");
+console.log("✅ Functions exposed to global window");
