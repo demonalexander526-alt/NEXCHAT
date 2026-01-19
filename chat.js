@@ -5944,22 +5944,5 @@ async function deleteChat(chatId, type) {
   }
 }
 
-async function unarchiveChat(chatId) {
-  try {
-    const userRef = doc(db, "users", myUID);
-    // Remove from archivedChats array
-    await updateDoc(userRef, {
-      archivedChats: arrayRemove(chatId)
-    });
-    showNotif("📂 Chat unarchived", "success");
-    // Refresh lists
-    if (typeof loadContacts === 'function') loadContacts();
-  } catch (e) {
-    console.error("Error unarchiving:", e);
-    showNotif("Error unarchiving chat", "error");
-  }
-}
-
-// Expose these new functions universally
+// Expose deleteChat to global scope (unarchiveChat already defined earlier)
 window.deleteChat = deleteChat;
-window.unarchiveChat = unarchiveChat;

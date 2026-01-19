@@ -3,9 +3,28 @@
 // It attaches listeners to ALL interactive buttons in the app
 
 // Import global functions from chat.js if not already available
+// Add fallbacks in case chat.js hasn't fully loaded yet
 if (typeof goBackToDashboard === 'undefined') {
   window.goBackToDashboard = () => {
     console.warn('goBackToDashboard not yet loaded from chat.js');
+  };
+}
+
+if (typeof openSearch === 'undefined') {
+  window.openSearch = () => {
+    console.warn('openSearch not yet loaded from chat.js');
+  };
+}
+
+if (typeof openSettingsModal === 'undefined') {
+  window.openSettingsModal = () => {
+    console.warn('openSettingsModal not yet loaded from chat.js');
+  };
+}
+
+if (typeof toggleFullscreen === 'undefined') {
+  window.toggleFullscreen = () => {
+    console.warn('toggleFullscreen not yet loaded from chat.js');
   };
 }
 
