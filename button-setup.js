@@ -213,7 +213,13 @@ setTimeout(() => {
   // ============ SEARCH BUTTONS ============
   const closeSearchBtn = document.getElementById("close-search-btn");
   if (closeSearchBtn) {
-    closeSearchBtn.addEventListener("click", closeSearch);
+    closeSearchBtn.addEventListener("click", () => {
+      if (typeof window.closeSearch === 'function') {
+        window.closeSearch();
+      } else {
+        console.warn('closeSearch not yet available');
+      }
+    });
     console.log("✅ Close search button");
   }
 

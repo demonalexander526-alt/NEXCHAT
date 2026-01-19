@@ -2162,12 +2162,19 @@ async function openChat(uid, username, profilePic, chatType = 'direct') {
   currentChatUser = uid;
   currentChatType = chatType; // Store chat type (direct or group)
 
-  document.getElementById("chatName").textContent = username;
-  document.getElementById("chatProfilePic").src = profilePic || "👤";
+  // Update chat header elements (with null checks)
+  const chatNameEl = document.getElementById("chatName");
+  if (chatNameEl) chatNameEl.textContent = username;
+  
+  const chatProfilePicEl = document.getElementById("chatProfilePic");
+  if (chatProfilePicEl) chatProfilePicEl.src = profilePic || "👤";
 
-  // Update info sidebar
-  document.getElementById("infoName").textContent = username;
-  document.getElementById("infoPic").src = profilePic || "👤";
+  // Update info sidebar (with null checks)
+  const infoNameEl = document.getElementById("infoName");
+  if (infoNameEl) infoNameEl.textContent = username;
+  
+  const infoPicEl = document.getElementById("infoPic");
+  if (infoPicEl) infoPicEl.src = profilePic || "👤";
 
   try {
     if (chatType === 'group') {
@@ -2175,9 +2182,14 @@ async function openChat(uid, username, profilePic, chatType = 'direct') {
       const groupDoc = await getDoc(doc(db, "groups", uid));
       if (groupDoc.exists()) {
         const groupData = groupDoc.data();
-        document.getElementById("infoEmail").textContent = `Members: ${groupData.members.length} `;
-        document.getElementById("statusText").textContent = `👥 Group Chat`;
-        document.getElementById("infoStatus").textContent = `👥 Group Chat`;
+        const infoEmailEl = document.getElementById("infoEmail");
+        if (infoEmailEl) infoEmailEl.textContent = `Members: ${groupData.members.length} `;
+        
+        const statusTextEl = document.getElementById("statusText");
+        if (statusTextEl) statusTextEl.textContent = `👥 Group Chat`;
+        
+        const infoStatusEl = document.getElementById("infoStatus");
+        if (infoStatusEl) infoStatusEl.textContent = `👥 Group Chat`;
 
         // Load group members for mention system
         groupMembers = [];
@@ -2205,15 +2217,24 @@ async function openChat(uid, username, profilePic, chatType = 'direct') {
         userData = userDoc.data();
         const infoEmail = document.getElementById("infoEmail");
         if (infoEmail) infoEmail.textContent = userData.email || "";
-        document.getElementById("statusText").textContent = userData.online ? "🟢 Online" : "⚫ Offline";
-        document.getElementById("infoStatus").textContent = userData.online ? "🟢 Online" : "⚫ Offline";
+        
+        const statusTextEl = document.getElementById("statusText");
+        if (statusTextEl) statusTextEl.textContent = userData.online ? "🟢 Online" : "⚫ Offline";
+        
+        const infoStatusEl = document.getElementById("infoStatus");
+        if (infoStatusEl) infoStatusEl.textContent = userData.online ? "🟢 Online" : "⚫ Offline";
       } else {
         // User document doesn't exist yet, but allow chatting with UID
         console.warn("User document not found in database, but proceeding with UID:", uid);
         const infoEmail = document.getElementById("infoEmail");
         if (infoEmail) infoEmail.textContent = "Profile pending...";
-        document.getElementById("statusText").textContent = "⚪ Pending";
-        document.getElementById("infoStatus").textContent = "⚪ Pending";
+        
+        const statusTextEl = document.getElementById("statusText");
+        if (statusTextEl) statusTextEl.textContent = "⚪ Pending";
+        
+        const infoStatusEl = document.getElementById("infoStatus");
+        if (infoStatusEl) infoStatusEl.textContent = "⚪ Pending";
+        
         showNotif("ℹ️ User profile not fully synced yet. Chat enabled via UID.", "info");
       }
 
@@ -5820,6 +5841,7 @@ function switchDarkMode() {
 // Make sure these functions are available in global scope
 window.toggleFullscreen = toggleFullscreen;
 window.openSearch = openSearch;
+window.closeSearch = closeSearch;
 window.openSettingsModal = openSettingsModal;
 window.goBackToDashboard = goBackToDashboard;
 window.showNotif = showNotif;
