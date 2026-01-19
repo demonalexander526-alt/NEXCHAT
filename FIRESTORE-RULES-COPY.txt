@@ -1,0 +1,262 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ============================================================
+    // HELPER FUNCTIONS
+    // ============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isGroupMember(groupId) {
+      return isAuthenticated() && 
+             request.auth.uid in get(/databases/$(database)/documents/groups/$(groupId)).data.members;
+    }
+    
+    function isGroupAdmin(groupId) {
+      return isAuthenticated() && 
+             request.auth.uid in get(/databases/$(database)/documents/groups/$(groupId)).data.admins;
+    }
+    
+    // ============================================================
+    // USERS COLLECTION
+    // ============================================================
+    match /users/{uid} {
+      allow read, write: if isOwner(uid);
+      allow read: if isAuthenticated();
+      allow create: if isOwner(uid) && 
+                       request.resource.data.uid == uid;
+    }
+    
+    // ============================================================
+    // GROUPS COLLECTION
+    // ============================================================
+    match /groups/{groupId} {
+      allow create: if isAuthenticated() && 
+                       request.resource.data.creatorId == request.auth.uid;
+      
+      allow read: if isGroupMember(groupId);
+      allow update: if isGroupAdmin(groupId);
+      allow delete: if isGroupAdmin(groupId);
+      
+      // Group messages
+      match /messages/{messageId} {
+        allow create: if isGroupMember(groupId) &&
+                         request.resource.data.senderId == request.auth.uid;
+        
+        allow read: if isGroupMember(groupId);
+        
+        allow update, delete: if isAuthenticated() && 
+                                 (isOwner(resource.data.senderId) || isGroupAdmin(groupId));
+      }
+    }
+    
+    // ============================================================
+    // DIRECT MESSAGES COLLECTION
+    // ============================================================
+    match /messages/{messageId} {
+      allow create: if isAuthenticated() &&
+                       request.resource.data.from == request.auth.uid;
+      
+      allow read: if isAuthenticated() &&
+                     (request.auth.uid == resource.data.from || 
+                      request.auth.uid == resource.data.to);
+      
+      allow update: if isOwner(resource.data.from);
+      allow delete: if isAuthenticated() &&
+                       (isOwner(resource.data.from) || 
+                        isOwner(resource.data.to));
+    }
+    
+    // ============================================================
+    // STATUSES COLLECTION (NEX-STATUS)
+    // ============================================================
+    match /statuses/{statusId} {
+      allow read: if isAuthenticated();
+      
+      allow create: if isAuthenticated() &&
+                       request.resource.data.userId == request.auth.uid &&
+                       request.resource.data.expiresAt > request.time;
+      
+      allow update: if isOwner(resource.data.userId);
+      allow delete: if isOwner(resource.data.userId);
+    }
+    
+    // ============================================================
+    // OFFLINE MESSAGE QUEUE
+    // ============================================================
+    match /offlineMessageQueue/{queueId} {
+      allow create: if isAuthenticated() &&
+                       request.resource.data.userId == request.auth.uid;
+      
+      allow read: if isOwner(resource.data.userId);
+      allow update: if isOwner(resource.data.userId);
+      allow delete: if isOwner(resource.data.userId);
+    }
+    
+    // ============================================================
+    // MESSAGE ACTIVITY LOG
+    // ============================================================
+    match /messageActivity/{activityId} {
+      allow create: if isAuthenticated() &&
+                       request.resource.data.userId == request.auth.uid;
+      
+      allow read: if isOwner(resource.data.userId);
+      allow update, delete: if false;
+    }
+    
+    // ============================================================
+    // REPORTS COLLECTION
+    // ============================================================
+    match /reports/{reportId} {
+      allow create: if isAuthenticated() &&
+                       request.resource.data.reportedBy == request.auth.uid;
+      
+      allow read: if isOwner(resource.data.reportedBy);
+      allow update, delete: if false;
+    }
+    
+    // ============================================================
+    // BLOCKED USERS
+    // ============================================================
+    match /blockedUsers/{blockId} {
+      allow read, write: if isAuthenticated() &&
+                            request.resource.data.userId == request.auth.uid;
+    }
+    
+    // ============================================================
+    // USER PRESENCE
+    // ============================================================
+    match /presence/{uid} {
+      allow read: if isAuthenticated();
+      allow write: if isOwner(uid);
+    }
+    
+    // ============================================================
+    // VOICE & VIDEO CALLS
+    // ============================================================
+    match /calls/{callId} {
+      // Both caller and receiver can create/access call documents
+      allow create: if isAuthenticated() &&
+                       request.resource.data.callerId == request.auth.uid;
+      
+      // Caller and receiver can read the call
+      allow read: if isAuthenticated() &&
+                     (request.auth.uid == resource.data.callerId || 
+                      request.auth.uid == resource.data.receiverId);
+      
+      // Both parties can update call status (accept/reject/end)
+      allow update: if isAuthenticated() &&
+                       (request.auth.uid == resource.data.callerId || 
+                        request.auth.uid == resource.data.receiverId);
+      
+      // Caller or receiver can delete call after it ends
+      allow delete: if isAuthenticated() &&
+                       (request.auth.uid == resource.data.callerId || 
+                        request.auth.uid == resource.data.receiverId);
+      
+      // ICE candidates subcollection (for WebRTC peer connection)
+      match /iceCandidates/{candidateId} {
+        allow create: if isAuthenticated() &&
+                         request.resource.data.from == request.auth.uid;
+        
+        allow read: if isAuthenticated() &&
+                       (request.auth.uid == get(/databases/$(database)/documents/calls/$(callId)).data.callerId ||
+                        request.auth.uid == get(/databases/$(database)/documents/calls/$(callId)).data.receiverId);
+        
+        allow delete: if isAuthenticated() &&
+                         request.resource.data.from == request.auth.uid;
+      }
+      
+      // SDP offers/answers subcollection (for WebRTC signaling)
+      match /sdp/{sdpId} {
+        allow create: if isAuthenticated() &&
+                         request.resource.data.from == request.auth.uid;
+        
+        allow read: if isAuthenticated() &&
+                       (request.auth.uid == get(/databases/$(database)/documents/calls/$(callId)).data.callerId ||
+                        request.auth.uid == get(/databases/$(database)/documents/calls/$(callId)).data.receiverId);
+        
+        allow update: if isAuthenticated() &&
+                         request.resource.data.from == request.auth.uid;
+      }
+    }
+    
+    // ============================================================
+    // CALL HISTORY
+    // ============================================================
+    match /callHistory/{historyId} {
+      // Users can create their own call history records
+      allow create: if isAuthenticated() &&
+                       (request.resource.data.callerId == request.auth.uid ||
+                        request.resource.data.receiverId == request.auth.uid);
+      
+      // Users can read their own call history
+      allow read: if isAuthenticated() &&
+                     (request.auth.uid == resource.data.callerId ||
+                      request.auth.uid == resource.data.receiverId);
+      
+      // Users can update their own call history (mark as read, etc)
+      allow update: if isAuthenticated() &&
+                       (request.auth.uid == resource.data.callerId ||
+                        request.auth.uid == resource.data.receiverId);
+      
+      // Users can delete their own call history
+      allow delete: if isAuthenticated() &&
+                       (request.auth.uid == resource.data.callerId ||
+                        request.auth.uid == resource.data.receiverId);
+    }
+    
+    // ============================================================
+    // GROUP CALLS
+    // ============================================================
+    match /groupCalls/{groupCallId} {
+      // Group members can create group calls
+      allow create: if isAuthenticated() && 
+                       isGroupMember(resource.data.groupId) &&
+                       request.resource.data.initiatorId == request.auth.uid;
+      
+      // Group members can read/join group calls
+      allow read: if isAuthenticated() && 
+                     isGroupMember(resource.data.groupId);
+      
+      // Only initiator can update group call
+      allow update: if isAuthenticated() &&
+                       request.auth.uid == resource.data.initiatorId;
+      
+      // Initiator can end/delete group call
+      allow delete: if isAuthenticated() &&
+                       request.auth.uid == resource.data.initiatorId;
+      
+      // Participants subcollection
+      match /participants/{participantId} {
+        allow create: if isAuthenticated() &&
+                         isGroupMember(get(/databases/$(database)/documents/groupCalls/$(groupCallId)).data.groupId);
+        
+        allow read: if isAuthenticated() &&
+                       isGroupMember(get(/databases/$(database)/documents/groupCalls/$(groupCallId)).data.groupId);
+        
+        allow update: if isAuthenticated() &&
+                         request.resource.data.userId == request.auth.uid;
+        
+        allow delete: if isAuthenticated() &&
+                         (request.auth.uid == request.resource.data.userId ||
+                          request.auth.uid == get(/databases/$(database)/documents/groupCalls/$(groupCallId)).data.initiatorId);
+      }
+    }
+    
+    // ============================================================
+    // USER BACKGROUNDS (Background Image Settings)
+    // ============================================================
+    match /userBackgrounds/{uid} {
+      // Users can manage their own background settings
+      allow read, write: if isOwner(uid);
+    }
+  }
+}

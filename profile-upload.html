@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#00ff66">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="format-detection" content="telephone=no">
+  <meta name="description" content="Complete your NEXCHAT profile">
+  <meta name="apple-mobile-web-app-title" content="NEXCHAT Profile">
+  <meta name="mobile-web-app-title" content="NEXCHAT Profile">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <title>☄️ NEXCHAT - Setup Profile ☄️</title>
+  <link rel="stylesheet" href="Profile-upload.css?v=1.0">
+  <link rel="icon" type="image/x-icon" href="logo.jpg">
+  <link rel="apple-touch-icon" href="logo.jpg">
+  <style>
+    /* Prevent any layout shifts or side panels */
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  </style>
+</head>
+<body>
+
+<div class="profile-bg"></div>
+
+<main class="profile-container" role="main" aria-labelledby="setupTitle">
+  <img src="logo.jpg" class="logo" alt="NEXCHAT Logo">
+  <h2 id="setupTitle">Complete Your Profile</h2>
+
+  <form id="profileForm" aria-describedby="result" novalidate>
+    <!-- Profile Picture Input -->
+    <div class="form-group">
+      <label for="profilePic" class="form-label">Profile Picture</label>
+      <div class="upload-options">
+        <button type="button" class="upload-btn camera-btn" id="cameraBtn" title="Take a photo">
+          <span class="btn-icon">📷</span>
+          <span class="btn-text">Camera</span>
+        </button>
+        <button type="button" class="upload-btn gallery-btn" id="galleryBtn" title="Choose from storage">
+          <span class="btn-icon">🖼️</span>
+          <span class="btn-text">Gallery</span>
+        </button>
+      </div>
+      <input 
+        type="file" 
+        id="profilePic" 
+        accept="image/*" 
+        required 
+        aria-required="true"
+        aria-describedby="fileHelp"
+        style="display: none;"
+      >
+      <small id="fileHelp">Supported: JPG, PNG, GIF (Max 5MB)</small>
+    </div>
+
+    <!-- Image Preview -->
+    <div id="previewContainer" class="preview-container" aria-hidden="true">
+      <img id="previewImage" alt="Preview" class="preview-image">
+      <p class="preview-text">Preview</p>
+    </div>
+
+    <button type="submit" class="auth-btn">🖼️ Upload Profile Picture</button>
+  </form>
+
+  <p id="result" aria-live="polite" role="status"></p>
+  <div id="timerContainer" style="
+    margin-top: 20px;
+    padding: 12px;
+    background: rgba(0, 255, 102, 0.1);
+    border: 1px solid #00ff66;
+    border-radius: 8px;
+    text-align: center;
+    color: #00ff66;
+    font-weight: 600;
+    display: none;
+  ">
+    ⏱️ Auto-redirect in <span id="timerCount">30</span>s
+  </div>
+
+  <div id="backToChatContainer" style="
+    margin-top: 20px;
+    text-align: center;
+  ">
+    <a href="chat.html" style="
+      color: #00ff66;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 600;
+    ">← Back to Chat</a>
+  </div>
+</main>
+
+<script type="module">
+  import { auth, db, storage } from "./firebase-config.js";
+  import { setDoc, doc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+  import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
+
+  const profileForm = document.getElementById('profileForm');
+  const result = document.getElementById('result');
+  const fileInput = document.getElementById('profilePic');
+  const previewImage = document.getElementById('previewImage');
+  const previewContainer = document.getElementById('previewContainer');
+  const timerContainer = document.getElementById('timerContainer');
+  const timerCount = document.getElementById('timerCount');
+  const cameraBtn = document.getElementById('cameraBtn');
+  const galleryBtn = document.getElementById('galleryBtn');
+
+  // ============================================================
+  // UPLOAD SOURCE SELECTION (CAMERA vs GALLERY)
+  // ============================================================
+  cameraBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    fileInput.setAttribute('capture', 'environment');
+    fileInput.click();
+  });
+
+  galleryBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    fileInput.removeAttribute('capture');
+    fileInput.click();
+  });
+
+  // ============================================================
+  // AUTO-REDIRECT TIMER (30 SECONDS)
+  // ============================================================
+  let timerInterval = null;
+  let timeRemaining = 30;
+  let isProfileCreated = false;
+
+  function startAutoRedirectTimer() {
+    // Only start timer if user is already authenticated (profile exists)
+    if (auth && auth.currentUser) {
+      console.log('⏱️ Starting 30-second auto-redirect timer...');
+      timerContainer.style.display = 'block';
+      
+      timerInterval = setInterval(() => {
+        timeRemaining--;
+        timerCount.textContent = timeRemaining;
+        
+        // Change color as time runs out
+        if (timeRemaining <= 10) {
+          timerContainer.style.background = 'rgba(255, 77, 77, 0.2)';
+          timerContainer.style.borderColor = '#ff4d4d';
+          timerContainer.style.color = '#ff4d4d';
+        }
+        
+        if (timeRemaining <= 0) {
+          clearInterval(timerInterval);
+          console.log('⏱️ Timer expired! Auto-redirecting to chat.html');
+          window.location.replace('chat.html');
+        }
+      }, 1000);
+    }
+  }
+
+  function cancelAutoRedirectTimer() {
+    if (timerInterval) {
+      clearInterval(timerInterval);
+      timerInterval = null;
+      console.log('✅ Auto-redirect timer cancelled');
+      timerContainer.style.display = 'none';
+    }
+  }
+
+  // Start timer when page loads (only if already authenticated)
+  auth.onAuthStateChanged((user) => {
+    if (user) {
+      console.log('✅ User already authenticated:', user.uid);
+      startAutoRedirectTimer();
+    } else {
+      console.log('❌ User not authenticated, redirecting to login...');
+      timerContainer.style.display = 'none';
+      setTimeout(() => {
+        window.location.replace('index.html');
+      }, 1000);
+    }
+  });
+
+  // Helper to wait for auth user UID
+  function getCurrentUID(timeout = 10000) {
+    return new Promise((resolve, reject) => {
+      if (auth && auth.currentUser && auth.currentUser.uid) {
+        console.log('✅ Auth user found immediately:', auth.currentUser.uid);
+        return resolve(auth.currentUser.uid);
+      }
+      
+      console.log('⏳ Waiting for auth state... (timeout: ' + timeout + 'ms)');
+      const timer = setTimeout(() => {
+        console.error('❌ Auth timeout - user not authenticated after ' + timeout + 'ms');
+        reject(new Error('User not authenticated. Please register first and wait for the redirect.'));
+      }, timeout);
+      
+      try {
+        const unsub = auth.onAuthStateChanged(u => {
+          clearTimeout(timer);
+          unsub();
+          if (u && u.uid) {
+            console.log('✅ Auth state changed, user found:', u.uid);
+            resolve(u.uid);
+          } else {
+            console.error('❌ No user in auth state');
+            reject(new Error('User not authenticated. Please log in first.'));
+          }
+        });
+      } catch (e) {
+        clearTimeout(timer);
+        console.error('❌ Auth error:', e);
+        reject(e);
+      }
+    });
+  }
+
+  // Helper to compress image
+  function compressImage(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target.result;
+        
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          
+          // Resize if image is too large
+          const maxWidth = 800;
+          const maxHeight = 800;
+          
+          if (width > height) {
+            if (width > maxWidth) {
+              height *= maxWidth / width;
+              width = maxWidth;
+            }
+          } else {
+            if (height > maxHeight) {
+              width *= maxHeight / height;
+              height = maxHeight;
+            }
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          // Convert to blob with compression
+          canvas.toBlob((blob) => {
+            if (blob) {
+              resolve(blob);
+            } else {
+              reject(new Error('Failed to compress image'));
+            }
+          }, 'image/jpeg', 0.8); // 80% quality
+        };
+        
+        img.onerror = () => {
+          reject(new Error('Failed to load image'));
+        };
+      };
+      
+      reader.onerror = () => {
+        reject(new Error('Failed to read file'));
+      };
+    });
+  }
+
+  // Image preview
+  fileInput.addEventListener('change', () => {
+    const file = fileInput.files[0];
+    if (!file) return;
+    
+    // Check file type
+    if (!file.type.startsWith('image/')) {
+      result.textContent = "❌ Please select an image file!";
+      result.style.color = '#ff4d4d';
+      fileInput.value = '';
+      previewContainer.style.display = 'none';
+      return;
+    }
+    
+    // File size check (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      result.textContent = "❌ File too large! Max 5MB allowed.";
+      result.style.color = '#ff4d4d';
+      fileInput.value = '';
+      previewContainer.style.display = 'none';
+      return;
+    }
+
+    const url = URL.createObjectURL(file);
+    previewImage.src = url;
+    previewContainer.setAttribute('aria-hidden', 'false');
+    previewContainer.style.display = 'flex';
+    result.textContent = '✅ Image selected. Ready to upload!';
+    result.style.color = '#00ff66';
+  });
+
+  // Form submission
+  profileForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    // Cancel the auto-redirect timer since user is submitting
+    cancelAutoRedirectTimer();
+
+    // Validation
+    if (fileInput.files.length === 0) {
+      result.textContent = "❌ Please select a profile picture!";
+      result.style.color = '#ff4d4d';
+      return;
+    }
+
+    const submitBtn = profileForm.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+
+    const file = fileInput.files[0];
+    
+    // File size check (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      result.textContent = "❌ File too large! Max 5MB allowed.";
+      result.style.color = '#ff4d4d';
+      fileInput.value = '';
+      previewContainer.style.display = 'none';
+      submitBtn.disabled = false;
+      return;
+    }
+
+    try {
+      // Show loading state
+      result.textContent = "⏳ Processing profile picture...";
+      result.style.color = '#00ff66';
+      console.log('📝 Starting profile picture upload...');
+
+      // Get UID
+      let uid;
+      try {
+        uid = await getCurrentUID();
+      } catch (authErr) {
+        console.error('❌ Auth error:', authErr);
+        result.textContent = `❌ ${authErr.message}`;
+        result.style.color = '#ff4d4d';
+        submitBtn.disabled = false;
+        return;
+      }
+
+      console.log('🔐 Got UID:', uid);
+
+      // Upload image to Cloud Storage
+      let profilePicUrl = null;
+      
+      try {
+        console.log('📤 Uploading image to Cloud Storage...');
+        console.log('📊 File details:', {
+          name: file.name,
+          size: file.size,
+          type: file.type
+        });
+        
+        // Compress image before upload if needed
+        let fileToUpload = file;
+        
+        // For large files, compress using canvas
+        if (file.size > 2 * 1024 * 1024) {
+          console.log('🔧 File is large, attempting compression...');
+          fileToUpload = await compressImage(file);
+          console.log('✅ Compressed file size:', fileToUpload.size);
+        }
+        
+        // Use timestamp to ensure unique filename
+        const timestamp = Date.now();
+        const fileExtension = file.type === 'image/png' ? 'png' : file.type === 'image/gif' ? 'gif' : 'jpg';
+        const filename = `profile_${uid}_${timestamp}.${fileExtension}`;
+        const storageRef = ref(storage, `profilePics/${uid}/${filename}`);
+        
+        console.log('🗂️ Storage path:', `profilePics/${uid}/${filename}`);
+        
+        // Upload the file with metadata
+        const metadata = {
+          contentType: file.type,
+          customMetadata: {
+            uploadedBy: uid,
+            uploadedAt: new Date().toISOString()
+          }
+        };
+        
+        const snapshot = await uploadBytes(storageRef, fileToUpload, metadata);
+        console.log('✅ File uploaded to:', snapshot.ref.fullPath);
+        
+        // Get download URL with retry logic
+        let retries = 3;
+        let downloadUrl = null;
+        
+        while (retries > 0 && !downloadUrl) {
+          try {
+            downloadUrl = await getDownloadURL(storageRef);
+            console.log('✅ Got download URL on attempt:', 4 - retries);
+            break;
+          } catch (urlErr) {
+            retries--;
+            if (retries > 0) {
+              console.log(`⏳ Retry ${4 - retries}/3 for download URL...`);
+              await new Promise(resolve => setTimeout(resolve, 500));
+            }
+          }
+        }
+        
+        if (!downloadUrl) {
+          throw new Error('Failed to get download URL after retries');
+        }
+        
+        profilePicUrl = downloadUrl;
+        console.log('✅ Image uploaded successfully');
+      } catch (uploadErr) {
+        console.error('❌ Image upload error:', uploadErr);
+        console.error('Error code:', uploadErr.code);
+        console.error('Error message:', uploadErr.message);
+        result.textContent = `❌ Upload failed: ${uploadErr.message}. Check your internet connection and try again.`;
+        result.style.color = '#ff4d4d';
+        submitBtn.disabled = false;
+        return;
+      }
+
+      // Update user profile in Firestore with URL only (not base64)
+      let saved = false;
+      let lastError = null;
+      
+      for (let retries = 3; retries > 0; retries--) {
+        try {
+          console.log(`💾 Saving profile to Firestore (attempt ${4 - retries}/3)...`);
+          const updateData = {
+            profilePicUrl: profilePicUrl,
+            profilePic: profilePicUrl,
+            updatedAt: new Date().toISOString(),
+            profileCompleted: true
+          };
+          
+          await setDoc(doc(db, 'users', uid), updateData, { merge: true });
+          saved = true;
+          console.log('✅ Profile saved successfully to Firestore');
+          break;
+        } catch (err) {
+          lastError = err;
+          console.error(`❌ Save attempt ${4 - retries} failed:`, err.message);
+          if (retries > 1) {
+            console.log(`⏳ Retrying in 1 second...`);
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
+        }
+      }
+
+      if (!saved) {
+        console.error('⚠️ Firestore save failed after 3 attempts:', lastError);
+        result.textContent = `❌ Failed to save profile: ${lastError?.message}`;
+        result.style.color = '#ff4d4d';
+        submitBtn.disabled = false;
+        return;
+      }
+
+      // Show success message
+      console.log(`✅ Profile picture saved for user: ${uid}`);
+      result.textContent = "✅ Profile picture saved! Redirecting to chat...";
+      result.style.color = '#00ff66';
+      result.style.fontSize = '16px';
+      result.style.fontWeight = 'bold';
+
+      // Clear form
+      fileInput.value = '';
+      previewContainer.style.display = 'none';
+
+      // Redirect after 2 seconds
+      setTimeout(() => {
+        console.log('🔄 Redirecting to chat.html');
+        window.location.href = 'chat.html';
+      }, 2000);
+    } catch (err) {
+      console.error('❌ Unexpected error in profile upload:', err);
+      result.textContent = `❌ Error: ${err.message}`;
+      result.style.color = '#ff4d4d';
+      submitBtn.disabled = false;
+    }
+  });
+</script>
+
+</body>
+</html>

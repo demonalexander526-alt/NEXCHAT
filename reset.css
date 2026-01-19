@@ -1,0 +1,202 @@
+/* reset.css */
+
+/* Basic reset & font */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Orbitron', sans-serif;
+  background-color: #0d0d0d;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+/* Container */
+.reset-container {
+  width: 90%;
+  max-width: 400px;
+  padding: 30px 20px;
+  border-radius: 15px;
+  text-align: center;
+  background: rgba(0,0,0,0.85);
+  box-shadow: 0 0 20px #00ff00, 0 0 40px #00ff00, 0 0 60px #00ff00;
+  animation: neonGlow 10s infinite;
+}
+
+/* Logo */
+.logo {
+  width: 100px;
+  max-width: 30%;
+  height: auto;
+  margin-bottom: 20px;
+  border-radius: 50%;
+  box-shadow: 0 0 20px #00ff00;
+  animation: neonGlow 10s infinite;
+}
+
+/* Heading */
+h2 {
+  color: #00ff00;
+  font-size: 1.5em;
+  margin-bottom: 30px;
+  text-shadow: 0 0 5px #00ff00, 0 0 10px #00ff00, 0 0 20px #00ff00;
+  animation: neonGlow 10s infinite;
+}
+
+/* Input field */
+input[type="email"] {
+  width: 100%;
+  padding: 12px;
+  margin: 10px 0;
+  border: none;
+  border-radius: 8px;
+  outline: none;
+  font-size: 1em;
+  background: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  box-shadow: 0 0 5px #00ff00;
+  transition: box-shadow 0.3s ease;
+}
+
+input[type="email"]:focus {
+  box-shadow: 0 0 10px #00ff00, 0 0 20px #00ff00;
+}
+
+/* Input group */
+.input-group {
+  margin-bottom: 20px;
+}
+
+.help-text {
+  display: block;
+  color: #aaa;
+  font-size: 0.85em;
+  margin-top: 6px;
+  text-shadow: 0 0 3px #00ff00;
+}
+
+/* Info box for spam folder warning */
+.info-box {
+  background: rgba(0, 255, 102, 0.1);
+  border-left: 4px solid #00ff00;
+  padding: 12px;
+  border-radius: 6px;
+  margin: 20px 0;
+  font-size: 0.9em;
+  color: #ddd;
+  text-align: left;
+}
+
+.info-box p {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.info-box strong {
+  color: #00ff00;
+  text-shadow: 0 0 5px #00ff00;
+}
+
+/* Button */
+.auth-btn {
+  width: 100%;
+  padding: 12px;
+  margin-top: 15px;
+  border: none;
+  border-radius: 8px;
+  background-color: #00ff00;
+  color: #000;
+  font-weight: bold;
+  font-size: 1em;
+  cursor: pointer;
+  box-shadow: 0 0 10px #00ff00, 0 0 20px #00ff00;
+  transition: 0.3s;
+  animation: neonGlowFast 5s infinite;
+}
+
+.auth-btn:hover {
+  box-shadow: 0 0 20px #00ff00, 0 0 40px #00ff00, 0 0 60px #00ff00;
+}
+
+/* Switch link */
+.switch {
+  color: #fff;
+  margin-top: 15px;
+}
+
+.switch span {
+  color: #00ff00;
+  cursor: pointer;
+  text-decoration: underline;
+  animation: neonGlow 10s infinite;
+}
+
+/* Result message */
+#result {
+  color: #ff0000;
+  margin-top: 20px;
+  font-weight: bold;
+  min-height: 20px;
+  padding: 12px;
+  border-radius: 6px;
+  line-height: 1.5;
+  animation: slideDown 0.3s ease;
+}
+
+#result:empty {
+  display: none;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Neon color animation (container, text, links) */
+@keyframes neonGlow {
+  0%   { color: #00ff00; box-shadow: 0 0 10px #00ff00, 0 0 20px #00ff00; }
+  20%  { color: #0000ff; box-shadow: 0 0 10px #0000ff, 0 0 20px #0000ff; }
+  40%  { color: #ff0000; box-shadow: 0 0 10px #ff0000, 0 0 20px #ff0000; }
+  60%  { color: #00ff00; box-shadow: 0 0 10px #00ff00, 0 0 20px #00ff00; }
+  80%  { color: #ffff00; box-shadow: 0 0 10px #ffff00, 0 0 20px #ffff00; }
+  100% { color: #00ff00; box-shadow: 0 0 10px #00ff00, 0 0 20px #00ff00; }
+}
+
+/* Neon color animation for button (faster) */
+@keyframes neonGlowFast {
+  0%   { color: #00ff00; box-shadow: 0 0 10px #00ff00, 0 0 20px #00ff00; }
+  20%  { color: #0000ff; box-shadow: 0 0 10px #0000ff, 0 0 20px #0000ff; }
+  40%  { color: #ff0000; box-shadow: 0 0 10px #ff0000, 0 0 20px #ff0000; }
+  60%  { color: #00ff00; box-shadow: 0 0 10px #00ff00, 0 0 20px #00ff00; }
+  80%  { color: #ffff00; box-shadow: 0 0 10px #ffff00, 0 0 20px #ffff00; }
+  100% { color: #00ff00; box-shadow: 0 0 10px #00ff00, 0 0 20px #00ff00; }
+}
+
+/* Media query for very small devices */
+@media (max-width: 350px) {
+  .reset-container {
+    padding: 20px 15px;
+  }
+  h2 {
+    font-size: 1.2em;
+  }
+  .logo {
+    width: 80px;
+  }
+}

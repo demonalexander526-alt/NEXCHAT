@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#00ff66">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="NEXCHAT">
+  <meta name="format-detection" content="telephone=no">
+  <meta name="x-apple-disable-message-reformatting" content="yes">
+  <title>NEXCHAT - Messages</title>
+  <link rel="stylesheet" href="chat.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/x-icon" href="logo.jpg">
+  <link rel="apple-touch-icon" href="logo.jpg">
+</head>
+<body>
+  <div class="app">
+    <!-- TOP HEADER BAR -->
+    <header class="top-header">
+      <div class="header-left">
+        <button id="dashboardBackBtn" class="back-button" title="Back to Dashboard">← </button>
+        <h1 class="header-logo">NEXCHAT</h1>
+      </div>
+      <div class="header-center">
+        <div id="tokenDisplay" class="token-display" title="Your tokens">
+          <span class="token-icon">⭐</span>
+          <span id="tokenCount">0</span>
+        </div>
+      </div>
+      <div class="header-right-scroll">
+        <div class="header-right">
+          <button id="profile-sticker" class="header-icon-btn profile-sticker" title="Profile" onclick="window.location.href='profile-upload.html'">👤</button>
+          
+          <!-- Dark Mode Sliding Toggle Switch -->
+          <div class="toggle-switch-container" title="Dark/Light Mode">
+            <div class="toggle-switch" id="darkModeToggle">
+              <div class="toggle-slider"></div>
+              <span class="toggle-label dark-label">🌙</span>
+              <span class="toggle-label light-label">☀️</span>
+            </div>
+          </div>
+          
+          <button id="fullscreen-btn-header" class="header-icon-btn" title="Fullscreen">⛶</button>
+          <button id="shop-btn-header" class="header-icon-btn" title="Buy Tokens">🛒</button>
+          <button id="search-btn-header" class="header-icon-btn" title="Search">🔍</button>
+          <button id="settings-btn-header" class="header-icon-btn" title="Settings">⚙️</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- NEX-STATUS SECTION (only visible in chat list view) -->
+    <div class="nex-status-container" id="statusContainer" style="display: none;">
+      <div class="nex-status-header">
+        <h3>📝 NEX-STATUS</h3>
+        <p style="font-size: 12px; color: #888; margin: 8px 0;">Statuses expire after 24 hours</p>
+      </div>
+      <div class="status-input-area">
+        <div class="my-status-card">
+          <img id="myStatusPic" src="" alt="Your status" class="status-avatar">
+          <input 
+            type="file" 
+            id="statusImageInput" 
+            style="display: none;" 
+            accept="image/*"
+          />
+          <button id="uploadStatusImageBtn" class="upload-status-btn" title="Upload image">📸</button>
+          <input 
+            type="text" 
+            id="statusInput" 
+            class="status-input" 
+            placeholder="What's on your mind?" 
+            maxlength="150"
+          />
+          <button id="postStatusBtn" class="status-post-btn" title="Post Status">✓</button>
+        </div>
+      </div>
+      <div id="statusFeed" class="status-feed">
+        <div class="status-empty-state">
+          <p>No statuses from your contacts yet</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- GROUPS SECTION -->
+    <div class="groups-container" id="groupsContainer" style="display: none;">
+      <div class="groups-header">
+        <h3>👥 Groups</h3>
+        <button id="createNewGroupBtn" class="new-chat-btn" title="Create Group">➕</button>
+      </div>
+      <ul id="groupsList" class="groups-list">
+        <li class="empty-state">
+          <p>No groups yet</p>
+          <p class="hint">Create or join a group to get started</p>
+        </li>
+      </ul>
+    </div>
+
+    <!-- MAIN CHAT LIST -->
+    <main class="chat-main">
+      <!-- CHAT LIST VIEW -->
+      <div id="chatListView" class="chat-list-view">
+        <!-- Search Bar -->
+        <div class="search-container">
+          <input 
+            type="text" 
+            id="searchInput" 
+            class="search-bar" 
+            placeholder="Search chats..."
+            autocomplete="off"
+          />
+        </div>
+
+        <!-- Filter Tabs -->
+        <div class="filter-tabs">
+          <button class="filter-tab active" data-filter="all" title="All chats">All</button>
+          <button class="filter-tab" data-filter="unread" title="Unread messages">Unread</button>
+          <button class="filter-tab" data-filter="favorites" title="Favorite chats">⭐ Favorites</button>
+          <button class="filter-tab" data-filter="groups" title="Group chats">👥 Groups</button>
+          <button class="filter-tab add-chat-tab" id="newChatFromTab" title="New chat">+</button>
+        </div>
+
+        <!-- Active Chats Section -->
+        <div class="chats-section">
+          <ul id="contactList" class="chat-list">
+            <li class="empty-state">
+              <p>No chats yet</p>
+              <p class="hint">Search for friends to start chatting</p>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Archived Section -->
+        <div class="archived-section">
+          <button class="archived-header" id="archivedToggle">
+            📦 Archived Chats <span id="archivedCount" style="font-size: 12px; margin-left: 8px;">0</span>
+          </button>
+          <ul id="archivedList" class="chat-list archived-list" style="display: none;">
+            <li class="empty-state" style="padding: 16px;">
+              <p>No archived chats</p>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- CHAT DETAIL VIEW -->
+      <div id="chatDetailView" class="chat-detail-view" style="display: none;">
+        <!-- Chat Header -->
+        <div class="chat-detail-header">
+          <button id="backBtn" class="back-btn" title="Back to chats">‹</button>
+          <div class="chat-header-profile" id="chatHeaderProfile" style="cursor: pointer; position: relative;" title="Click to open group settings">
+            <img id="chatProfilePic" src="" alt="profile" class="header-avatar">
+            <div class="header-text">
+              <h3 id="chatName">User</h3>
+              <p id="statusText" class="status-dot">🟢 Online</p>
+            </div>
+          </div>
+          <button id="menuBtn" class="three-dots-menu" title="More options">⋯</button>
+        </div>
+
+        <!-- Messages Area -->
+        <div class="messages-area" id="messages-area">
+          <div class="messages-list">
+            <div class="empty-state">
+              <p>No messages yet</p>
+              <p class="hint">Start the conversation!</p>
+            </div>
+          </div>
+          <div id="typingIndicator" class="typing-indicator" style="display: none;">
+            <span class="typing-dot"></span>
+            <span class="typing-dot"></span>
+            <span class="typing-dot"></span>
+          </div>
+        </div>
+
+        <!-- Chat Options Menu -->
+        <div id="chatOptionsMenu" class="chat-options-dropdown" style="display: none;">
+          <div class="dropdown-header">Options</div>
+          <button id="callBtn" class="option-item call-option">☎️ Call User</button>
+          <button id="videoCallBtn" class="option-item video-option">📹 Video Call</button>
+          <button id="groupAdminBtn" class="option-item" style="display: none; background: #00d4ff; color: #000;">👥 Manage Members</button>
+          <div class="dropdown-divider"></div>
+          <button id="blockBtn" class="option-item danger">🚫 Block User</button>
+          <button id="unblockBtn" class="option-item success" style="display: none;">✅ Unblock User</button>
+          <button id="reportBtn" class="option-item danger">⚠️ Report User</button>
+          <button id="deleteBtn" class="option-item danger">🗑️ Delete Chat</button>
+        </div>
+
+        <!-- Message Input -->
+        <div class="message-input-area">
+          <form id="message-form" class="message-form">
+            <button type="button" id="attach-btn" class="input-btn" title="Attach file">📎</button>
+            <input 
+              type="file" 
+              id="file-input" 
+              style="display: none;" 
+              accept="image/*,video/*,.pdf,.doc,.docx"
+            />
+            <input 
+              type="text" 
+              id="message-input" 
+              class="message-input" 
+              placeholder="Say something..."
+              autocomplete="off"
+              maxlength="1000"
+            />
+            <button type="button" id="emoji-btn" class="input-btn">😊</button>
+            <button type="button" id="poll-btn" class="input-btn" title="Create Poll" style="display: none;">📊</button>
+            <button type="button" id="sticker-btn" class="sticker-btn" title="Post Status">✨</button>
+            <button type="submit" class="send-btn">✓</button>
+          </form>
+          
+          <!-- File attachment preview -->
+          <div id="attachment-preview" class="attachment-preview" style="display: none;">
+            <div class="attachment-item">
+              <span id="attachment-name">File selected</span>
+              <button type="button" id="remove-attachment" class="remove-attachment-btn" title="Remove">✕</button>
+            </div>
+          </div>
+
+          <!-- Poll Modal -->
+          <div id="pollModal" class="modal" style="display: none;">
+            <div class="modal-content">
+              <span class="close-modal" onclick="document.getElementById('pollModal').style.display='none'">&times;</span>
+              <h2>📊 Create a Poll</h2>
+              <form id="pollForm">
+                <div class="form-group">
+                  <label>Poll Question</label>
+                  <input type="text" id="pollQuestion" placeholder="Ask a question..." maxlength="100" required>
+                </div>
+                <div class="form-group">
+                  <label>Options (one per line)</label>
+                  <textarea id="pollOptions" placeholder="Option 1&#10;Option 2&#10;Option 3" rows="4" required></textarea>
+                </div>
+                <button type="submit" class="btn-primary">✓ Create Poll</button>
+              </form>
+            </div>
+          </div>
+
+          <!-- Emoji Picker -->
+          <div id="emoji-picker" class="emoji-picker-popup" style="display: none;">
+            <div class="emoji-header">
+              <span>Emojis</span>
+              <button type="button" id="close-emoji-btn" class="close-btn">✕</button>
+            </div>
+            <div id="emoji-grid" class="emoji-grid"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SEARCH OVERLAY -->
+      <div id="search-overlay" class="search-overlay" style="display: none;">
+        <div id="search-modal" class="search-modal">
+          <div class="search-header">
+            <input 
+              type="text" 
+              id="search-input" 
+              class="search-input" 
+              placeholder="Search by UID, username, or name..." 
+              autocomplete="off"
+            />
+            <button id="browse-users-btn" class="search-action-btn" title="Browse all users">👥</button>
+            <button id="close-search-btn" class="close-btn">✕</button>
+          </div>
+          <div id="search-results" class="search-results"></div>
+        </div>
+      </div>
+
+      <!-- INFO SIDEBAR (on chat detail) - Enhanced Group Info Panel -->
+      <div id="infoSidebar" class="info-panel" style="display: none;">
+        <div class="info-header">
+          <button id="closeInfoBtn" class="close-btn" style="position: absolute; left: 16px;">‹</button>
+          <button id="closeInfoBtn2" class="close-btn" style="position: absolute; right: 16px;">⋮</button>
+        </div>
+
+        <div class="info-body">
+          <!-- Profile Section -->
+          <div class="info-profile-section">
+            <div class="profile-pic-container">
+              <img id="infoPic" src="" alt="profile" class="info-profile-pic">
+            </div>
+            <h2 id="infoName">Group Name</h2>
+            <p id="infoMemberCount" class="member-count">Group · 0 members</p>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="info-action-buttons">
+            <button id="infoAudioBtn" class="info-action-btn">
+              <span class="action-icon">☎️</span>
+              <span class="action-label">Audio</span>
+            </button>
+            <button id="infoVideoBtn" class="info-action-btn">
+              <span class="action-icon">📹</span>
+              <span class="action-label">Video</span>
+            </button>
+            <button id="infoAddBtn" class="info-action-btn">
+              <span class="action-icon">👥</span>
+              <span class="action-label">Add</span>
+            </button>
+            <button id="infoSearchBtn" class="info-action-btn">
+              <span class="action-icon">🔍</span>
+              <span class="action-label">Search</span>
+            </button>
+          </div>
+
+          <!-- Media Section -->
+          <div class="info-section">
+            <div class="section-header">
+              <span class="section-title">Media, links, and docs</span>
+              <span class="section-count" id="mediaCount">0</span>
+              <span class="section-arrow">›</span>
+            </div>
+            <div id="mediaPreview" class="media-preview">
+              <!-- Media items will be populated here -->
+            </div>
+          </div>
+
+          <!-- Notifications Section -->
+          <div class="info-section">
+            <div class="section-item">
+              <span class="section-icon">🔔</span>
+              <div class="section-content">
+                <div class="section-label">Notifications</div>
+                <div class="section-value" id="notificationValue">All</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Media Visibility Section -->
+          <div class="info-section">
+            <div class="section-item">
+              <span class="section-icon">👁️</span>
+              <div class="section-content">
+                <div class="section-label">Media visibility</div>
+                <div class="section-value" id="mediaVisibilityValue">Off</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Kept Messages Section -->
+          <div class="info-section">
+            <div class="section-item">
+              <span class="section-icon">📌</span>
+              <div class="section-content">
+                <div class="section-label">Kept messages</div>
+                <div class="section-value" id="keptMessagesValue">Only admins can keep or unkeep messages in this group.</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Encryption Section -->
+          <div class="info-section">
+            <div class="section-item">
+              <span class="section-icon">🔒</span>
+              <div class="section-content">
+                <div class="section-label">Encryption</div>
+                <div class="section-value" id="encryptionValue">Messages and calls are end-to-end encrypted</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Members Section (for groups) -->
+          <div class="info-section" id="membersList" style="display: none;">
+            <div class="section-title">Members</div>
+            <div id="membersListContent">
+              <!-- Members will be populated here -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STATUS VIEWER MODAL -->
+      <div id="statusViewerModal" class="modal" style="display: none;">
+        <div class="status-viewer-content">
+          <button id="closeStatusViewerBtn" class="close-btn" style="position: absolute; top: 16px; right: 16px; z-index: 10;">✕</button>
+          <div class="status-viewer-image-container">
+            <img id="statusViewerImage" src="" alt="Status" class="status-viewer-image">
+          </div>
+          <div class="status-viewer-info">
+            <div class="status-viewer-header">
+              <img id="statusViewerAvatar" src="" alt="user" class="status-viewer-avatar">
+              <div class="status-viewer-text">
+                <h3 id="statusViewerName">User Name</h3>
+                <p id="statusViewerTime">Just now</p>
+              </div>
+            </div>
+            <p id="statusViewerCaption" class="status-viewer-caption">Caption text goes here</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- OFFLINE INDICATOR -->
+      <div id="offlineIndicator" class="offline-indicator" style="display: none;">
+        <span class="offline-icon">📵</span>
+        <span class="offline-text">You are offline - Messages will send when online</span>
+      </div>
+
+      <!-- REELS FUNCTIONALITY REMOVED -->
+
+      <!-- CREATE GROUP MODAL -->
+      <div id="createGroupModal" class="modal" style="display: none;">
+        <div class="modal-content">
+          <span class="close-modal" onclick="document.getElementById('createGroupModal').style.display='none'">&times;</span>
+          <h2>👥 Create Group</h2>
+          <form id="createGroupForm">
+            <div class="form-group">
+              <label>Group Name</label>
+              <input type="text" id="groupName" placeholder="Group name..." maxlength="50" required>
+            </div>
+            <div class="form-group">
+              <label>Group Description</label>
+              <textarea id="groupDescription" placeholder="Group description..." maxlength="200" rows="3"></textarea>
+            </div>
+            <div class="form-group">
+              <label>Add Members (select from contacts)</label>
+              <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                <button type="button" id="addAllContactsBtn" class="btn-secondary" style="flex: 1;">✓ Add All Contacts</button>
+                <button type="button" id="clearAllContactsBtn" class="btn-secondary" style="flex: 1;">✗ Clear All</button>
+              </div>
+              <div id="groupMembersList" style="max-height: 200px; overflow-y: auto; border: 1px solid #00ff66; border-radius: 6px; padding: 10px;">
+                <p style="color: #888; text-align: center;">Loading contacts...</p>
+              </div>
+            </div>
+            <button type="submit" class="btn-primary">✓ Create Group</button>
+            <div id="groupCreateResult" style="margin-top: 15px; padding: 10px; border-radius: 6px; text-align: center; display: none;"></div>
+          </form>
+        </div>
+      </div>
+
+      <!-- REELS FUNCTIONALITY REMOVED -->
+
+      <!-- SETTINGS MODAL -->
+      <div id="settingsModal" class="settings-modal" style="display: none;">
+        <div class="settings-modal-content">
+          <div class="settings-header">
+            <h2>⚙️ Settings</h2>
+            <button id="closeSettingsBtn" class="close-btn">✕</button>
+          </div>
+          <div class="settings-body">
+            <div class="settings-section">
+              <h3>Notifications</h3>
+              <div class="setting-item">
+                <label>
+                  <input type="checkbox" id="notifToggle" checked>
+                  Enable Notifications
+                </label>
+              </div>
+              <div class="setting-item">
+                <label>
+                  <input type="checkbox" id="soundToggle" checked>
+                  Sound Effects
+                </label>
+              </div>
+            </div>
+
+            <div class="settings-section">
+              <h3>Privacy</h3>
+              <div class="setting-item">
+                <label>
+                  <input type="checkbox" id="onlineStatusToggle" checked>
+                  Show Online Status
+                </label>
+              </div>
+              <div class="setting-item">
+                <label>
+                  <input type="checkbox" id="readReceiptsToggle" checked>
+                  Read Receipts
+                </label>
+              </div>
+            </div>
+
+            <div class="settings-section">
+              <h3>Theme</h3>
+              <div class="setting-item">
+                <label>
+                  <input type="radio" name="theme" value="light" id="themeLight">
+                  Light
+                </label>
+              </div>
+              <div class="setting-item">
+                <label>
+                  <input type="radio" name="theme" value="dark" id="themeDark" checked>
+                  Dark
+                </label>
+              </div>
+            </div>
+
+            <div class="settings-section">
+              <h3>🖼️ Background Image</h3>
+              <div class="setting-item">
+                <label><strong>Change Chat Background</strong></label>
+                <input type="file" id="backgroundImageInput" accept="image/*" style="width: 100%; padding: 10px; margin: 8px 0; background: #1a1a1a; border: 1px solid #00ff66; border-radius: 6px; color: #00ff66;">
+              </div>
+              <button id="uploadBackgroundBtn" class="settings-action-btn" style="background: #00ff66; color: #000; width: 100%;">📸 Upload Background</button>
+              <button id="removeBackgroundBtn" class="settings-action-btn" style="background: #ff6b6b; color: #fff; width: 100%; margin-top: 8px;">🗑️ Remove Background</button>
+              <div id="backgroundPreview" style="width: 100%; height: 100px; margin-top: 12px; border-radius: 8px; border: 2px solid #00ff66; background-size: cover; background-position: center;"></div>
+            </div>
+
+            <div class="settings-section">
+              <h3>Account</h3>
+              <div class="setting-item">
+                <label><strong>Your UID:</strong></label>
+                <p id="userUIDDisplay" style="padding: 10px; background: rgba(0, 255, 102, 0.1); border: 1px solid #00ff66; border-radius: 6px; color: #00ff66; word-break: break-all; font-family: monospace; font-size: 12px; margin: 8px 0;">Loading...</p>
+                <button id="copyUIDBtn" class="settings-action-btn" style="background: #00ff66; color: #000; margin-top: 8px;">📋 Copy UID</button>
+              </div>
+              <button id="changePasswordBtn" class="settings-action-btn">🔑 Change Password</button>
+              <button id="clearCacheBtn" class="settings-action-btn">🗑️ Clear Cache</button>
+            </div>
+
+            <div class="settings-section">
+              <h3>💳 Transfer Tokens</h3>
+              <div class="setting-item">
+                <label><strong>Recipient UID:</strong></label>
+                <input type="text" id="recipientUID" placeholder="Paste recipient's UID here..." style="width: 100%; padding: 10px; margin: 8px 0; background: #1a1a1a; border: 1px solid #00ff66; border-radius: 6px; color: #00ff66; font-size: 12px;">
+              </div>
+              <div class="setting-item">
+                <label><strong>Amount:</strong></label>
+                <input type="number" id="transferAmount" placeholder="100" min="1" style="width: 100%; padding: 10px; margin: 8px 0; background: #1a1a1a; border: 1px solid #00ff66; border-radius: 6px; color: #00ff66;">
+              </div>
+              <button id="transferTokensBtn" class="settings-action-btn" style="background: #00ff66; color: #000; width: 100%;">🚀 Send Tokens</button>
+              <p id="transferResult" style="margin-top: 10px; color: #00ff66; font-size: 12px;"></p>
+            </div>
+
+            <div class="settings-section">
+              <button id="adminPanelBtn" class="settings-action-btn" style="background: #ff6600; color: #fff; display: none;">👑 Admin Panel</button>
+            </div>
+
+            <div class="settings-section">
+              <button id="logoutSettingsBtn" class="settings-action-btn danger">🚪 Logout</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- BOTTOM NAVIGATION -->
+    <nav class="bottom-nav">
+      <button id="nav-messages" class="nav-item active" data-nav="chats" title="Messages">💬</button>
+      <button id="nav-status" class="nav-item" data-nav="updates" title="View Statuses">✨</button>
+      <button id="nav-groups" class="nav-item" data-nav="communities" title="Groups">👥</button>
+      <button id="logout-btn" class="nav-item logout" title="Logout">🚪</button>
+    </nav>
+  </div>
+
+  <!-- NOTIFICATION CONTAINER -->
+  <div id="notificationContainer" class="notification-container"></div>
+
+  <script src="pwa-install.js"></script>
+  <script src="app-prompt.js"></script>
+  <script type="module" src="chat.js"></script>
+  <style>
+    @keyframes slideUp {
+      from { transform: translateY(0); opacity: 1; }
+      to { transform: translateY(-100%); opacity: 0; }
+    }
+
+    .bottom-nav {
+      margin-bottom: 60px;
+    }
+
+    .back-button {
+      background: transparent;
+      border: none;
+      color: #00ff66;
+      font-size: 24px;
+      cursor: pointer;
+      padding: 5px 10px;
+      margin-right: 10px;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 40px;
+      width: 40px;
+      border-radius: 50%;
+    }
+
+    .back-button:hover {
+      background: rgba(0, 255, 102, 0.1);
+      transform: scale(1.1);
+      box-shadow: 0 0 10px rgba(0, 255, 102, 0.3);
+    }
+
+    .back-button:active {
+      transform: scale(0.95);
+    }
+
+    /* Dark Mode Toggle Switch Styles */
+    .toggle-switch-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 8px;
+    }
+
+    .toggle-switch {
+      position: relative;
+      width: 60px;
+      height: 30px;
+      background: linear-gradient(135deg, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.2) 100%);
+      border: 2px solid #00ff66;
+      border-radius: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      padding: 2px;
+      transition: all 0.3s ease;
+      user-select: none;
+    }
+
+    .toggle-switch:hover {
+      box-shadow: 0 0 10px rgba(0, 255, 102, 0.4);
+      border-color: #00ff66;
+    }
+
+    .toggle-switch.active {
+      background: linear-gradient(135deg, rgba(0, 255, 102, 0.2) 0%, rgba(0, 255, 102, 0.1) 100%);
+    }
+
+    .toggle-slider {
+      position: absolute;
+      width: 26px;
+      height: 26px;
+      background: #00ff66;
+      border-radius: 50%;
+      top: 2px;
+      left: 2px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 2px 8px rgba(0, 255, 102, 0.3);
+    }
+
+    .toggle-switch.active .toggle-slider {
+      left: 32px;
+      background: #00ff66;
+      box-shadow: 0 2px 8px rgba(0, 255, 102, 0.5);
+    }
+
+    .toggle-label {
+      position: absolute;
+      font-size: 14px;
+      font-weight: bold;
+      transition: opacity 0.3s ease;
+      user-select: none;
+    }
+
+    .dark-label {
+      left: 6px;
+      opacity: 1;
+    }
+
+    .toggle-switch.active .dark-label {
+      opacity: 0.3;
+    }
+
+    .light-label {
+      right: 6px;
+      opacity: 0.3;
+    }
+
+    .toggle-switch.active .light-label {
+      opacity: 1;
+    }
+
+    @media (max-width: 768px) {
+      .toggle-switch {
+        width: 55px;
+        height: 28px;
+      }
+
+      .toggle-slider {
+        width: 24px;
+        height: 24px;
+      }
+
+      .toggle-switch.active .toggle-slider {
+        left: 29px;
+      }
+
+      .toggle-label {
+        font-size: 12px;
+      }
+    }
+
+    /* 3-Dot Menu Button Styles */
+    .three-dots-menu {
+      background: transparent;
+      border: 2px solid #00ff66;
+      color: #00ff66;
+      font-size: 20px;
+      cursor: pointer;
+      padding: 6px 10px;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      letter-spacing: 3px;
+      font-weight: bold;
+    }
+
+    .three-dots-menu:hover {
+      background: rgba(0, 255, 102, 0.1);
+      box-shadow: 0 0 10px rgba(0, 255, 102, 0.3);
+      transform: scale(1.05);
+    }
+
+    .three-dots-menu:active {
+      transform: scale(0.95);
+    }
+
+    /* Chat Options Dropdown Menu */
+    .chat-options-dropdown {
+      position: fixed;
+      background: linear-gradient(135deg, rgba(20, 20, 30, 0.98) 0%, rgba(30, 30, 40, 0.98) 100%);
+      border: 2px solid #00ff66;
+      border-radius: 12px;
+      min-width: 200px;
+      box-shadow: 0 10px 40px rgba(0, 255, 102, 0.2), 0 0 20px rgba(0, 255, 102, 0.1);
+      z-index: 2000;
+      padding: 8px 0;
+      backdrop-filter: blur(10px);
+      animation: dropdownSlideDown 0.3s ease-out;
+    }
+
+    @keyframes dropdownSlideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .dropdown-header {
+      padding: 10px 16px;
+      color: #00ff66;
+      font-size: 12px;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      border-bottom: 1px solid rgba(0, 255, 102, 0.2);
+    }
+
+    .option-item {
+      width: 100%;
+      padding: 12px 16px;
+      background: transparent;
+      border: none;
+      color: #00ff66;
+      text-align: left;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: inherit;
+    }
+
+    .option-item:hover {
+      background: rgba(0, 255, 102, 0.1);
+      padding-left: 20px;
+      text-shadow: 0 0 10px rgba(0, 255, 102, 0.4);
+    }
+
+    .option-item.danger {
+      color: #ff6b6b;
+    }
+
+    .option-item.danger:hover {
+      background: rgba(255, 107, 107, 0.1);
+      text-shadow: 0 0 10px rgba(255, 107, 107, 0.4);
+    }can u  s
+
+    .call-option::before {
+      content: '';
+      display: inline-block;
+      width: 4px;
+      height: 4px;
+      background: #00ff66;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .video-option::before {
+      content: '';
+      display: inline-block;
+      width: 4px;
+      height: 4px;
+      background: #00ff66;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .dropdown-divider {
+      height: 1px;
+      background: rgba(0, 255, 102, 0.2);
+      margin: 6px 0;
+    }
+
+    /* Adjust chat detail header for menu positioning */
+    .chat-detail-header {
+      position: relative;
+    }
+  </style>
+</body>
+</html>

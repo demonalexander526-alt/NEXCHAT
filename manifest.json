@@ -1,0 +1,56 @@
+{
+  "name": "NEXCHAT - Advanced Chat & Messaging",
+  "short_name": "NEXCHAT",
+  "description": "Real-time messaging and communication platform with voice calls, video calls, and more",
+  "start_url": "./chat.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0a0f1a",
+  "theme_color": "#00ff66",
+  "icons": [
+    {
+      "src": "logo.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any"
+    },
+    {
+      "src": "logo.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any"
+    },
+    {
+      "src": "logo.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "maskable"
+    }
+  ],
+  "categories": ["messaging", "communication"],
+  "screenshots": [
+    {
+      "src": "logo.jpg",
+      "sizes": "540x720",
+      "type": "image/jpeg",
+      "form_factor": "narrow"
+    }
+  ],
+  "share_target": {
+    "action": "./share",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url",
+      "files": [
+        {
+          "name": "file",
+          "accept": ["*/*"]
+        }
+      ]
+    }
+  }
+}

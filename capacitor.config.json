@@ -1,0 +1,44 @@
+{
+  "appId": "com.nexchat.app",
+  "appName": "NEXCHAT",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https",
+    "iosScheme": "ionic"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 2000,
+      "launchAutoHide": true,
+      "backgroundColor": "#0a0f1a",
+      "showSpinner": true,
+      "spinnerColor": "#00ff66",
+      "androidScaleType": "CENTER_CROP",
+      "androidSpinnerStyle": "large"
+    },
+    "PushNotifications": {
+      "presentationOptions": ["badge", "sound", "alert"]
+    },
+    "Camera": {
+      "permissions": ["photos", "camera"]
+    },
+    "Filesystem": {},
+    "Share": {}
+  },
+  "ios": {
+    "contentInset": "automatic",
+    "limitsNavigationsToAppBoundDomains": true
+  },
+  "android": {
+    "minWebViewVersion": 50,
+    "useLegacyBridge": false,
+    "buildOptions": {
+      "keystorePath": "~/.android/keystore.jks",
+      "keystorePassword": "android",
+      "keystoreAlias": "androiddebugkey",
+      "keystoreAliasPassword": "android",
+      "releaseType": "APK"
+    }
+  }
+}
