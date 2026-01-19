@@ -83,6 +83,76 @@ const emojis = [
   '👋', '👏', '🙌', '👐', '🤝', '🤲', '🤞', '🖖', '🤘', '🤟'
 ];
 
+// ============ GLOBAL UTILITY FUNCTIONS ============
+
+// Fullscreen toggle function
+function toggleFullscreen() {
+  const elem = document.documentElement;
+  const app = document.querySelector('.app');
+  const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
+
+  if (!isFullscreen) {
+    // Try native fullscreen first
+    let fullscreenPromise = null;
+
+    if (elem.requestFullscreen) {
+      fullscreenPromise = elem.requestFullscreen();
+    } else if (elem.webkitRequestFullscreen) {
+      fullscreenPromise = elem.webkitRequestFullscreen();
+    } else if (elem.mozRequestFullScreen) {
+      fullscreenPromise = elem.mozRequestFullScreen();
+    } else if (elem.msRequestFullscreen) {
+      fullscreenPromise = elem.msRequestFullscreen();
+    }
+
+    // If native fullscreen fails or is not supported, use CSS maximization
+    if (fullscreenPromise) {
+      fullscreenPromise.catch(() => {
+        // Fallback to CSS-based fullscreen
+        applyMaximizedView();
+      });
+    } else {
+      // Fallback to CSS-based fullscreen if native fullscreen not available
+      applyMaximizedView();
+    }
+
+    showNotif("📺 Fullscreen mode", "success", 1500);
+  } else {
+    // Exit fullscreen
+    if (document.exitFullscreen) {
+      document.exitFullscreen();
+    } else if (document.webkitExitFullscreen) {
+      document.webkitExitFullscreen();
+    } else if (document.mozCancelFullScreen) {
+      document.mozCancelFullScreen();
+    } else if (document.msExitFullscreen) {
+      document.msExitFullscreen();
+    }
+
+    // Also remove CSS maximization if applied
+    removeMaximizedView();
+    showNotif("📺 Normal view", "success", 1500);
+  }
+}
+
+function applyMaximizedView() {
+  const app = document.querySelector('.app');
+  if (app) {
+    app.dataset.maximized = 'true';
+    document.body.style.overflow = 'hidden';
+    console.log('✅ Fullscreen applied');
+  }
+}
+
+function removeMaximizedView() {
+  const app = document.querySelector('.app');
+  if (app && app.dataset.maximized === 'true') {
+    app.dataset.maximized = 'false';
+    document.body.style.overflow = 'auto';
+    console.log('✅ Fullscreen removed');
+  }
+}
+
 function showNotif(msg, type = "info", duration = 3000) {
   const container = document.getElementById("notificationContainer");
   if (!container) {
@@ -3816,67 +3886,12 @@ function initializeAppAfterAuth() {
     document.getElementById("settingsModal").style.display = "block";
   });
   document.getElementById("closeSettingsBtn")?.addEventListener("click", () => {
-    document.getElementById("settingsModal").style.display = "none";
-  });
-
-  // Shop
-  document.getElementById("shop-btn-header")?.addEventListener("click", () => {
-    window.location.href = "cart.html";
+    saveSettingsPreferences();
+    closeSettingsModal();
   });
 
   // Emojis
-  document.getElementById("emoji-btn")?.addEventListener("click", (e) => {
-    e.preventDefault();
-    const picker = document.getElementById("emoji-picker");
-    picker.style.display = picker.style.display === "none" ? "block" : "none";
-  });
-  document.getElementById("close-emoji-btn")?.addEventListener("click", () => {
-    document.getElementById("emoji-picker").style.display = "none";
-  });
 
-  // File attachment
-  document.getElementById("attach-btn")?.addEventListener("click", (e) => {
-    e.preventDefault();
-    document.getElementById("file-input").click();
-  });
-  document.getElementById("file-input")?.addEventListener("change", (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      document.getElementById("attachment-name").textContent = file.name;
-      document.getElementById("attachment-preview").style.display = "block";
-    }
-  });
-  document.getElementById("remove-attachment")?.addEventListener("click", () => {
-    document.getElementById("file-input").value = "";
-    document.getElementById("attachment-preview").style.display = "none";
-  });
-
-  // Menu button
-  document.getElementById("menuBtn")?.addEventListener("click", (e) => {
-    e.preventDefault();
-    const menu = document.getElementById("chatOptionsMenu");
-    menu.style.display = menu.style.display === "none" ? "block" : "none";
-  });
-
-  // Chat options
-  document.getElementById("callBtn")?.addEventListener("click", initiateCall);
-  document.getElementById("videoCallBtn")?.addEventListener("click", initiateVideoCall);
-  document.getElementById("blockBtn")?.addEventListener("click", blockUser);
-  document.getElementById("unblockBtn")?.addEventListener("click", unblockUser);
-  document.getElementById("reportBtn")?.addEventListener("click", reportUser);
-
-  // Logout
-  document.getElementById("logoutSettingsBtn")?.addEventListener("click", () => {
-    if (confirm("🚪 Logout?")) {
-      signOut(auth).then(() => {
-        localStorage.clear();
-        showNotif("👋 Logged out!", "success", 1500);
-        setTimeout(() => {
-          window.location.href = "index.html";
-        }, 500);
-      });
-    }
-  });
 
   console.log("✅ Post-auth listeners initialized");
 }
@@ -4074,74 +4089,6 @@ async function setupInitialization() {
     e.stopPropagation();
     toggleFullscreen();
   }, false);
-
-  // Function to toggle fullscreen
-  function toggleFullscreen() {
-    const elem = document.documentElement;
-    const app = document.querySelector('.app');
-    const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
-
-    if (!isFullscreen) {
-      // Try native fullscreen first
-      let fullscreenPromise = null;
-
-      if (elem.requestFullscreen) {
-        fullscreenPromise = elem.requestFullscreen();
-      } else if (elem.webkitRequestFullscreen) {
-        fullscreenPromise = elem.webkitRequestFullscreen();
-      } else if (elem.mozRequestFullScreen) {
-        fullscreenPromise = elem.mozRequestFullScreen();
-      } else if (elem.msRequestFullscreen) {
-        fullscreenPromise = elem.msRequestFullscreen();
-      }
-
-      // If native fullscreen fails or is not supported, use CSS maximization
-      if (fullscreenPromise) {
-        fullscreenPromise.catch(() => {
-          // Fallback to CSS-based fullscreen
-          applyMaximizedView();
-        });
-      } else {
-        // Fallback to CSS-based fullscreen if native fullscreen not available
-        applyMaximizedView();
-      }
-
-      showNotif("📺 Fullscreen mode", "success", 1500);
-    } else {
-      // Exit fullscreen
-      if (document.exitFullscreen) {
-        document.exitFullscreen();
-      } else if (document.webkitExitFullscreen) {
-        document.webkitExitFullscreen();
-      } else if (document.mozCancelFullScreen) {
-        document.mozCancelFullScreen();
-      } else if (document.msExitFullscreen) {
-        document.msExitFullscreen();
-      }
-
-      // Also remove CSS maximization if applied
-      removeMaximizedView();
-      showNotif("📺 Normal view", "success", 1500);
-    }
-  }
-
-  function applyMaximizedView() {
-    const app = document.querySelector('.app');
-    if (app) {
-      app.dataset.maximized = 'true';
-      document.body.style.overflow = 'hidden';
-      console.log('✅ Fullscreen applied');
-    }
-  }
-
-  function removeMaximizedView() {
-    const app = document.querySelector('.app');
-    if (app && app.dataset.maximized === 'true') {
-      app.dataset.maximized = 'false';
-      document.body.style.overflow = 'auto';
-      console.log('✅ Fullscreen removed');
-    }
-  }
 
   // Settings button click
   document.getElementById("settings-btn-header")?.addEventListener("click", (e) => {
@@ -4724,78 +4671,6 @@ function startStatusTimerUpdates() {
     });
   }, 60000); // Update every minute
 }
-
-async function postStatus() {
-  const statusInput = document.getElementById("statusInput");
-
-  if (!statusInput) {
-    showNotif("Status input not found", "error");
-    return;
-  }
-
-  if (!myUID) {
-    showNotif("❌ Please log in first to post a status", "error");
-    return;
-  }
-
-  const text = statusInput.value.trim();
-
-  if (!text) {
-    showNotif("Status cannot be empty", "error");
-    return;
-  }
-
-  if (text.length > 150) {
-    showNotif("Status is too long (max 150 characters)", "error");
-    return;
-  }
-
-  try {
-    const postBtn = document.getElementById("postStatusBtn");
-    if (postBtn) postBtn.disabled = true;
-
-    // Get list of users this person has chatted with
-    const chattedUsers = await getChattedUsers(myUID);
-    console.log("📊 Status posting - Chatted users:", chattedUsers);
-
-    const statusesRef = collection(db, "statuses");
-    const now = new Date();
-    const expiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000); // 24 hours from now
-
-    const statusData = {
-      userId: myUID,
-      text: text,
-      timestamp: serverTimestamp(),
-      expiresAt: expiresAt,
-      likes: 0,
-      comments: [],
-      visibleTo: chattedUsers // Only visible to chatted users
-    };
-
-    console.log("📝 Saving status with data:", statusData);
-
-    await addDoc(statusesRef, statusData);
-
-    statusInput.value = "";
-    showNotif("✅ Status posted! (Visible only to users you've chatted with)", "success", 2000);
-    hapticFeedback('success');
-
-    if (postBtn) postBtn.disabled = false;
-  } catch (err) {
-    console.error("Error posting status:", err);
-    showNotif("Error posting status: " + err.message, "error");
-    const postBtn = document.getElementById("postStatusBtn");
-    if (postBtn) postBtn.disabled = false;
-  }
-}
-
-document.getElementById("postStatusBtn")?.addEventListener("click", postStatus);
-document.getElementById("statusInput")?.addEventListener("keypress", (e) => {
-  if (e.key === "Enter" && !e.shiftKey) {
-    e.preventDefault();
-    postStatus();
-  }
-});
 
 function openReportModal() {
   if (!currentChatUser || !myUID) {
@@ -6157,10 +6032,6 @@ function setupAuthListeners() {
     }
   });
 
-  document.getElementById('shop-btn-header')?.addEventListener('click', () => {
-    window.location.href = 'cart.html';
-  });
-
   document.getElementById('fullscreen-btn-header')?.addEventListener('click', () => {
     if (!document.fullscreenElement) {
       document.documentElement.requestFullscreen();
@@ -6440,4 +6311,14 @@ async function loadContacts() {
   }
 }
 
+// ============================================================
+// EXPOSE FUNCTIONS GLOBALLY FOR ONCLICK HANDLERS
+// ============================================================
+// Make sure these functions are available in global scope
+window.toggleFullscreen = toggleFullscreen;
+window.openSearch = openSearch;
+window.openSettingsModal = openSettingsModal;
+window.goBackToDashboard = goBackToDashboard;
+window.showNotif = showNotif;
 
+console.log("? Functions exposed to global window");

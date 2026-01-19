@@ -22,7 +22,7 @@
     <!-- TOP HEADER BAR -->
     <header class="top-header">
       <div class="header-left">
-        <button id="dashboardBackBtn" class="back-button" title="Back to Dashboard">← </button>
+          <button id="dashboardBackBtn" class="back-button" title="Back to Dashboard">← </button>
         <h1 class="header-logo">NEXCHAT</h1>
       </div>
       <div class="header-center">
@@ -45,7 +45,7 @@
           </div>
           
           <button id="fullscreen-btn-header" class="header-icon-btn" title="Fullscreen">⛶</button>
-          <button id="shop-btn-header" class="header-icon-btn" title="Buy Tokens">🛒</button>
+          <button id="shop-btn-header" class="header-icon-btn" title="Buy Tokens" onclick="window.location.href='cart.html'">🛒</button>
           <button id="search-btn-header" class="header-icon-btn" title="Search">🔍</button>
           <button id="settings-btn-header" class="header-icon-btn" title="Settings">⚙️</button>
         </div>
@@ -551,6 +551,8 @@
   <script src="pwa-install.js"></script>
   <script src="app-prompt.js"></script>
   <script type="module" src="chat.js"></script>
+  <script src="button-setup.js"></script>
+  <script src="diagnostics.js"></script>
   <style>
     @keyframes slideUp {
       from { transform: translateY(0); opacity: 1; }
