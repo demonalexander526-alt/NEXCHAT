@@ -1,7 +1,7 @@
 import { auth, db, rtdb } from "./firebase-config.js";
 import {
   collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, setDoc,
-  query, where, onSnapshot, serverTimestamp, orderBy, limit, Timestamp, increment, runTransaction
+  query, where, onSnapshot, serverTimestamp, orderBy, limit, Timestamp, increment, runTransaction, arrayUnion, arrayRemove
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 import { signOut, updatePassword, reauthenticateWithCredential, EmailAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 import { ref, get } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
@@ -6316,3 +6316,148 @@ window.loadContacts = loadContacts;
 window.switchDarkMode = switchDarkMode;
 
 console.log("✅ Functions exposed to global window");
+
+// ===================================
+// DYNAMICALLY ADDED FUNCTIONS
+// ===================================
+
+async function toggleDarkMode() {
+  if (typeof switchDarkMode === 'function') {
+    switchDarkMode();
+  } else {
+    const isDark = document.body.classList.toggle("dark-mode");
+    document.body.classList.toggle("light-mode", !isDark);
+    const toggle = document.getElementById("darkModeToggle");
+    if (toggle) toggle.classList.toggle("active", isDark);
+    localStorage.setItem("darkMode", isDark);
+  }
+}
+
+async function loadGroups() {
+  const groupsList = document.getElementById("groupsList");
+  if (!groupsList || !myUID) return;
+
+  try {
+    const q = query(
+      collection(db, "groups"),
+      where("members", "array-contains", myUID),
+      orderBy("lastMessageTime", "desc")
+    );
+
+    const snapshot = await getDocs(q);
+
+    if (snapshot.empty) {
+      groupsList.innerHTML = `<li class="empty-state"><p>No groups yet</p></li>`;
+      return;
+    }
+
+    groupsList.innerHTML = "";
+    snapshot.forEach(docSnap => {
+      const group = docSnap.data();
+      const groupId = docSnap.id;
+      const li = document.createElement("li");
+      li.className = "chat-list-item";
+      li.innerHTML = `
+        <div class="chat-avatar-container"><div class="chat-avatar group-avatar">👥</div></div>
+        <div class="chat-info"><h3>${escape(group.name)}</h3></div>
+      `;
+      li.addEventListener("click", async () => {
+        await openChat(groupId, group.name, "👥", "group");
+        if (typeof showChatDetailView === 'function') showChatDetailView();
+      });
+      groupsList.appendChild(li);
+    });
+  } catch (err) {
+    console.error("Groups error", err);
+    if (err.message.includes("index")) console.warn("Index missing for groups query");
+  }
+}
+
+async function loadContacts() {
+  const contactList = document.getElementById("contactList");
+  if (!contactList || !myUID) return;
+
+  contactList.innerHTML = '<li style="text-align:center; padding:10px;">Loading contacts...</li>';
+
+  try {
+    const q = query(collection(db, "users"), limit(20));
+    const snapshot = await getDocs(q);
+
+    if (snapshot.empty) {
+      contactList.innerHTML = `<li class="empty-state"><p>No users found</p></li>`;
+      return;
+    }
+
+    contactList.innerHTML = "";
+    snapshot.forEach(docSnap => {
+      if (docSnap.id === myUID) return;
+      const user = docSnap.data();
+      const uid = docSnap.id;
+      const name = user.username || user.name || "User";
+      const pic = user.profilePic || null;
+
+      const li = document.createElement("li");
+      li.className = "chat-list-item";
+      let avatar = pic ? `<img src="${pic}" class="chat-avatar" onerror="this.src='logo.jpg'">` : `<div class="chat-avatar">${name.charAt(0)}</div>`;
+
+      li.innerHTML = `
+         <div class="chat-avatar-container">${avatar}</div>
+         <div class="chat-info"><h3>${escape(name)}</h3></div>
+       `;
+
+      li.addEventListener("click", async () => {
+        await openChat(uid, name, pic, "direct");
+        if (typeof showChatDetailView === 'function') showChatDetailView();
+      });
+
+      contactList.appendChild(li);
+    });
+  } catch (err) {
+    console.error("Contacts error", err);
+  }
+}
+
+async function deleteChat(chatId, type) {
+  if (!confirm("Are you sure you want to delete this chat? This will remove it from your list.")) return;
+
+  try {
+    const userRef = doc(db, "users", myUID);
+    // Add the chat ID to a "deletedChats" array in the user document
+    // We need arrayUnion which we imported earlier
+    await updateDoc(userRef, {
+      deletedChats: arrayUnion(chatId)
+    });
+
+    showNotif("🗑️ Chat deleted", "success");
+    // Refresh list
+    if (typeof loadContacts === 'function') loadContacts();
+
+    // If currently open, close it
+    if (currentChatUser === chatId) {
+      if (typeof goBackToDashboard === 'function') goBackToDashboard();
+    }
+  } catch (e) {
+    console.error("Error deleting chat:", e);
+    showNotif("Could not delete chat", "error");
+  }
+}
+
+async function unarchiveChat(chatId) {
+  try {
+    const userRef = doc(db, "users", myUID);
+    // Remove from archivedChats array
+    await updateDoc(userRef, {
+      archivedChats: arrayRemove(chatId)
+    });
+    showNotif("📂 Chat unarchived", "success");
+    // Refresh lists
+    if (typeof loadContacts === 'function') loadContacts();
+  } catch (e) {
+    console.error("Error unarchiving:", e);
+    showNotif("Error unarchiving chat", "error");
+  }
+}
+
+// Expose these new functions universally
+window.deleteChat = deleteChat;
+window.unarchiveChat = unarchiveChat;
