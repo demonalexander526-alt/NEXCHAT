@@ -1,0 +1,7 @@
+pwa-install.js:155 ✅ PWA Service Worker registered successfully: ServiceWorkerRegistration
+pwa-install.js:156 Scope: https://demonalexander526-alt.github.io/NEXCHAT/
+pwa-install.js:157 State: activated
+button-setup.js:5 🔗 Setting up ALL button event listeners...
+✅ chat.js:6222 FIXED - Removed duplicate 'loadContacts' declaration (was at line 2154)
+button-setup.js:9 ✅ Attaching button listeners
+✅ button-setup.js:14 FIXED - Added fallback for goBackToDashboard from chat.js

@@ -2,6 +2,13 @@
 // This script runs AFTER chat.js module is fully loaded
 // It attaches listeners to ALL interactive buttons in the app
 
+// Import global functions from chat.js if not already available
+if (typeof goBackToDashboard === 'undefined') {
+  window.goBackToDashboard = () => {
+    console.warn('goBackToDashboard not yet loaded from chat.js');
+  };
+}
+
 console.log("🔗 Setting up ALL button event listeners...");
 
 // Wait for the page to be fully loaded AND chat.js module to initialize
