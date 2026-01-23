@@ -93,6 +93,19 @@
       </ul>
     </div>
 
+    <!-- ANNOUNCEMENTS SECTION -->
+    <div class="announcements-container" id="announcementsContainer" style="display: none;">
+      <div class="announcements-header">
+        <h3>📢 Announcements</h3>
+      </div>
+      <div id="announcementsFeed" class="announcements-feed">
+        <div class="announcements-empty-state">
+          <p>No announcements yet</p>
+          <p class="hint">Stay tuned for updates from NEXCHAT</p>
+        </div>
+      </div>
+    </div>
+
     <!-- MAIN CHAT LIST -->
     <main class="chat-main">
       <!-- CHAT LIST VIEW -->
@@ -179,6 +192,17 @@
           <button id="deleteBtn" class="option-item danger">🗑️ Delete Chat</button>
         </div>
 
+        <!-- Reply Preview -->
+        <div id="replyPreview" class="reply-preview" style="display: none;">
+          <div class="reply-preview-content">
+            <div class="reply-preview-text">
+              <p class="reply-from">Replying to <span id="replyFromName"></span></p>
+              <p class="reply-message" id="replyMessage"></p>
+            </div>
+            <button type="button" id="cancelReplyBtn" class="cancel-reply-btn" title="Cancel reply">✕</button>
+          </div>
+        </div>
+
         <!-- Message Input -->
         <div class="message-input-area">
           <form id="message-form" class="message-form">
@@ -188,9 +212,22 @@
               autocomplete="off" maxlength="1000" />
             <button type="button" id="emoji-btn" class="input-btn">😊</button>
             <button type="button" id="poll-btn" class="input-btn" title="Create Poll" style="display: none;">📊</button>
+            <button type="button" id="audio-record-btn" class="input-btn" title="Record audio">🎤</button>
             <button type="button" id="sticker-btn" class="sticker-btn" title="Post Status">✨</button>
+            <button type="button" id="audio-send-btn" class="audio-send-btn" title="Send audio">›</button>
             <button type="submit" class="send-btn">✓</button>
           </form>
+
+          <!-- Audio Recording UI -->
+          <div id="audioRecordingUI" class="audio-recording-ui" style="display: none;">
+            <div class="audio-record-controls">
+              <button type="button" id="audioStopBtn" class="audio-control-btn stop-btn" title="Stop recording">⏹️ Stop</button>
+              <div class="audio-timer">
+                <span id="audioTimer">0:00</span>
+              </div>
+              <button type="button" id="audioCancelBtn" class="audio-control-btn cancel-btn" title="Cancel">❌ Cancel</button>
+            </div>
+          </div>
 
           <!-- File attachment preview -->
           <div id="attachment-preview" class="attachment-preview" style="display: none;">
@@ -212,7 +249,7 @@
                   <input type="text" id="pollQuestion" placeholder="Ask a question..." maxlength="100" required>
                 </div>
                 <div class="form-group">
-                  <label>Options (one per line)</label>
+                  <label>Options per line </label>
                   <textarea id="pollOptions" placeholder="Option 1&#10;Option 2&#10;Option 3" rows="4"
                     required></textarea>
                 </div>
@@ -488,6 +525,20 @@
             </div>
 
             <div class="settings-section">
+              <h3>🎨 Chat-Specific Background</h3>
+              <p style="color: #888; font-size: 12px; margin-bottom: 10px;">Set a unique background for this chat</p>
+              <div class="setting-item">
+                <label><strong>Choose Image</strong></label>
+                <input type="file" id="chatBackgroundImageInput" accept="image/*"
+                  style="width: 100%; padding: 10px; margin: 8px 0; background: #1a1a1a; border: 1px solid #00ff66; border-radius: 6px; color: #00ff66;">
+              </div>
+              <button id="uploadChatBackgroundBtn" class="settings-action-btn"
+                style="background: #00d4ff; color: #000; width: 100%;">🎨 Set Chat Background</button>
+              <button id="removeChatBackgroundBtn" class="settings-action-btn"
+                style="background: #ff9900; color: #000; width: 100%; margin-top: 8px;">🗑️ Remove Chat Background</button>
+            </div>
+
+            <div class="settings-section">
               <h3>Account</h3>
               <div class="setting-item">
                 <label><strong>Your UID:</strong></label>
@@ -503,19 +554,32 @@
 
             <div class="settings-section">
               <h3>💳 Transfer Tokens</h3>
-              <div class="setting-item">
-                <label><strong>Recipient UID:</strong></label>
-                <input type="text" id="recipientUID" placeholder="Paste recipient's UID here..."
-                  style="width: 100%; padding: 10px; margin: 8px 0; background: #1a1a1a; border: 1px solid #00ff66; border-radius: 6px; color: #00ff66; font-size: 12px;">
+              <div class="setting-item" style="flex-direction: column; align-items: flex-start; border: none; padding: 0;">
+                <div style="width: 100%; background: rgba(0, 255, 102, 0.1); border: 1px solid #00ff66; border-radius: 8px; padding: 12px; margin-bottom: 12px;">
+                  <p style="color: #888; margin: 0 0 4px 0; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Your Balance</p>
+                  <p style="color: #00ff66; margin: 0; font-size: 20px; font-weight: 700;">
+                    <span id="currentTokenBalance">0</span>
+                    <span style="font-size: 14px; opacity: 0.8;">⭐ Tokens</span>
+                  </p>
+                </div>
               </div>
-              <div class="setting-item">
-                <label><strong>Amount:</strong></label>
-                <input type="number" id="transferAmount" placeholder="100" min="1"
-                  style="width: 100%; padding: 10px; margin: 8px 0; background: #1a1a1a; border: 1px solid #00ff66; border-radius: 6px; color: #00ff66;">
+              <div class="setting-item" style="flex-direction: column; align-items: flex-start; border: none; padding: 0;">
+                <label style="font-size: 13px; margin-bottom: 8px;"><strong>Recipient UID:</strong></label>
+                <input type="text" id="recipientUID" placeholder="Paste recipient's UID here..."
+                  style="width: 100%; padding: 11px 12px; background: #2a2a2a; border: 1px solid #00ff66; border-radius: 8px; color: #00ff66; font-size: 12px; transition: all 0.2s ease;" 
+                  onfocus="this.style.borderColor='#00ff66'; this.style.boxShadow='0 0 12px rgba(0, 255, 102, 0.3)';"
+                  onblur="this.style.boxShadow='none';">
+              </div>
+              <div class="setting-item" style="flex-direction: column; align-items: flex-start; border: none; padding: 0; margin-top: 12px;">
+                <label style="font-size: 13px; margin-bottom: 8px;"><strong>Amount:</strong></label>
+                <input type="number" id="transferAmount" placeholder="Enter amount..." min="1" max="99999"
+                  style="width: 100%; padding: 11px 12px; background: #2a2a2a; border: 1px solid #00ff66; border-radius: 8px; color: #00ff66; font-size: 12px; transition: all 0.2s ease;"
+                  onfocus="this.style.borderColor='#00ff66'; this.style.boxShadow='0 0 12px rgba(0, 255, 102, 0.3)';"
+                  onblur="this.style.boxShadow='none';">
               </div>
               <button id="transferTokensBtn" class="settings-action-btn"
-                style="background: #00ff66; color: #000; width: 100%;">🚀 Send Tokens</button>
-              <p id="transferResult" style="margin-top: 10px; color: #00ff66; font-size: 12px;"></p>
+                style="background: linear-gradient(135deg, #00ff66, #00dd55); color: #000; width: 100%; margin-top: 12px; font-weight: 700;">🚀 Send Tokens</button>
+              <div id="transferResult"></div>
             </div>
 
             <div class="settings-section">
@@ -536,6 +600,9 @@
       <button id="nav-messages" class="nav-item active" data-nav="chats" title="Messages">💬</button>
       <button id="nav-status" class="nav-item" data-nav="updates" title="View Statuses">✨</button>
       <button id="nav-groups" class="nav-item" data-nav="communities" title="Groups">👥</button>
+      <button id="nav-announcements" class="nav-item" data-nav="announcements" title="Announcements">📢</button>
+      <button id="nav-marketplace" class="nav-item" data-nav="marketplace" title="Marketplace" onclick="window.location.href='advertisement.html'">🛍️</button>
+      <button id="nav-games" class="nav-item" data-nav="games" title="Gaming Hub" onclick="window.location.href='gaminghub.html'">🎮</button>
       <button id="logout-btn" class="nav-item logout" title="Logout">🚪</button>
     </nav>
   </div>
@@ -545,6 +612,7 @@
 
   <script src="pwa-install.js"></script>
   <script src="app-prompt.js"></script>
+  <script src="messaging-features.js"></script>
   <script type="module" src="chat.js"></script>
   <script src="button-setup.js"></script>
   <style>

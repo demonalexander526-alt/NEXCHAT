@@ -1,4 +1,5 @@
 import { auth, db, rtdb } from "./firebase-config.js";
+import { chronexAI } from "./chronex-ai-service.js";
 import {
   collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, setDoc,
   query, where, onSnapshot, serverTimestamp, orderBy, limit, Timestamp, increment, runTransaction, arrayUnion, arrayRemove
@@ -831,6 +832,7 @@ function handleNavigation(section) {
   const chatListView = document.getElementById("chatListView");
   const statusContainer = document.getElementById("statusContainer");
   const groupsContainer = document.getElementById("groupsContainer");
+  const announcementsContainer = document.getElementById("announcementsContainer");
 
   switch (section) {
     case "chats":
@@ -838,12 +840,14 @@ function handleNavigation(section) {
       chatListView.style.display = "block";
       statusContainer.style.display = "none";
       groupsContainer.style.display = "none";
+      announcementsContainer.style.display = "none";
       break;
     case "updates":
       console.log("✨ Showing statuses");
       chatListView.style.display = "none";
       statusContainer.style.display = "block";
       groupsContainer.style.display = "none";
+      announcementsContainer.style.display = "none";
       loadStatusFeed();
       break;
     case "communities":
@@ -851,7 +855,16 @@ function handleNavigation(section) {
       chatListView.style.display = "none";
       statusContainer.style.display = "none";
       groupsContainer.style.display = "block";
+      announcementsContainer.style.display = "none";
       loadGroups();
+      break;
+    case "announcements":
+      console.log("📢 Showing announcements");
+      chatListView.style.display = "none";
+      statusContainer.style.display = "none";
+      groupsContainer.style.display = "none";
+      announcementsContainer.style.display = "flex";
+      loadAnnouncements();
       break;
     case "calls":
       showNotif("☎️ Calls history coming soon", "info");
@@ -872,17 +885,40 @@ async function showChatContextMenu(event, chatId) {
   // Create context menu
   const menu = document.createElement("div");
   menu.className = "chat-context-menu";
-  menu.style.cssText = `
-    position: fixed;
-    top: ${event.clientY}px;
-    left: ${event.clientX}px;
-    background: #1a1a1a;
-    border: 2px solid #00ff66;
-    border-radius: 8px;
-    z-index: 1000;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-    min-width: 180px;
-  `;
+  
+  // Find the chat list item and position menu relative to it
+  const chatItem = document.querySelector(`li[data-chat-id="${chatId}"]`);
+  if (chatItem) {
+    chatItem.style.position = "relative";
+    chatItem.appendChild(menu);
+    // Use relative positioning
+    menu.style.cssText = `
+      position: absolute;
+      top: calc(100% + 5px);
+      right: 0;
+      background: #1a1a1a;
+      border: 2px solid #00ff66;
+      border-radius: 8px;
+      z-index: 10000;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      min-width: 180px;
+    `;
+  } else {
+    // Fallback to fixed positioning if item not found
+    menu.style.cssText = `
+      position: fixed;
+      top: ${event.clientY}px;
+      left: ${event.clientX}px;
+      background: #1a1a1a;
+      border: 2px solid #00ff66;
+      border-radius: 8px;
+      z-index: 10000;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      min-width: 180px;
+    `;
+    document.body.appendChild(menu);
+    return;
+  }
 
   const createMenuBtn = (text, color = "#00ff66", borderTop = false) => {
     const btn = document.createElement("button");
@@ -1950,7 +1986,33 @@ async function sendMessage(e) {
     }
 
     // Send message based on chat type
-    if (currentChatType === 'group') {
+    if (currentChatType === 'ai') {
+      // AI Chat - Chronex AI
+      console.log("🤖 Sending message to Chronex AI");
+      
+      // Display user message immediately
+      displayChronexAIUserMessage(text);
+      
+      try {
+        // Send to AI and get response
+        const aiResponse = await chronexAI.chat(text, `chronex-${myUID}`);
+        
+        // Display AI response
+        displayChronexAIResponse(aiResponse);
+        
+        // Deduct 1 token
+        await updateDoc(userRef, {
+          tokens: newTokens,
+          lastMessageSentAt: serverTimestamp()
+        });
+
+        showNotif(`✓ AI response received(-1 token, ${newTokens} remaining)`, "success", 2000);
+      } catch (aiErr) {
+        console.error("❌ Chronex AI error:", aiErr);
+        displayChronexAIError("Sorry, I encountered an error processing your message. Please try again.");
+        throw aiErr;
+      }
+    } else if (currentChatType === 'group') {
       // Group message
       console.log("📤 Sending group message to:", currentChatUser);
       await sendGroupMessage(currentChatUser, text, attachment);
@@ -1965,7 +2027,15 @@ async function sendMessage(e) {
         read: false,
         type: "text",
         edited: false,
-        reactions: []
+        reactions: [],
+        // Add reply information if replying
+        ...(window.messagingFeatures && window.messagingFeatures.replyingToMessage && window.messagingFeatures.replyingToMessage() ? {
+          replyTo: {
+            text: window.messagingFeatures.replyingToMessage().text,
+            senderName: window.messagingFeatures.replyingToMessage().senderName,
+            timestamp: new Date().toISOString()
+          }
+        } : {})
       };
 
       // Add attachment if present
@@ -2002,6 +2072,11 @@ async function sendMessage(e) {
       tokenDisplay.textContent = newTokens;
     }
 
+    // Clear reply preview after sending
+    if (window.messagingFeatures && window.messagingFeatures.hideReplyPreview) {
+      window.messagingFeatures.hideReplyPreview();
+    }
+
     messageText.value = "";
     removeAttachment();
     hapticFeedback('success');
@@ -2013,6 +2088,61 @@ async function sendMessage(e) {
     console.error("❌ Error sending message:", err);
     showNotif("Error sending message: " + err.message, "error");
   }
+}
+
+// ============ CHRONEX AI DISPLAY FUNCTIONS ============
+
+function displayChronexAIUserMessage(message) {
+  const messagesContainer = document.querySelector(".messages-list");
+  if (!messagesContainer) return;
+
+  const messageEl = document.createElement("div");
+  messageEl.className = "message user-message";
+  messageEl.innerHTML = `
+    <div class="message-content">
+      <p>${escape(message)}</p>
+    </div>
+    <div class="message-time">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+  `;
+
+  messagesContainer.appendChild(messageEl);
+  messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
+
+function displayChronexAIResponse(response) {
+  const messagesContainer = document.querySelector(".messages-list");
+  if (!messagesContainer) return;
+
+  const messageEl = document.createElement("div");
+  messageEl.className = "message ai-message";
+  messageEl.innerHTML = `
+    <div class="message-avatar">🤖</div>
+    <div class="message-content">
+      <p>${response.replace(/\n/g, '<br>')}</p>
+    </div>
+    <div class="message-time">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+  `;
+
+  messagesContainer.appendChild(messageEl);
+  messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
+
+function displayChronexAIError(errorMessage) {
+  const messagesContainer = document.querySelector(".messages-list");
+  if (!messagesContainer) return;
+
+  const messageEl = document.createElement("div");
+  messageEl.className = "message ai-message error-message";
+  messageEl.innerHTML = `
+    <div class="message-avatar">⚠️</div>
+    <div class="message-content">
+      <p>${escape(errorMessage)}</p>
+    </div>
+    <div class="message-time">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+  `;
+
+  messagesContainer.appendChild(messageEl);
+  messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
 
 function loadMessages() {
@@ -2029,6 +2159,29 @@ function loadMessages() {
   const messagesDiv = document.getElementById("messages-area");
   if (!messagesDiv) {
     console.error("❌ messages-area element not found");
+    return;
+  }
+
+  // Handle AI Chat type (Chronex AI)
+  if (currentChatType === 'ai') {
+    messagesDiv.innerHTML = `
+      <div class="messages-list">
+        <div class="empty-state">
+          <p>🤖 Welcome to Chronex AI!</p>
+          <p class="hint">I'm an advanced AI assistant. Ask me anything about coding, math, data analysis, and more!</p>
+          <div style="margin-top: 20px; text-align: left; font-size: 12px; color: #888;">
+            <p><strong>Capabilities:</strong></p>
+            <ul style="padding-left: 20px;">
+              <li>Code analysis and suggestions</li>
+              <li>Mathematical problem solving</li>
+              <li>Question answering</li>
+              <li>Data analysis assistance</li>
+              <li>Multi-language support</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    `;
     return;
   }
 
@@ -2110,9 +2263,53 @@ function loadMessages() {
     transition: all 0.2s;
     `;
 
+      // Add reply indicator if message is a reply
+      if (m.replyTo) {
+        const replyIndicator = document.createElement("div");
+        replyIndicator.className = "swipe-reply-indicator";
+        replyIndicator.style.cssText = `
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 4px;
+        height: 100%;
+        background: ${isOwn ? "#00aa44" : "#00d4ff"};
+        border-radius: 2px;
+      `;
+        bubble.style.position = "relative";
+        bubble.style.paddingLeft = "14px";
+        bubble.appendChild(replyIndicator);
+
+        const replyQuote = document.createElement("div");
+        replyQuote.style.cssText = `
+        background: ${isOwn ? "rgba(0,170,68,0.2)" : "rgba(0,212,255,0.2)"};
+        border-left: 3px solid ${isOwn ? "#00aa44" : "#00d4ff"};
+        padding: 8px;
+        margin-bottom: 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-style: italic;
+      `;
+        replyQuote.innerHTML = `<strong>↩️ ${escape(m.replyTo.senderName)}:</strong> ${escape(m.replyTo.text.substring(0, 60))}${m.replyTo.text.length > 60 ? '...' : ''}`;
+        bubble.appendChild(replyQuote);
+      }
+
       const content = document.createElement("p");
       content.style.margin = "0";
-      content.textContent = m.text;
+      
+      // Check if message is an audio file
+      if (m.attachment && m.attachment.fileType && m.attachment.fileType.startsWith('audio/')) {
+        // Create audio player
+        const audioPlayer = window.messagingFeatures.createAudioPlayerElement(
+          m.attachment.downloadURL,
+          m.attachment.duration || 0
+        );
+        bubble.appendChild(audioPlayer);
+      } else {
+        // Regular text message
+        content.textContent = m.text;
+        bubble.appendChild(content);
+      }
 
       const timeSpan = document.createElement("div");
       timeSpan.style.cssText = `font-size: 11px; margin-top: 4px; opacity: 0.7; display: flex; align-items: center; gap: 4px;`;
@@ -2129,7 +2326,6 @@ function loadMessages() {
       }
       timeSpan.textContent = receiptText;
 
-      bubble.appendChild(content);
       bubble.appendChild(timeSpan);
 
       bubble.addEventListener("mouseenter", () => {
@@ -2254,6 +2450,18 @@ async function openChat(uid, username, profilePic, chatType = 'direct') {
         // Setup mention input listeners
         setTimeout(() => setupMentionInput(), 100);
       }
+    } else if (chatType === 'ai') {
+      // Handle AI chat type (Chronex AI)
+      const infoEmailEl = document.getElementById("infoEmail");
+      if (infoEmailEl) infoEmailEl.textContent = "Advanced AI Assistant";
+      
+      const statusTextEl = document.getElementById("statusText");
+      if (statusTextEl) statusTextEl.textContent = "🤖 AI Ready";
+      
+      const infoStatusEl = document.getElementById("infoStatus");
+      if (infoStatusEl) infoStatusEl.textContent = "🤖 AI Ready";
+
+      showNotif("💬 Welcome to Chronex AI! Ask me anything!", "info");
     } else {
       // Load individual user info
       const userDoc = await getDoc(doc(db, "users", uid));
@@ -2307,6 +2515,9 @@ async function openChat(uid, username, profilePic, chatType = 'direct') {
 
     // Show chat view
     showChatDetailView();
+
+    // Load chat-specific background
+    await loadChatBackground(uid, chatType);
 
     // Update UI elements based on chat type
     const pollBtn = document.getElementById('poll-btn');
@@ -2875,6 +3086,35 @@ document.getElementById("nav-status")?.addEventListener("click", () => {
   }
 });
 
+document.getElementById("nav-announcements")?.addEventListener("click", () => {
+  const announcementsContainer = document.getElementById("announcementsContainer");
+  const chatListView = document.getElementById("chatListView");
+  const statusContainer = document.getElementById("statusContainer");
+  const groupsContainer = document.getElementById("groupsContainer");
+
+  if (announcementsContainer.style.display === "none") {
+    chatListView.style.display = "none";
+    statusContainer.style.display = "none";
+    groupsContainer.style.display = "none";
+    announcementsContainer.style.display = "flex";
+    
+    // Remove active from other nav items
+    document.getElementById("nav-messages").classList.remove("active");
+    document.getElementById("nav-status").classList.remove("active");
+    document.getElementById("nav-groups").classList.remove("active");
+    document.getElementById("nav-announcements").classList.add("active");
+    
+    loadAnnouncements();
+    showNotif("📢 Announcements", "info", 800);
+  } else {
+    announcementsContainer.style.display = "none";
+    chatListView.style.display = "block";
+    document.getElementById("nav-announcements").classList.remove("active");
+    document.getElementById("nav-messages").classList.add("active");
+    showNotif("Messages", "info", 800);
+  }
+});
+
 // NEX-REELS button - shows reels view and deducts 100 tokens for 1 hour access
 // NEX-REELS functionality removed
 
@@ -2919,6 +3159,7 @@ document.getElementById("file-input")?.addEventListener("change", (e) => {
   selectedFile = file;
   showAttachmentPreview(file);
   showNotif(`✅ File selected: ${file.name} `, "success", 1500);
+  try { document.dispatchEvent(new CustomEvent('selectedFileChanged')); } catch(e){}
 });
 
 function showAttachmentPreview(file) {
@@ -2945,15 +3186,16 @@ function removeAttachment() {
   if (preview) preview.style.display = "none";
 
   showNotif("✗ Attachment removed", "info", 1000);
+  try { document.dispatchEvent(new CustomEvent('selectedFileChanged')); } catch(e){}
 }
 
 async function uploadFileToStorage(file, chatId, isGroup = false) {
   try {
     const timestamp = Date.now();
     const fileExt = file.name.split('.').pop();
-    const fileName = `${timestamp}_${Math.random().toString(36).substr(2, 9)}.${fileExt} `;
+    const fileName = `${timestamp}_${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
 
-    const folderPath = isGroup ? `group - attachments / ${chatId} /${myUID}` : `chat-attachments/${myUID} `;
+    const folderPath = isGroup ? `group-attachments/${chatId}/${myUID}` : `chat-attachments/${myUID}`;
     const fileRef = storageRef(storage, `${folderPath}/${fileName}`);
 
     console.log(`📤 Uploading file: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`);
@@ -2985,30 +3227,39 @@ async function transferTokens() {
   const recipientUID = document.getElementById("recipientUID")?.value.trim();
   const amount = parseInt(document.getElementById("transferAmount")?.value || 0);
   const resultEl = document.getElementById("transferResult");
+  const transferBtn = document.getElementById("transferTokensBtn");
 
   if (!resultEl) return;
 
+  // Validation
   if (!recipientUID) {
-    resultEl.textContent = "❌ Please enter recipient UID";
-    resultEl.style.color = "#ff6600";
+    resultEl.innerHTML = `<span style="color: #ff6b6b;">❌ Please enter recipient UID</span>`;
     return;
   }
 
   if (!amount || amount <= 0) {
-    resultEl.textContent = "❌ Please enter a valid amount";
-    resultEl.style.color = "#ff6600";
+    resultEl.innerHTML = `<span style="color: #ff6b6b;">❌ Please enter a valid amount</span>`;
+    return;
+  }
+
+  if (amount > 99999) {
+    resultEl.innerHTML = `<span style="color: #ff6b6b;">❌ Amount cannot exceed 99,999 tokens</span>`;
     return;
   }
 
   if (recipientUID === myUID) {
-    resultEl.textContent = "❌ Cannot transfer to yourself";
-    resultEl.style.color = "#ff6600";
+    resultEl.innerHTML = `<span style="color: #ff6b6b;">❌ Cannot transfer tokens to yourself</span>`;
     return;
   }
 
   try {
-    resultEl.textContent = "⏳ Processing transfer...";
-    resultEl.style.color = "#00ff66";
+    // Disable button and show loading
+    if (transferBtn) {
+      transferBtn.disabled = true;
+      transferBtn.textContent = "⏳ Processing...";
+    }
+
+    resultEl.innerHTML = `<span style="color: #00ff66;">⏳ Verifying recipient...</span>`;
 
     const senderRef = doc(db, "users", myUID);
     const recipientRef = doc(db, "users", recipientUID);
@@ -3023,7 +3274,7 @@ async function transferTokens() {
       }
 
       if (!recipientDoc.exists()) {
-        throw new Error("Recipient not found");
+        throw new Error("Recipient not found - invalid UID");
       }
 
       const senderTokens = senderDoc.data()?.tokens ?? 0;
@@ -3035,7 +3286,7 @@ async function transferTokens() {
       }
 
       if (senderTokens < amount) {
-        throw new Error(`Insufficient balance (You have ${senderTokens} tokens)`);
+        throw new Error(`Insufficient balance - You have ${senderTokens} tokens, but trying to send ${amount}`);
       }
 
       const newSenderTokens = Math.max(0, senderTokens - amount);
@@ -3055,24 +3306,41 @@ async function transferTokens() {
       });
 
       return {
-        recipientName: recipientDoc.data()?.username || "user",
+        recipientName: recipientDoc.data()?.username || "User",
+        recipientEmail: recipientDoc.data()?.email || "unknown",
         amount,
         newSenderTokens,
         newRecipientTokens
       };
     });
 
-    resultEl.textContent = `✅ Sent ${result.amount} tokens to ${result.recipientName}`;
-    resultEl.style.color = "#00ff66";
+    // Success message with details
+    resultEl.innerHTML = `
+      <div style="background: rgba(0, 255, 102, 0.1); border-left: 3px solid #00ff66; padding: 12px; border-radius: 6px; margin-top: 12px;">
+        <p style="color: #00ff66; margin: 0; font-weight: 600;">✅ Transfer Successful!</p>
+        <p style="color: #e0e0e0; margin: 6px 0 0 0; font-size: 13px;">
+          Sent <strong>${result.amount} tokens</strong> to <strong>${result.recipientName}</strong>
+        </p>
+        <p style="color: #888; margin: 4px 0 0 0; font-size: 12px;">
+          Your new balance: <strong style="color: #00ff66;">${result.newSenderTokens}</strong> tokens
+        </p>
+      </div>
+    `;
 
     console.log(`✅ Transfer complete: ${result.amount} tokens sent to ${result.recipientName}`);
 
+    // Clear inputs
     document.getElementById("recipientUID").value = "";
     document.getElementById("transferAmount").value = "";
 
+    // Re-enable button after delay
     setTimeout(() => {
-      resultEl.textContent = "";
-    }, 3000);
+      if (transferBtn) {
+        transferBtn.disabled = false;
+        transferBtn.textContent = "🚀 Send Tokens";
+      }
+      resultEl.innerHTML = "";
+    }, 4000);
 
   } catch (err) {
     console.error("Transfer error:", err);
@@ -3080,27 +3348,42 @@ async function transferTokens() {
     console.error("Error message:", err.message);
 
     let errorMsg = err.message;
+    let errorTitle = "Transfer Failed";
 
     if (err.message && err.message.includes('offline')) {
-      errorMsg = "❌ Network Error: Check your internet connection or Firestore security rules";
+      errorMsg = "Network error - Check your internet connection";
+      errorTitle = "Offline";
     } else if (err.code === 'permission-denied' || err.message?.includes('Permission denied')) {
-      errorMsg = "❌ Permission Error: Check Firestore security rules - transfers may not be allowed";
+      errorMsg = "You don't have permission to transfer tokens";
+      errorTitle = "Permission Denied";
     } else if (err.code === 'not-found') {
-      errorMsg = "❌ User or data not found";
+      errorMsg = "User or data not found";
+      errorTitle = "Not Found";
     } else if (err.code === 'invalid-argument') {
-      errorMsg = "❌ Invalid data format - ensure all fields are correct";
+      errorMsg = "Invalid data - ensure all fields are correct";
+      errorTitle = "Invalid Input";
     } else if (err.message?.includes('Insufficient balance')) {
-      errorMsg = `❌ ${err.message}`;
+      errorTitle = "Insufficient Balance";
     } else if (err.message?.includes('Recipient not found')) {
-      errorMsg = "❌ Recipient not found";
+      errorMsg = "Recipient UID not found";
+      errorTitle = "User Not Found";
     } else if (err.message?.includes('Your user data not found')) {
-      errorMsg = "❌ Your user data not found";
-    } else {
-      errorMsg = `❌ Transfer failed: ${err.message}`;
+      errorMsg = "Your account data not found";
+      errorTitle = "Account Error";
     }
 
-    resultEl.textContent = errorMsg;
-    resultEl.style.color = "#ff6600";
+    resultEl.innerHTML = `
+      <div style="background: rgba(255, 107, 107, 0.1); border-left: 3px solid #ff6b6b; padding: 12px; border-radius: 6px; margin-top: 12px;">
+        <p style="color: #ff6b6b; margin: 0; font-weight: 600;">❌ ${errorTitle}</p>
+        <p style="color: #e0e0e0; margin: 6px 0 0 0; font-size: 13px;">${errorMsg}</p>
+      </div>
+    `;
+
+    // Re-enable button
+    if (transferBtn) {
+      transferBtn.disabled = false;
+      transferBtn.textContent = "🚀 Send Tokens";
+    }
   }
 }
 
@@ -3118,10 +3401,30 @@ function openSettingsModal() {
       userUIDDisplay.textContent = myUID;
     }
 
+    // Load current token balance
+    loadTokenBalance();
+
     // Add vibration feedback on Android
     if (isAndroid && navigator.vibrate) {
       navigator.vibrate(50);
     }
+  }
+}
+
+async function loadTokenBalance() {
+  try {
+    const userRef = doc(db, "users", myUID);
+    const userDoc = await getDoc(userRef);
+    
+    if (userDoc.exists()) {
+      const tokens = userDoc.data()?.tokens ?? 0;
+      const balanceEl = document.getElementById("currentTokenBalance");
+      if (balanceEl) {
+        balanceEl.textContent = tokens.toLocaleString();
+      }
+    }
+  } catch (err) {
+    console.error("Error loading token balance:", err);
   }
 }
 
@@ -3604,9 +3907,23 @@ async function setupInitialization() {
         if (userDoc.exists()) {
           const userData = userDoc.data();
           myUsername = userData.username || "";
-          myProfilePic = userData.profilePic || "";
+          myProfilePic = userData.profilePic || userData.profilePicUrl || "";
 
-          // Get tokens from user data - should be 2000 for new users from registration
+          if (myProfilePic && (myProfilePic.startsWith('http') || myProfilePic.startsWith('data:'))) {
+            const profileBtn = document.getElementById('profile-sticker');
+            if (profileBtn) {
+              profileBtn.style.backgroundImage = `url('${myProfilePic}')`;
+              profileBtn.style.backgroundSize = 'cover';
+              profileBtn.style.backgroundPosition = 'center';
+              profileBtn.style.fontSize = '0';
+              profileBtn.style.borderRadius = '50%';
+            }
+            const statusImg = document.getElementById('myStatusPic');
+            if (statusImg) {
+              statusImg.src = myProfilePic;
+            }
+          }
+
           const tokenCount = userData.tokens ?? 0;
           console.log("💰 Token count from Firebase:", tokenCount);
           console.log("💰 User data:", userData);
@@ -3947,7 +4264,112 @@ async function setupInitialization() {
   });
 
   // ============================================================
-  // BACKGROUND IMAGE FEATURE
+  // PER-CHAT BACKGROUND IMAGE FEATURE
+  // ============================================================
+
+  const loadChatBackground = async (chatId, chatType) => {
+    try {
+      const bgDocPath = chatType === 'group' 
+        ? `groupBackgrounds/${chatId}` 
+        : `directMessageBackgrounds/${myUID}_${chatId}`;
+      
+      const bgDoc = await getDoc(doc(db, bgDocPath.split('/')[0], bgDocPath.split('/')[1]));
+      
+      if (bgDoc.exists() && bgDoc.data().backgroundUrl) {
+        applyBackgroundImage(bgDoc.data().backgroundUrl);
+        localStorage.setItem(`chat_bg_${chatId}`, bgDoc.data().backgroundUrl);
+      } else {
+        removeBackgroundImage();
+        localStorage.removeItem(`chat_bg_${chatId}`);
+      }
+    } catch (error) {
+      console.warn("Could not load chat background:", error);
+      removeBackgroundImage();
+    }
+  };
+
+  window.loadChatBackground = loadChatBackground;
+
+  // Upload background for current chat
+  document.getElementById("uploadChatBackgroundBtn")?.addEventListener("click", async () => {
+    if (!currentChatUser) {
+      showNotif("❌ No chat selected", "error");
+      return;
+    }
+
+    const fileInput = document.getElementById("chatBackgroundImageInput");
+    const file = fileInput.files[0];
+
+    if (!file) {
+      showNotif("❌ Please select an image first", "error");
+      return;
+    }
+
+    try {
+      showNotif("📸 Uploading chat background...", "info");
+
+      const bgPath = currentChatType === 'group'
+        ? `chatBackgrounds/groups/${currentChatUser}/${Date.now()}`
+        : `chatBackgrounds/direct/${myUID}_${currentChatUser}/${Date.now()}`;
+      
+      const bgRef = storageRef(storage, bgPath);
+      const snapshot = await uploadBytes(bgRef, file);
+      const bgUrl = await getDownloadURL(snapshot.ref);
+
+      const collection_name = currentChatType === 'group' ? 'groupBackgrounds' : 'directMessageBackgrounds';
+      const doc_id = currentChatType === 'group' ? currentChatUser : `${myUID}_${currentChatUser}`;
+
+      await setDoc(doc(db, collection_name, doc_id), {
+        backgroundUrl: bgUrl,
+        uploadedAt: serverTimestamp(),
+        fileName: file.name,
+        chatId: currentChatUser,
+        chatType: currentChatType
+      }, { merge: true });
+
+      applyBackgroundImage(bgUrl);
+      localStorage.setItem(`chat_bg_${currentChatUser}`, bgUrl);
+
+      showNotif("✅ Chat background updated!", "success");
+      fileInput.value = "";
+    } catch (error) {
+      console.error("❌ Failed to upload chat background:", error);
+      showNotif("❌ Failed to upload chat background", "error");
+    }
+  });
+
+  // Remove background for current chat
+  document.getElementById("removeChatBackgroundBtn")?.addEventListener("click", async () => {
+    if (!currentChatUser) {
+      showNotif("❌ No chat selected", "error");
+      return;
+    }
+
+    if (!confirm("🗑️ Remove this chat's background?")) return;
+
+    try {
+      showNotif("🗑️ Removing chat background...", "info");
+
+      const collection_name = currentChatType === 'group' ? 'groupBackgrounds' : 'directMessageBackgrounds';
+      const doc_id = currentChatType === 'group' ? currentChatUser : `${myUID}_${currentChatUser}`;
+
+      await updateDoc(doc(db, collection_name, doc_id), {
+        backgroundUrl: null,
+        removedAt: serverTimestamp()
+      });
+
+      removeBackgroundImage();
+      localStorage.removeItem(`chat_bg_${currentChatUser}`);
+
+      showNotif("✅ Chat background removed!", "success");
+    } catch (error) {
+      console.error("❌ Failed to remove chat background:", error);
+      showNotif("❌ Failed to remove chat background", "error");
+    }
+  });
+
+  // ============================================================
+  // BACKGROUND IMAGE FEATURE (KEPT FOR COMPATIBILITY)
   // ============================================================
 
   // Upload background button
@@ -3964,8 +4386,8 @@ async function setupInitialization() {
       showNotif("📸 Uploading background image...", "info");
 
       const bgRef = storageRef(storage, `backgrounds/${myUID}/${Date.now()}`);
-      await uploadBytes(bgRef, file);
-      const bgUrl = await getDownloadURL(bgRef);
+      const snapshot = await uploadBytes(bgRef, file);
+      const bgUrl = await getDownloadURL(snapshot.ref);
 
       // Save to Firestore
       await setDoc(doc(db, "userBackgrounds", myUID), {
@@ -4045,6 +4467,10 @@ async function setupInitialization() {
     const app = document.querySelector(".app");
     if (app) {
       app.style.backgroundImage = `url('${imageUrl}')`;
+      app.style.backgroundSize = 'cover';
+      app.style.backgroundPosition = 'center';
+      app.style.backgroundAttachment = 'fixed';
+      app.style.backgroundRepeat = 'no-repeat';
       console.log("✅ Background applied");
     }
   }
@@ -4053,6 +4479,10 @@ async function setupInitialization() {
     const app = document.querySelector(".app");
     if (app) {
       app.style.backgroundImage = "none";
+      app.style.backgroundSize = '';
+      app.style.backgroundPosition = '';
+      app.style.backgroundAttachment = '';
+      app.style.backgroundRepeat = '';
       console.log("✅ Background removed");
     }
   }
@@ -5498,6 +5928,75 @@ function viewStatus(status) {
 }
 
 // ============================================================
+// ANNOUNCEMENTS SYSTEM
+// ============================================================
+
+async function loadAnnouncements() {
+  try {
+    const announcementsFeed = document.getElementById('announcementsFeed');
+    
+    const q = query(
+      collection(db, 'announcements'),
+      orderBy('createdAt', 'desc'),
+      limit(50)
+    );
+
+    const snapshot = await getDocs(q);
+
+    if (snapshot.empty) {
+      announcementsFeed.innerHTML = `
+        <div class="announcements-empty-state">
+          <p>📢 No announcements yet</p>
+          <p class="hint">Stay tuned for updates from NEXCHAT</p>
+        </div>
+      `;
+      return;
+    }
+
+    announcementsFeed.innerHTML = '';
+
+    snapshot.forEach(doc => {
+      const announcement = doc.data();
+      const announceDiv = document.createElement('div');
+      announceDiv.className = 'announcement-item';
+
+      const createdTime = announcement.createdAt?.toDate ? announcement.createdAt.toDate() : new Date(announcement.createdAt);
+      const timeDiff = Math.floor((Date.now() - createdTime.getTime()) / 1000);
+      
+      let timeText = 'Just now';
+      if (timeDiff < 60) {
+        timeText = 'Just now';
+      } else if (timeDiff < 3600) {
+        timeText = `${Math.floor(timeDiff / 60)}m ago`;
+      } else if (timeDiff < 86400) {
+        timeText = `${Math.floor(timeDiff / 3600)}h ago`;
+      } else {
+        timeText = `${Math.floor(timeDiff / 86400)}d ago`;
+      }
+
+      announceDiv.innerHTML = `
+        <div class="announcement-header">
+          <h4 class="announcement-title">${escape(announcement.title || 'Announcement')}</h4>
+          <span class="announcement-badge">📢 Admin</span>
+        </div>
+        <p class="announcement-content">${escape(announcement.content || '')}</p>
+        <div class="announcement-footer">
+          <span class="announcement-time">${timeText}</span>
+          <span class="announcement-admin">By Admin</span>
+        </div>
+      `;
+
+      announcementsFeed.appendChild(announceDiv);
+    });
+
+    showNotif('📢 Announcements loaded', 'success', 2000);
+  } catch (error) {
+    console.error('❌ Error loading announcements:', error);
+    showNotif('Error loading announcements: ' + error.message, 'error');
+  }
+}
+
+// ============================================================
 // INITIALIZATION
 // ============================================================
 
@@ -5685,6 +6184,7 @@ function initializeBasicUI() {
   console.log("✅ All header button listeners attached");
 
   const sendBtn = document.querySelector(".send-btn");
+  const audioSendBtn = document.getElementById('audio-send-btn');
   if (sendBtn) {
     sendBtn.addEventListener("click", (e) => {
       console.log("📤 Send button clicked");
@@ -5692,6 +6192,38 @@ function initializeBasicUI() {
       sendMessage(e);
     });
   }
+
+  if (audioSendBtn) {
+    audioSendBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      // audio-send should trigger same send flow; sendMessage will pick up selectedFile
+      sendMessage(e);
+    });
+  }
+
+  // Toggle between text-send (large) and audio-send based on attachment state
+  function updateSendButtons() {
+    const input = document.getElementById('message-input');
+    const hasText = input && input.value.trim().length > 0;
+    if (typeof selectedFile !== 'undefined' && selectedFile) {
+      if (sendBtn) sendBtn.style.display = 'none';
+      if (audioSendBtn) audioSendBtn.style.display = 'flex';
+    } else {
+      if (audioSendBtn) audioSendBtn.style.display = 'none';
+      if (sendBtn) {
+        sendBtn.style.display = 'flex';
+        if (hasText) sendBtn.classList.add('large'); else sendBtn.classList.remove('large');
+      }
+    }
+  }
+
+  // Listen for attachment changes
+  document.addEventListener('selectedFileChanged', () => updateSendButtons());
+  // Update when user types
+  const messageInput = document.getElementById('message-input');
+  if (messageInput) messageInput.addEventListener('input', () => updateSendButtons());
+  // Run once at startup
+  setTimeout(() => updateSendButtons(), 200);
 
   // Attach event listeners for back button
   document.getElementById("backBtn")?.addEventListener("click", () => {
@@ -5929,16 +6461,74 @@ async function loadGroups() {
     }
 
     groupsList.innerHTML = "";
-    snapshot.forEach(docSnap => {
+    snapshot.forEach(async docSnap => {
       const group = docSnap.data();
       const groupId = docSnap.id;
       const li = document.createElement("li");
       li.className = "chat-list-item";
       li.setAttribute('data-chat-id', groupId);
+
+      // Get last message and unread count
+      let lastMessage = group.lastMessage || "No messages yet";
+      let lastMessageTime = "";
+      let unreadCount = 0;
+
+      try {
+        if (group.lastMessageTime) {
+          const date = group.lastMessageTime.toDate ? group.lastMessageTime.toDate() : new Date(group.lastMessageTime);
+          const now = new Date();
+          const diffMs = now - date;
+          const diffMins = Math.floor(diffMs / 60000);
+          const diffHours = Math.floor(diffMs / 3600000);
+          const diffDays = Math.floor(diffMs / 86400000);
+
+          if (diffMins < 1) {
+            lastMessageTime = "Now";
+          } else if (diffMins < 60) {
+            lastMessageTime = `${diffMins}m`;
+          } else if (diffHours < 24) {
+            lastMessageTime = `${diffHours}h`;
+          } else if (diffDays < 7) {
+            lastMessageTime = `${diffDays}d`;
+          } else {
+            lastMessageTime = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+          }
+        }
+
+        // Shorten last message preview
+        if (lastMessage && lastMessage.length > 40) {
+          lastMessage = lastMessage.substring(0, 40) + "...";
+        }
+
+        // Count unread group messages
+        const messagesRef = collection(db, "groupMessages");
+        const unreadQuery = query(
+          messagesRef,
+          where("groupId", "==", groupId),
+          where("readBy", "array-contains-any", [myUID]) // Not read by this user
+        );
+        // Note: This is a simplified version - a better approach would be to track unread per user
+      } catch (e) {
+        console.log("Error loading group message preview:", e);
+      }
+
+      const unreadBadgeHTML = unreadCount > 0 ? `<span class="unread-badge">${unreadCount > 99 ? '99+' : unreadCount}</span>` : '';
+
       li.innerHTML = `
         <div class="chat-avatar-container"><div class="chat-avatar group-avatar">👥</div></div>
-        <div class="chat-info"><h3>${escape(group.name)}</h3></div>
+        <div class="chat-item-content ${unreadCount > 0 ? 'unread' : ''}">
+          <div class="chat-item-header">
+            <span class="chat-name">${escape(group.name)}</span>
+          </div>
+          <p class="chat-preview">${escape(lastMessage)}</p>
+        </div>
+        <div class="chat-time-container">
+          <span class="chat-item-time">${lastMessageTime}</span>
+          ${unreadBadgeHTML}
+        </div>
+        <button class="chat-menu-btn" title="Options">⋮</button>
       `;
+
       li.addEventListener("click", async () => {
         await openChat(groupId, group.name, "👥", "group");
         if (typeof showChatDetailView === 'function') showChatDetailView();
@@ -5960,6 +6550,16 @@ async function loadGroups() {
         }, 250);
       });
       li.addEventListener("touchend", () => clearTimeout(longPressTimer));
+      
+      // Three-dot menu button click handler
+      const menuBtn = li.querySelector(".chat-menu-btn");
+      if (menuBtn) {
+        menuBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          if (typeof showChatContextMenu === 'function') showChatContextMenu(e, groupId);
+        });
+      }
+      
       groupsList.appendChild(li);
     });
   } catch (err) {
@@ -5973,57 +6573,207 @@ async function loadContacts() {
   if (!contactList || !myUID) return;
 
   contactList.innerHTML = '<li style="text-align:center; padding:10px;">Loading contacts...</li>';
-
   try {
-    const q = query(collection(db, "users"), limit(20));
-    const snapshot = await getDocs(q);
-
-    if (snapshot.empty) {
-      contactList.innerHTML = `<li class="empty-state"><p>No users found</p></li>`;
-      return;
+    // Unsubscribe previous listener if exists
+    if (typeof contactsListener === 'function') {
+      try { contactsListener(); } catch (e) { /* ignore */ }
     }
 
-    contactList.innerHTML = "";
-    snapshot.forEach(docSnap => {
-      if (docSnap.id === myUID) return;
-      const user = docSnap.data();
-      const uid = docSnap.id;
-      const name = user.username || user.name || "User";
-      const pic = user.profilePic || null;
+    const q = query(collection(db, "users"), limit(50));
 
-      const li = document.createElement("li");
-      li.className = "chat-list-item";
-      li.setAttribute('data-chat-id', uid);
-      let avatar = pic ? `<img src="${pic}" class="chat-avatar" onerror="this.src='logo.jpg'">` : `<div class="chat-avatar">${name.charAt(0)}</div>`;
+    // Real-time listener so UI updates without hard reload
+    contactsListener = onSnapshot(q, async (snapshot) => {
+      if (!snapshot || snapshot.empty) {
+        contactList.innerHTML = `<li class="empty-state"><p>No users found</p></li>`;
+        return;
+      }
 
-      li.innerHTML = `
-         <div class="chat-avatar-container">${avatar}</div>
-         <div class="chat-info"><h3>${escape(name)}</h3></div>
-       `;
+      contactList.innerHTML = "";
 
-      li.addEventListener("click", async () => {
-        await openChat(uid, name, pic, "direct");
+      // Add Chronex AI at the top
+      const chronexLi = document.createElement("li");
+      chronexLi.className = "chat-list-item chronex-ai-item";
+      chronexLi.setAttribute('data-chat-id', 'chronex-ai');
+      chronexLi.innerHTML = `
+        <div class="chat-avatar-container">
+          <div class="chat-avatar" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); font-size: 20px;">🤖</div>
+        </div>
+        <div class="chat-item-content">
+          <div class="chat-item-header">
+            <span class="chat-name">Chronex AI</span>
+          </div>
+          <p class="chat-preview">AI Assistant</p>
+        </div>
+        <div class="chat-time-container">
+          <span class="chat-item-time">Now</span>
+        </div>
+        <button class="chat-menu-btn" title="Options">⋮</button>
+      `;
+
+      chronexLi.addEventListener("click", async (e) => {
+        e.stopPropagation();
+        if (myUID) chronexAI.setUserId(myUID);
+        await openChat("chronex-ai", "Chronex AI", null, "ai");
         if (typeof showChatDetailView === 'function') showChatDetailView();
       });
-      // Right-click context menu
-      li.addEventListener("contextmenu", (e) => {
-        e.preventDefault();
-        if (typeof showChatContextMenu === 'function') showChatContextMenu(e, uid);
-      });
-      // Long-press handler (250ms hold)
-      let longPressTimer;
-      li.addEventListener("touchstart", () => {
-        longPressTimer = setTimeout(() => {
-          const touchEvent = new MouseEvent('contextmenu', {
-            clientX: event.touches[0].clientX,
-            clientY: event.touches[0].clientY
-          });
-          if (typeof showChatContextMenu === 'function') showChatContextMenu(touchEvent, uid);
-        }, 250);
-      });
-      li.addEventListener("touchend", () => clearTimeout(longPressTimer));
 
-      contactList.appendChild(li);
+      contactList.appendChild(chronexLi);
+
+      snapshot.forEach(async docSnap => {
+        if (docSnap.id === myUID) return;
+        const user = docSnap.data();
+        const uid = docSnap.id;
+        const name = user.username || user.name || "User";
+        const pic = user.profilePic || null;
+
+        const li = document.createElement("li");
+        li.className = "chat-list-item";
+        li.setAttribute('data-chat-id', uid);
+        let avatar = pic ? `<img src="${pic}" class="chat-avatar" onerror="this.src='logo.jpg'">` : `<div class="chat-avatar">${name.charAt(0)}</div>`;
+
+        // Fetch last message for this user
+        let lastMessage = "No messages yet";
+        let lastMessageTime = "";
+        let unreadCount = 0;
+
+        try {
+          const messagesRef = collection(db, "messages");
+          
+          // Get the last message (from either direction)
+          const q1 = query(
+            messagesRef,
+            where("to", "==", uid),
+            where("from", "==", myUID),
+            orderBy("timestamp", "desc"),
+            limit(1)
+          );
+          
+          const q2 = query(
+            messagesRef,
+            where("from", "==", uid),
+            where("to", "==", myUID),
+            orderBy("timestamp", "desc"),
+            limit(1)
+          );
+
+          const snap1 = await getDocs(q1);
+          const snap2 = await getDocs(q2);
+
+          let latestMsg = null;
+          let latestTime = null;
+
+          if (!snap1.empty) {
+            latestMsg = snap1.docs[0].data();
+            latestTime = snap1.docs[0].data().timestamp;
+          }
+
+          if (!snap2.empty) {
+            const msg2 = snap2.docs[0].data();
+            const time2 = snap2.docs[0].data().timestamp;
+            if (!latestTime || time2 > latestTime) {
+              latestMsg = msg2;
+              latestTime = time2;
+            }
+          }
+
+          if (latestMsg) {
+            // Format last message preview
+            if (latestMsg.text) {
+              lastMessage = (latestMsg.from === myUID ? "You: " : "") + latestMsg.text.substring(0, 40);
+              if (latestMsg.text.length > 40) lastMessage += "...";
+            } else if (latestMsg.attachment) {
+              lastMessage = (latestMsg.from === myUID ? "You: " : "") + "📎 Attachment";
+            }
+
+            // Format time
+            if (latestTime) {
+              const date = latestTime.toDate ? latestTime.toDate() : new Date(latestTime);
+              const now = new Date();
+              const diffMs = now - date;
+              const diffMins = Math.floor(diffMs / 60000);
+              const diffHours = Math.floor(diffMs / 3600000);
+              const diffDays = Math.floor(diffMs / 86400000);
+
+              if (diffMins < 1) {
+                lastMessageTime = "Now";
+              } else if (diffMins < 60) {
+                lastMessageTime = `${diffMins}m`;
+              } else if (diffHours < 24) {
+                lastMessageTime = `${diffHours}h`;
+              } else if (diffDays < 7) {
+                lastMessageTime = `${diffDays}d`;
+              } else {
+                lastMessageTime = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+              }
+            }
+          }
+
+          // Count unread messages from this user
+          const unreadQuery = query(
+            messagesRef,
+            where("from", "==", uid),
+            where("to", "==", myUID),
+            where("read", "==", false)
+          );
+          const unreadSnap = await getDocs(unreadQuery);
+          unreadCount = unreadSnap.size;
+        } catch (e) {
+          console.log("Error loading message preview for", uid, e);
+        }
+
+        // Build HTML with new structure including preview and unread badge
+        const unreadBadgeHTML = unreadCount > 0 ? `<span class="unread-badge">${unreadCount > 99 ? '99+' : unreadCount}</span>` : '';
+        
+        li.innerHTML = `
+           <div class="chat-avatar-container">${avatar}</div>
+           <div class="chat-item-content ${unreadCount > 0 ? 'unread' : ''}">
+             <div class="chat-item-header">
+               <span class="chat-name">${escape(name)}</span>
+             </div>
+             <p class="chat-preview">${escape(lastMessage)}</p>
+           </div>
+           <div class="chat-time-container">
+             <span class="chat-item-time">${lastMessageTime}</span>
+             ${unreadBadgeHTML}
+           </div>
+           <button class="chat-menu-btn" title="Options">⋮</button>
+         `;
+
+        li.addEventListener("click", async () => {
+          await openChat(uid, name, pic, "direct");
+          if (typeof showChatDetailView === 'function') showChatDetailView();
+        });
+
+        li.addEventListener("contextmenu", (e) => {
+          e.preventDefault();
+          if (typeof showChatContextMenu === 'function') showChatContextMenu(e, uid);
+        });
+
+        // Long-press handler (250ms hold)
+        let longPressTimer;
+        li.addEventListener("touchstart", (event) => {
+          longPressTimer = setTimeout(() => {
+            const touchEvent = new MouseEvent('contextmenu', {
+              clientX: event.touches?.[0]?.clientX || 0,
+              clientY: event.touches?.[0]?.clientY || 0
+            });
+            if (typeof showChatContextMenu === 'function') showChatContextMenu(touchEvent, uid);
+          }, 250);
+        });
+        li.addEventListener("touchend", () => clearTimeout(longPressTimer));
+
+        const menuBtn = li.querySelector(".chat-menu-btn");
+        if (menuBtn) {
+          menuBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            if (typeof showChatContextMenu === 'function') showChatContextMenu(e, uid);
+          });
+        }
+
+        contactList.appendChild(li);
+      });
+    }, (err) => {
+      console.error('Contacts listener error', err);
     });
   } catch (err) {
     console.error("Contacts error", err);

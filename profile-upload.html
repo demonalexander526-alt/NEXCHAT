@@ -404,29 +404,14 @@
         const snapshot = await uploadBytes(storageRef, fileToUpload, metadata);
         console.log('✅ File uploaded to:', snapshot.ref.fullPath);
         
-        // Get download URL with retry logic
-        let retries = 3;
-        let downloadUrl = null;
-        
-        while (retries > 0 && !downloadUrl) {
-          try {
-            downloadUrl = await getDownloadURL(storageRef);
-            console.log('✅ Got download URL on attempt:', 4 - retries);
-            break;
-          } catch (urlErr) {
-            retries--;
-            if (retries > 0) {
-              console.log(`⏳ Retry ${4 - retries}/3 for download URL...`);
-              await new Promise(resolve => setTimeout(resolve, 500));
-            }
-          }
+        // Get download URL directly from snapshot
+        try {
+          profilePicUrl = await getDownloadURL(snapshot.ref);
+          console.log('✅ Got download URL:', profilePicUrl);
+        } catch (urlErr) {
+          console.error('❌ Failed to get download URL:', urlErr);
+          throw new Error('Failed to get download URL: ' + urlErr.message);
         }
-        
-        if (!downloadUrl) {
-          throw new Error('Failed to get download URL after retries');
-        }
-        
-        profilePicUrl = downloadUrl;
         console.log('✅ Image uploaded successfully');
       } catch (uploadErr) {
         console.error('❌ Image upload error:', uploadErr);

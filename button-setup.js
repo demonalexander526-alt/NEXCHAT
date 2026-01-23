@@ -2,36 +2,52 @@
 // This script runs AFTER chat.js module is fully loaded
 // It attaches listeners to ALL interactive buttons in the app
 
-// Import global functions from chat.js if not already available
-// Add fallbacks in case chat.js hasn't fully loaded yet
-if (typeof goBackToDashboard === 'undefined') {
-  window.goBackToDashboard = () => {
-    console.warn('goBackToDashboard not yet loaded from chat.js');
-  };
+// Create fallback functions to prevent "undefined" errors before chat.js loads
+if (typeof window.goBackToDashboard !== 'function') {
+  window.goBackToDashboard = () => console.warn('goBackToDashboard not yet loaded from chat.js');
+}
+if (typeof window.openSearch !== 'function') {
+  window.openSearch = () => console.warn('openSearch not yet loaded from chat.js');
+}
+if (typeof window.openSettingsModal !== 'function') {
+  window.openSettingsModal = () => console.warn('openSettingsModal not yet loaded from chat.js');
+}
+if (typeof window.toggleFullscreen !== 'function') {
+  window.toggleFullscreen = () => console.warn('toggleFullscreen not yet loaded from chat.js');
+}
+if (typeof window.showChatListView !== 'function') {
+  window.showChatListView = () => console.warn('showChatListView not yet loaded from chat.js');
+}
+if (typeof window.goBack !== 'function') {
+  window.goBack = () => console.warn('goBack not yet loaded from chat.js');
 }
 
-if (typeof openSearch === 'undefined') {
-  window.openSearch = () => {
-    console.warn('openSearch not yet loaded from chat.js');
-  };
-}
-
-if (typeof openSettingsModal === 'undefined') {
-  window.openSettingsModal = () => {
-    console.warn('openSettingsModal not yet loaded from chat.js');
-  };
-}
-
-if (typeof toggleFullscreen === 'undefined') {
-  window.toggleFullscreen = () => {
-    console.warn('toggleFullscreen not yet loaded from chat.js');
-  };
+// Helper function to wait for functions to be available
+function waitForFunctions() {
+  return new Promise((resolve) => {
+    const checkInterval = setInterval(() => {
+      if (
+        typeof window.goBackToDashboard === 'function' &&
+        typeof window.openSearch === 'function' &&
+        typeof window.openSettingsModal === 'function' &&
+        typeof window.toggleFullscreen === 'function'
+      ) {
+        clearInterval(checkInterval);
+        resolve();
+      }
+    }, 100);
+    // Timeout after 5 seconds to prevent infinite waiting
+    setTimeout(() => {
+      clearInterval(checkInterval);
+      console.warn('⚠️ Button functions not fully loaded after 5 seconds, proceeding anyway');
+      resolve();
+    }, 5000);
+  });
 }
 
 console.log("🔗 Setting up ALL button event listeners...");
 
-// Wait for the page to be fully loaded AND chat.js module to initialize
-setTimeout(() => {
+function attachAllButtonListeners() {
   console.log("✅ Attaching button listeners");
 
   // ============ HEADER BUTTONS ============
@@ -370,4 +386,18 @@ setTimeout(() => {
   }
 
   console.log("✅✅✅ ALL BUTTON LISTENERS ATTACHED ✅✅✅");
-}, 500);
+}
+
+// Wait for chat.js functions to be available before attaching listeners
+function initializeButtons() {
+  waitForFunctions().then(() => {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', attachAllButtonListeners);
+    } else {
+      attachAllButtonListeners();
+    }
+  });
+}
+
+// Start waiting for functions immediately
+initializeButtons();

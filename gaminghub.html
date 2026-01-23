@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gaming Hub - NEXCHAT</title>
+  <link rel="stylesheet" href="gaminghub.css" />
+  <link rel="stylesheet" href="reset.css" />
+</head>
+<body>
+  <div class="gaming-hub-container">
+    <!-- Header -->
+    <div class="gaming-header">
+      <div class="gaming-header-top">
+        <button type="button" id="back-to-chat-btn" class="back-btn" title="Back to chat">← Back</button>
+        <h1 class="gaming-title">🎮 Gaming Hub</h1>
+        <div class="header-spacer"></div>
+      </div>
+
+      <!-- Search Bar -->
+      <div class="gaming-search-area">
+        <input 
+          type="text" 
+          id="game-search-input" 
+          class="game-search-input" 
+          placeholder="Search games..."
+          autocomplete="off"
+        />
+      </div>
+
+      <!-- Category Tabs -->
+      <div class="category-tabs">
+        <button type="button" class="category-tab active" data-category="all">All Games</button>
+        <button type="button" class="category-tab" data-category="action">Action</button>
+        <button type="button" class="category-tab" data-category="puzzle">Puzzle</button>
+        <button type="button" class="category-tab" data-category="strategy">Strategy</button>
+        <button type="button" class="category-tab" data-category="multiplayer">Multiplayer</button>
+        <button type="button" class="category-tab" data-category="casual">Casual</button>
+      </div>
+
+      <!-- Main Navigation Tabs -->
+      <div class="main-nav-tabs">
+        <button type="button" class="nav-tab active" data-section="games">🎮 Games</button>
+        <button type="button" class="nav-tab" data-section="gamers">👾 Gamers</button>
+        <button type="button" class="nav-tab" data-section="squads">🎖️ Squads</button>
+        <button type="button" class="nav-tab" data-section="sessions">🎮 Sessions</button>
+      </div>
+    </div>
+
+    <!-- Games Grid -->
+    <div class="gaming-content" id="gamesSection">
+      <div id="games-grid" class="games-grid">
+        <!-- Games will be loaded here -->
+      </div>
+
+      <!-- Empty State -->
+      <div id="empty-state" class="empty-state" style="display: none;">
+        <div class="empty-state-content">
+          <div class="empty-icon">🎮</div>
+          <h3>No Games Found</h3>
+          <p>Try searching for a different game or browse other categories.</p>
+        </div>
+      </div>
+
+      <!-- Loading State -->
+      <div id="loading-state" class="loading-state">
+        <div class="spinner"></div>
+        <p>Loading games...</p>
+      </div>
+    </div>
+
+    <!-- Floating Action Button -->
+    <a href="chat.html" class="fab" title="Back to chat">💬</a>
+  </div>
+
+  <!-- GAMERS TAB -->
+  <div id="gamersSection" class="gamers-section" style="display: none;">
+    <div class="gamers-header">
+      <h2>👾 Find Gamers</h2>
+      <div class="filter-buttons">
+        <button class="filter-btn active" data-filter="all">All</button>
+        <button class="filter-btn" data-filter="online">🟢 Online</button>
+        <button class="filter-btn" data-filter="nearby">📍 Nearby</button>
+        <button class="filter-btn" data-filter="friends">👥 Friends</button>
+      </div>
+    </div>
+
+    <div class="gamers-search">
+      <div class="gamer-filters">
+        <select id="usernameFilter" class="filter-select">
+          <option value="">🔍 All Gamers</option>
+          <option value="ShadowNinja">ShadowNinja</option>
+          <option value="PhantomGamer">PhantomGamer</option>
+          <option value="IceQueen">IceQueen</option>
+          <option value="NovaStrike">NovaStrike</option>
+          <option value="VortexKing">VortexKing</option>
+        </select>
+        <select id="gameFilter" class="filter-select">
+          <option value="">🎮 All Games</option>
+          <option value="Valorant">Valorant</option>
+          <option value="PUBG Mobile">PUBG Mobile</option>
+          <option value="Overwatch 2">Overwatch 2</option>
+          <option value="Call of Duty Mobile">Call of Duty Mobile</option>
+          <option value="Destiny 2">Destiny 2</option>
+        </select>
+        <select id="skillFilter" class="filter-select">
+          <option value="">📊 All Skill Levels</option>
+          <option value="beginner">Beginner</option>
+          <option value="intermediate">Intermediate</option>
+          <option value="advanced">Advanced</option>
+          <option value="pro">Pro</option>
+        </select>
+        <select id="statusFilter" class="filter-select">
+          <option value="">🔴 All Status</option>
+          <option value="online">🟢 Online</option>
+          <option value="offline">⚫ Offline</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="gamersList" class="gamers-grid">
+      <!-- Gamer profiles loaded here -->
+    </div>
+  </div>
+
+  <!-- SQUADS TAB -->
+  <div id="squadsSection" class="squads-section" style="display: none;">
+    <div class="squads-header">
+      <h2>🎖️ Gaming Squads</h2>
+      <button id="createSquadBtn" class="create-squad-btn">➕ Create Squad</button>
+    </div>
+
+    <div class="squads-container">
+      <div id="mySquads" class="squads-category">
+        <h3>My Squads</h3>
+        <div id="mySquadsList" class="squads-list">
+          <p class="empty-text">No squads yet. Create or join one!</p>
+        </div>
+      </div>
+
+      <div id="suggestedSquads" class="squads-category">
+        <h3>Suggested Squads</h3>
+        <div id="suggestedSquadsList" class="squads-list">
+          <!-- Suggested squads loaded here -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MATCHING/SESSIONS TAB -->
+  <div id="sessionsSection" class="sessions-section" style="display: none;">
+    <div class="sessions-header">
+      <h2>🎮 Gaming Sessions</h2>
+      <button id="createSessionBtn" class="create-session-btn">➕ Start Session</button>
+    </div>
+
+    <div class="sessions-tabs">
+      <button class="session-tab active" data-tab="active">Active Sessions</button>
+      <button class="session-tab" data-tab="upcoming">Upcoming</button>
+      <button class="session-tab" data-tab="history">History</button>
+    </div>
+
+    <div id="activeSessionsList" class="sessions-list">
+      <!-- Active gaming sessions -->
+    </div>
+  </div>
+
+  <!-- Game Detail Modal -->
+  <div id="game-detail-modal" class="game-detail-modal" style="display: none;">
+    <div class="game-detail-content">
+      <button type="button" id="close-game-modal-btn" class="close-modal-btn" title="Close">✕</button>
+      
+      <div class="game-detail-header">
+        <div id="game-detail-image" class="game-detail-image"></div>
+      </div>
+
+      <div class="game-detail-info">
+        <h2 id="game-detail-name" class="game-detail-name"></h2>
+        <div class="game-detail-meta">
+          <div class="meta-item">
+            <span class="meta-label">Category:</span>
+            <span id="game-detail-category" class="meta-value"></span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Players:</span>
+            <span id="game-detail-players" class="meta-value"></span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Rating:</span>
+            <span id="game-detail-rating" class="meta-value"></span>
+          </div>
+        </div>
+
+        <div class="game-detail-stats">
+          <div class="stat-box">
+            <div class="stat-value" id="game-detail-playing">0</div>
+            <div class="stat-label">Playing Now</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value" id="game-detail-score">0</div>
+            <div class="stat-label">Avg Score</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value" id="game-detail-time">0min</div>
+            <div class="stat-label">Avg Time</div>
+          </div>
+        </div>
+
+        <p id="game-detail-description" class="game-detail-description"></p>
+
+        <div class="game-detail-actions">
+          <button type="button" id="play-game-btn" class="play-btn">
+            ▶️ Play Online
+          </button>
+          <button type="button" id="share-game-btn" class="share-btn">
+            📤 Share
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="firebase-config.js"></script>
+  <script src="global-exports.js"></script>
+  <script src="gaminghub.js"></script>
+</body>
+</html>

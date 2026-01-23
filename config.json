@@ -1,0 +1,19 @@
+{
+  "ai_provider": "openai",
+  "openai_api_key": "your-openai-api-key-here",
+  "openai_model": "gpt-3.5-turbo",
+  "huggingface_model": "gpt2",
+  "ollama_endpoint": "http://localhost:11434",
+  "temperature": 0.7,
+  "max_tokens": 1000,
+  "use_real_ai": true,
+  "comments": {
+    "ai_provider": "Options: openai, huggingface, ollama, default",
+    "openai_api_key": "Get from https://platform.openai.com/api-keys",
+    "openai_model": "gpt-4, gpt-3.5-turbo, gpt-4-turbo, etc",
+    "huggingface_model": "gpt2, distilgpt2, facebook/opt-350m, etc",
+    "temperature": "0.0-1.0 (lower=deterministic, higher=creative)",
+    "max_tokens": "Maximum response length",
+    "use_real_ai": "true=use real AI, false=use default responses"
+  }
+}

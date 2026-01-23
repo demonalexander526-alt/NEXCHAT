@@ -1,16 +1,21 @@
 @echo off
 REM NEXCHAT Environment Setup Checker
 REM This script verifies all required tools are installed
+REM Creator: DEMON ALEX
+REM Version: 1.0
 
 echo.
-echo ===================================
-echo NEXCHAT Setup Checker
-echo ===================================
+echo ============================================
+echo      NEXCHAT Environment Setup Checker
+echo ============================================
+echo.
+echo Starting verification...
 echo.
 
 setlocal enabledelayedexpansion
 
 set "missing="
+set "foundAll=1"
 
 REM Check Node.js
 echo Checking Node.js...
@@ -90,20 +95,36 @@ echo.
 echo ===================================
 
 if "!missing!"=="" (
-    echo ✅ All required tools are installed!
     echo.
-    echo You can now run: build-apk.bat
+    echo ============================================
+    echo      ✅ SUCCESS - All tools installed!
+    echo ============================================
+    echo.
+    echo Your NEXCHAT environment is ready!
+    echo.
+    echo Next steps:
+    echo   1. npm install      (if not done)
+    echo   2. build-apk.bat    (to build Android APK)
+    echo   3. Check Firebase credentials
+    echo.
 ) else (
-    echo ❌ Missing tools:!missing!
     echo.
-    echo Please install the missing tools:
-    echo 1. Node.js - https://nodejs.org/
-    echo 2. Java JDK - https://www.oracle.com/java/technologies/downloads/
-    echo 3. Android Studio - https://developer.android.com/studio
-    echo 4. Git - https://git-scm.com/
+    echo ============================================
+    echo      ❌ MISSING REQUIRED TOOLS
+    echo ============================================
+    echo.
+    echo Missing:!missing!
+    echo.
+    echo Installation links:
+    echo   Node.js  : https://nodejs.org/
+    echo   Java JDK: https://www.oracle.com/java/technologies/downloads/
+    echo   Android  : https://developer.android.com/studio
+    echo   Git      : https://git-scm.com/
+    echo.
+    echo After installation, run this script again.
+    echo.
 )
 
-echo ===================================
+echo ============================================
 echo.
-
 pause

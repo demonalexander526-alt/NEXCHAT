@@ -1,0 +1,8 @@
+[
+  {
+    "origin": ["https://demonalexander526-alt.github.io"],
+    "method": ["GET", "HEAD", "DELETE", "POST", "PUT"],
+    "responseHeader": ["Content-Type", "x-goog-meta-*"],
+    "maxAgeSeconds": 3600
+  }
+]
