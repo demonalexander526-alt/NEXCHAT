@@ -32,8 +32,6 @@ function hapticFeedback(intensity = 'medium') {
   }
 }
 
-// Note: Auth state is handled in setupInitialization() function instead
-
 let currentChatUser = null;
 let currentChatType = 'direct'; // 'direct' or 'group'
 let myUID = null;
@@ -45,16 +43,14 @@ let callActive = false;
 let callStartTime = null;
 let callTimer = null;
 let mentionPopupOpen = false;
-let groupMembers = []; // Store current group members for mentions
+let groupMembers = [];
 
-// Notification sounds - use data URLs for better compatibility
 const notificationSounds = {
   success: 'data:audio/wav;base64,UklGRiYAAABXQVZFZm10IBAAAAABAAEAQB8AAAB9AAACABAAZGF0YQIAAAAAAA==',
   error: 'data:audio/wav;base64,UklGRiYAAABXQVZFZm10IBAAAAABAAEAQB8AAAB9AAACABAAZGF0YQIAAAAAAA==',
   info: 'data:audio/wav;base64,UklGRiYAAABXQVZFZm10IBAAAAABAAEAQB8AAAB9AAACABAAZGF0YQIAAAAAAA=='
 };
 
-// ============ GLOBAL STATE ============
 let basicUIInitialized = false;
 let authListenersInitialized = false;
 let offlineDB = null;
@@ -68,16 +64,12 @@ const emojis = [
   '👋', '👏', '🙌', '👐', '🤝', '🤲', '🤞', '🖖', '🤘', '🤟'
 ];
 
-// ============ GLOBAL UTILITY FUNCTIONS ============
-
-// Fullscreen toggle function
 function toggleFullscreen() {
   const elem = document.documentElement;
   const app = document.querySelector('.app');
   const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
 
   if (!isFullscreen) {
-    // Try native fullscreen first
     let fullscreenPromise = null;
 
     if (elem.requestFullscreen) {
@@ -252,10 +244,14 @@ async function showGroupInfoPanel(groupId) {
     const members = groupData.members || [];
     const infoPic = groupData.groupPic || '👥';
 
-    // Update header
-    document.getElementById('infoName').textContent = groupData.name || 'Group';
-    document.getElementById('infoPic').src = infoPic || '👥';
-    document.getElementById('infoMemberCount').textContent = `Group · ${members.length} members`;
+    // Update header with null checks
+    const infoNameEl = document.getElementById('infoName');
+    const infoPicEl = document.getElementById('infoPic');
+    const infoMemberCountEl = document.getElementById('infoMemberCount');
+
+    if (infoNameEl) infoNameEl.textContent = groupData.name || 'Group';
+    if (infoPicEl) infoPicEl.src = infoPic || '👥';
+    if (infoMemberCountEl) infoMemberCountEl.textContent = `Group · ${members.length} members`;
 
     // Load and display media
     try {
@@ -281,7 +277,7 @@ async function showGroupInfoPanel(groupId) {
 
       document.getElementById('mediaCount').textContent = mediaCount;
       const mediaPreview = document.getElementById('mediaPreview');
-      mediaPreview.innerHTML = '';
+      if (mediaPreview) mediaPreview.innerHTML = '';
 
       mediaItems.forEach(attachment => {
         if (attachment.downloadURL) {
@@ -294,17 +290,19 @@ async function showGroupInfoPanel(groupId) {
           } else {
             item.innerHTML = `<div style="display: flex; align-items: center; justify-content: center; height: 100%; background: #1a1a1a; color: #00ff66;">📄</div>`;
           }
-          mediaPreview.appendChild(item);
+          const mediaPreview = document.getElementById('mediaPreview');
+          if (mediaPreview) mediaPreview.appendChild(item);
         }
       });
     } catch (err) {
       console.log('Media loading skipped:', err.message);
-      document.getElementById('mediaCount').textContent = '0';
+      const mediaCountEl = document.getElementById('mediaCount');
+      if (mediaCountEl) mediaCountEl.textContent = '0';
     }
 
     // Load members list
     const membersContent = document.getElementById('membersListContent');
-    membersContent.innerHTML = '';
+    if (membersContent) membersContent.innerHTML = '';
     const adminMembers = groupData.admins || [groupData.createdBy];
 
     for (const memberId of members) {
@@ -323,12 +321,14 @@ async function showGroupInfoPanel(groupId) {
           <div class="member-role">${isAdmin ? '👑 Admin' : 'Member'}</div>
         </div>
       `;
-      membersContent.appendChild(memberDiv);
+      if (membersContent) membersContent.appendChild(memberDiv);
     }
 
     // Show the panel
-    document.getElementById('infoSidebar').style.display = 'block';
-    document.getElementById('membersList').style.display = 'block';
+    const infoSidebarEl = document.getElementById('infoSidebar');
+    const membersListEl = document.getElementById('membersList');
+    if (infoSidebarEl) infoSidebarEl.style.display = 'block';
+    if (membersListEl) membersListEl.style.display = 'block';
 
   } catch (error) {
     console.error('Error showing group info panel:', error);
@@ -346,16 +346,22 @@ async function showUserInfoPanel(userId) {
 
     const userData = userDoc.data();
 
-    // Update header
-    document.getElementById('infoName').textContent = userData.username || userData.name || 'User';
-    document.getElementById('infoPic').src = userData.profilePic || userData.profilePicUrl || '👤';
-    document.getElementById('infoMemberCount').textContent = userData.email || 'User Profile';
+    // Update header with null checks
+    const infoNameEl = document.getElementById('infoName');
+    const infoPicEl = document.getElementById('infoPic');
+    const infoMemberCountEl = document.getElementById('infoMemberCount');
 
-    // Hide members list for direct chats
-    document.getElementById('membersList').style.display = 'none';
+    if (infoNameEl) infoNameEl.textContent = userData.username || userData.name || 'User';
+    if (infoPicEl) infoPicEl.src = userData.profilePic || userData.profilePicUrl || '👤';
+    if (infoMemberCountEl) infoMemberCountEl.textContent = userData.email || 'User Profile';
+
+    // Hide members list for direct chats with null check
+    const membersListEl = document.getElementById('membersList');
+    if (membersListEl) membersListEl.style.display = 'none';
 
     // Show the panel
-    document.getElementById('infoSidebar').style.display = 'block';
+    const infoSidebarEl = document.getElementById('infoSidebar');
+    if (infoSidebarEl) infoSidebarEl.style.display = 'block';
 
   } catch (error) {
     console.error('Error showing user info panel:', error);
@@ -715,6 +721,8 @@ function showChatListView() {
   if (bottomNav) {
     bottomNav.style.display = "flex";
   }
+  // Hide chat profile display when returning to list view
+  hideChatProfileDisplay();
 }
 
 function showChatDetailView() {
@@ -744,45 +752,8 @@ function showChatDetailView() {
 
 // ============ SEARCH AND FILTER FUNCTIONS ============
 
-function filterChats(query) {
-  const chatItems = document.querySelectorAll(".chat-list li[data-chat-id]");
-  chatItems.forEach(item => {
-    const name = item.textContent.toLowerCase();
-    if (query === "" || name.includes(query)) {
-      item.style.display = "block";
-    } else {
-      item.style.display = "none";
-    }
-  });
-}
-
-function applyFilter(filter) {
-  const chatItems = document.querySelectorAll(".chat-list li[data-chat-id]");
-  chatItems.forEach(item => {
-    const isUnread = item.dataset.unread === "true";
-    const isFavorite = item.dataset.favorite === "true";
-    const isGroup = item.dataset.isGroup === "true";
-
-    let shouldShow = true;
-
-    switch (filter) {
-      case "unread":
-        shouldShow = isUnread;
-        break;
-      case "favorites":
-        shouldShow = isFavorite;
-        break;
-      case "groups":
-        shouldShow = isGroup;
-        break;
-      case "all":
-        shouldShow = true;
-        break;
-    }
-
-    item.style.display = shouldShow ? "block" : "none";
-  });
-}
+// function filterChats and applyFilter removed (duplicates). 
+// See lines 6628+ for valid definitions.
 
 async function archiveChat(chatId) {
   try {
@@ -885,7 +856,7 @@ async function showChatContextMenu(event, chatId) {
   // Create context menu
   const menu = document.createElement("div");
   menu.className = "chat-context-menu";
-  
+
   // Find the chat list item and position menu relative to it
   const chatItem = document.querySelector(`li[data-chat-id="${chatId}"]`);
   if (chatItem) {
@@ -1054,11 +1025,11 @@ async function unmuteChat(chatId) {
   try {
     const userRef = doc(db, "users", myUID);
     const userDoc = await getDoc(userRef);
-    
+
     if (userDoc.exists()) {
       let mutedChats = userDoc.data().mutedChats || [];
       mutedChats = mutedChats.filter(id => id !== chatId);
-      
+
       await updateDoc(userRef, {
         mutedChats: mutedChats
       });
@@ -1076,7 +1047,7 @@ async function isChatMuted(chatId) {
   try {
     const userRef = doc(db, "users", myUID);
     const userDoc = await getDoc(userRef);
-    
+
     if (userDoc.exists()) {
       const mutedChats = userDoc.data().mutedChats || [];
       return mutedChats.includes(chatId);
@@ -1989,17 +1960,17 @@ async function sendMessage(e) {
     if (currentChatType === 'ai') {
       // AI Chat - Chronex AI
       console.log("🤖 Sending message to Chronex AI");
-      
+
       // Display user message immediately
       displayChronexAIUserMessage(text);
-      
+
       try {
         // Send to AI and get response
         const aiResponse = await chronexAI.chat(text, `chronex-${myUID}`);
-        
+
         // Display AI response
         displayChronexAIResponse(aiResponse);
-        
+
         // Deduct 1 token
         await updateDoc(userRef, {
           tokens: newTokens,
@@ -2236,6 +2207,24 @@ function loadMessages() {
       return;
     }
 
+    // Mark incoming unread messages as read
+    allMessages.forEach(async (m) => {
+      if (m.from !== myUID && m.read === false && m.docId) {
+        try {
+          await updateDoc(doc(db, "messages", m.docId), { read: true });
+        } catch (e) {
+          console.error("Error marking message as read:", e);
+        }
+      }
+    });
+
+    // Reload contacts to update unread badges
+    setTimeout(() => {
+      if (typeof loadContacts === 'function') {
+        loadContacts();
+      }
+    }, 500);
+
     allMessages.forEach((m) => {
       const isOwn = m.from === myUID;
 
@@ -2296,7 +2285,7 @@ function loadMessages() {
 
       const content = document.createElement("p");
       content.style.margin = "0";
-      
+
       // Check if message is an audio file
       if (m.attachment && m.attachment.fileType && m.attachment.fileType.startsWith('audio/')) {
         // Create audio player
@@ -2400,21 +2389,70 @@ function loadMessages() {
 // OPEN CHAT & UPDATE UI
 // ============================================================
 
+// Update profile display in header and message input area
+function updateChatProfileDisplay(username, profilePic, status = 'Online') {
+  // Update header active chat info
+  const headerLogoContainer = document.getElementById("headerLogoContainer");
+  const activeChatHeader = document.getElementById("activeChatHeader");
+
+  if (headerLogoContainer && activeChatHeader) {
+    headerLogoContainer.style.display = 'none';
+    activeChatHeader.style.display = 'flex';
+
+    const activeChatName = document.getElementById("activeChatName");
+    const activeChatStatus = document.getElementById("activeChatStatus");
+    const activeChatAvatar = document.getElementById("activeChatAvatar");
+
+    if (activeChatName) activeChatName.textContent = username;
+    if (activeChatStatus) activeChatStatus.textContent = status;
+    if (activeChatAvatar) activeChatAvatar.src = profilePic || "👤";
+  }
+
+  // Update message input area profile display
+  const chatUserProfile = document.getElementById("chatUserProfile");
+  if (chatUserProfile) {
+    chatUserProfile.style.display = 'flex';
+
+    const chatUserName = document.getElementById("chatUserName");
+    const chatUserStatus = document.getElementById("chatUserStatus");
+    const chatUserAvatar = document.getElementById("chatUserAvatar");
+
+    if (chatUserName) chatUserName.textContent = username;
+    if (chatUserStatus) chatUserStatus.textContent = status;
+    if (chatUserAvatar) chatUserAvatar.src = profilePic || "👤";
+  }
+}
+
+// Hide profile display (when not in a chat)
+function hideChatProfileDisplay() {
+  const headerLogoContainer = document.getElementById("headerLogoContainer");
+  const activeChatHeader = document.getElementById("activeChatHeader");
+  const chatUserProfile = document.getElementById("chatUserProfile");
+
+  if (headerLogoContainer) headerLogoContainer.style.display = 'block';
+  if (activeChatHeader) activeChatHeader.style.display = 'none';
+  if (chatUserProfile) chatUserProfile.style.display = 'none';
+}
+
 async function openChat(uid, username, profilePic, chatType = 'direct') {
   currentChatUser = uid;
   currentChatType = chatType; // Store chat type (direct or group)
 
+  // Update the profile display immediately
+  updateChatProfileDisplay(username, profilePic, "Loading...");
+
+
   // Update chat header elements (with null checks)
   const chatNameEl = document.getElementById("chatName");
   if (chatNameEl) chatNameEl.textContent = username;
-  
+
   const chatProfilePicEl = document.getElementById("chatProfilePic");
   if (chatProfilePicEl) chatProfilePicEl.src = profilePic || "👤";
 
   // Update info sidebar (with null checks)
   const infoNameEl = document.getElementById("infoName");
   if (infoNameEl) infoNameEl.textContent = username;
-  
+
   const infoPicEl = document.getElementById("infoPic");
   if (infoPicEl) infoPicEl.src = profilePic || "👤";
 
@@ -2426,12 +2464,15 @@ async function openChat(uid, username, profilePic, chatType = 'direct') {
         const groupData = groupDoc.data();
         const infoEmailEl = document.getElementById("infoEmail");
         if (infoEmailEl) infoEmailEl.textContent = `Members: ${groupData.members.length} `;
-        
+
         const statusTextEl = document.getElementById("statusText");
         if (statusTextEl) statusTextEl.textContent = `👥 Group Chat`;
-        
+
         const infoStatusEl = document.getElementById("infoStatus");
         if (infoStatusEl) infoStatusEl.textContent = `👥 Group Chat`;
+
+        // Update profile display with group status
+        updateChatProfileDisplay(username, profilePic, "👥 Group Chat");
 
         // Load group members for mention system
         groupMembers = [];
@@ -2454,12 +2495,15 @@ async function openChat(uid, username, profilePic, chatType = 'direct') {
       // Handle AI chat type (Chronex AI)
       const infoEmailEl = document.getElementById("infoEmail");
       if (infoEmailEl) infoEmailEl.textContent = "Advanced AI Assistant";
-      
+
       const statusTextEl = document.getElementById("statusText");
       if (statusTextEl) statusTextEl.textContent = "🤖 AI Ready";
-      
+
       const infoStatusEl = document.getElementById("infoStatus");
       if (infoStatusEl) infoStatusEl.textContent = "🤖 AI Ready";
+
+      // Update profile display with AI status
+      updateChatProfileDisplay(username, profilePic, "🤖 AI Ready");
 
       showNotif("💬 Welcome to Chronex AI! Ask me anything!", "info");
     } else {
@@ -2471,24 +2515,31 @@ async function openChat(uid, username, profilePic, chatType = 'direct') {
         userData = userDoc.data();
         const infoEmail = document.getElementById("infoEmail");
         if (infoEmail) infoEmail.textContent = userData.email || "";
-        
+
+        const statusText = userData.online ? "🟢 Online" : "⚫ Offline";
         const statusTextEl = document.getElementById("statusText");
-        if (statusTextEl) statusTextEl.textContent = userData.online ? "🟢 Online" : "⚫ Offline";
-        
+        if (statusTextEl) statusTextEl.textContent = statusText;
+
         const infoStatusEl = document.getElementById("infoStatus");
-        if (infoStatusEl) infoStatusEl.textContent = userData.online ? "🟢 Online" : "⚫ Offline";
+        if (infoStatusEl) infoStatusEl.textContent = statusText;
+
+        // Update profile display with user status
+        updateChatProfileDisplay(username, profilePic, statusText);
       } else {
         // User document doesn't exist yet, but allow chatting with UID
         console.warn("User document not found in database, but proceeding with UID:", uid);
         const infoEmail = document.getElementById("infoEmail");
         if (infoEmail) infoEmail.textContent = "Profile pending...";
-        
+
         const statusTextEl = document.getElementById("statusText");
         if (statusTextEl) statusTextEl.textContent = "⚪ Pending";
-        
+
         const infoStatusEl = document.getElementById("infoStatus");
         if (infoStatusEl) infoStatusEl.textContent = "⚪ Pending";
-        
+
+        // Update profile display with pending status
+        updateChatProfileDisplay(username, profilePic, "⚪ Pending");
+
         showNotif("ℹ️ User profile not fully synced yet. Chat enabled via UID.", "info");
       }
 
@@ -2946,6 +2997,27 @@ document.getElementById("infoVideoBtn")?.addEventListener("click", () => {
   startCall(true);
 });
 
+document.getElementById("infoAddBtn")?.addEventListener("click", () => {
+  if (currentChatType === 'group') {
+    // Open group members modal to add new members
+    const modal = document.getElementById("addMembersModal");
+    if (modal) {
+      modal.style.display = "block";
+      showNotif("👥 Add group members", "info");
+    } else {
+      showNotif("👥 Create a popup to add members", "info");
+    }
+  } else {
+    showNotif("👥 Add members to convert to group chat", "info");
+  }
+});
+
+document.getElementById("infoSearchBtn")?.addEventListener("click", () => {
+  // Open search within this chat
+  openSearch();
+  showNotif("🔍 Search within this chat", "info");
+});
+
 document.getElementById("infoBtn")?.addEventListener("click", () => {
   const sidebar = document.getElementById("infoSidebar");
   if (sidebar && currentChatUser) {
@@ -3097,13 +3169,13 @@ document.getElementById("nav-announcements")?.addEventListener("click", () => {
     statusContainer.style.display = "none";
     groupsContainer.style.display = "none";
     announcementsContainer.style.display = "flex";
-    
+
     // Remove active from other nav items
     document.getElementById("nav-messages").classList.remove("active");
     document.getElementById("nav-status").classList.remove("active");
     document.getElementById("nav-groups").classList.remove("active");
     document.getElementById("nav-announcements").classList.add("active");
-    
+
     loadAnnouncements();
     showNotif("📢 Announcements", "info", 800);
   } else {
@@ -3159,7 +3231,7 @@ document.getElementById("file-input")?.addEventListener("change", (e) => {
   selectedFile = file;
   showAttachmentPreview(file);
   showNotif(`✅ File selected: ${file.name} `, "success", 1500);
-  try { document.dispatchEvent(new CustomEvent('selectedFileChanged')); } catch(e){}
+  try { document.dispatchEvent(new CustomEvent('selectedFileChanged')); } catch (e) { }
 });
 
 function showAttachmentPreview(file) {
@@ -3186,7 +3258,7 @@ function removeAttachment() {
   if (preview) preview.style.display = "none";
 
   showNotif("✗ Attachment removed", "info", 1000);
-  try { document.dispatchEvent(new CustomEvent('selectedFileChanged')); } catch(e){}
+  try { document.dispatchEvent(new CustomEvent('selectedFileChanged')); } catch (e) { }
 }
 
 async function uploadFileToStorage(file, chatId, isGroup = false) {
@@ -3415,7 +3487,7 @@ async function loadTokenBalance() {
   try {
     const userRef = doc(db, "users", myUID);
     const userDoc = await getDoc(userRef);
-    
+
     if (userDoc.exists()) {
       const tokens = userDoc.data()?.tokens ?? 0;
       const balanceEl = document.getElementById("currentTokenBalance");
@@ -3459,6 +3531,43 @@ function loadSettingsPreferences() {
     const themeEl = document.getElementById("theme" + theme.charAt(0).toUpperCase() + theme.slice(1));
     if (themeEl) themeEl.checked = true;
 
+    // Load chat size preference
+    const chatSize = prefs.chatSize || "medium";
+    // Convert "extra-large" to "ExtraLarge" for element ID lookup
+    const chatSizeFormatted = chatSize.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join('');
+    const chatSizeEl = document.getElementById("chatSize" + chatSizeFormatted);
+    if (chatSizeEl) chatSizeEl.checked = true;
+
+    // Load text adjustment preferences
+    const fontFamilySelect = document.getElementById("fontFamilySelect");
+    if (fontFamilySelect && prefs.fontFamily) {
+      fontFamilySelect.value = prefs.fontFamily;
+    }
+
+    const letterSpacingRange = document.getElementById("letterSpacingRange");
+    if (letterSpacingRange && prefs.letterSpacing !== undefined) {
+      letterSpacingRange.value = prefs.letterSpacing;
+      document.getElementById("letterSpacingValue").textContent = prefs.letterSpacing;
+    }
+
+    const lineHeightRange = document.getElementById("lineHeightRange");
+    if (lineHeightRange && prefs.lineHeight !== undefined) {
+      lineHeightRange.value = prefs.lineHeight;
+      document.getElementById("lineHeightValue").textContent = prefs.lineHeight;
+    }
+
+    // Load text alignment preference
+    const alignButtons = document.querySelectorAll(".text-align-btn");
+    alignButtons.forEach(btn => {
+      btn.style.background = "#444";
+      btn.style.color = "#fff";
+    });
+    const alignmentBtn = document.getElementById("align" + (prefs.textAlignment || "left").charAt(0).toUpperCase() + (prefs.textAlignment || "left").slice(1));
+    if (alignmentBtn) {
+      alignmentBtn.style.background = "#00ff66";
+      alignmentBtn.style.color = "#000";
+    }
+
     console.log("✅ Settings loaded successfully", prefs);
   } catch (err) {
     console.error("Error loading settings:", err);
@@ -3473,12 +3582,26 @@ function saveSettingsPreferences() {
     const onlineEl = document.getElementById("onlineStatusToggle");
     const readEl = document.getElementById("readReceiptsToggle");
 
+    // Get text alignment from active button
+    let textAlignment = "left";
+    const activeAlignBtn = document.querySelector(".text-align-btn[style*='background: rgb(0, 255, 102)']");
+    if (activeAlignBtn) {
+      if (activeAlignBtn.id === "alignLeft") textAlignment = "left";
+      else if (activeAlignBtn.id === "alignCenter") textAlignment = "center";
+      else if (activeAlignBtn.id === "alignRight") textAlignment = "right";
+    }
+
     const prefs = {
       notifications: notifEl?.checked ?? true,
       sound: soundEl?.checked ?? true,
       onlineStatus: onlineEl?.checked ?? true,
       readReceipts: readEl?.checked ?? true,
       theme: document.querySelector('input[name="theme"]:checked')?.value || "dark",
+      chatSize: document.querySelector('input[name="chatSize"]:checked')?.value || "medium",
+      fontFamily: document.getElementById("fontFamilySelect")?.value || "Arial, sans-serif",
+      letterSpacing: parseFloat(document.getElementById("letterSpacingRange")?.value) || 0,
+      lineHeight: parseFloat(document.getElementById("lineHeightRange")?.value) || 1.5,
+      textAlignment: textAlignment,
       lastUpdated: new Date().toISOString()
     };
 
@@ -3510,6 +3633,30 @@ function applySettings(prefs) {
       document.documentElement.style.colorScheme = "dark";
       document.body.classList.add("dark-theme");
       document.body.classList.remove("light-theme");
+    }
+
+    // Apply chat size
+    const chatSize = prefs.chatSize || "medium";
+    document.documentElement.setAttribute("data-chat-size", chatSize);
+    document.body.classList.remove("chat-size-small", "chat-size-medium", "chat-size-large", "chat-size-extra-large");
+    document.body.classList.add(`chat-size-${chatSize}`);
+
+    // Apply text adjustments to messages
+    const messagesContainer = document.querySelector('.messages');
+    if (messagesContainer) {
+      const fontFamily = prefs.fontFamily || "Arial, sans-serif";
+      const letterSpacing = (prefs.letterSpacing || 0) + "px";
+      const lineHeight = prefs.lineHeight || 1.5;
+      const textAlignment = prefs.textAlignment || "left";
+
+      messagesContainer.style.fontFamily = fontFamily;
+      messagesContainer.style.letterSpacing = letterSpacing;
+      messagesContainer.style.lineHeight = lineHeight;
+
+      // Apply alignment to message items
+      document.querySelectorAll('.message-item').forEach(msg => {
+        msg.style.textAlign = textAlignment;
+      });
     }
 
     // Vibration test on Android if enabled
@@ -3927,10 +4074,10 @@ async function setupInitialization() {
           const tokenCount = userData.tokens ?? 0;
           console.log("💰 Token count from Firebase:", tokenCount);
           console.log("💰 User data:", userData);
-          
+
           const tokenDisplay = document.getElementById("tokenCount");
           console.log("💰 Token display element:", tokenDisplay);
-          
+
           if (tokenDisplay) {
             tokenDisplay.textContent = tokenCount;
             console.log("✅ Token display updated to:", tokenCount);
@@ -3993,37 +4140,61 @@ async function setupInitialization() {
         window.tokenSnapshotUnsubscribe = tokenSnapshotUnsubscribe;
 
         // Listen for incoming messages to auto-add users to chat list
+        // Listen for incoming messages to auto-add users to chat list
+        // OPTIMIZED: Added limit and orderBy to prevent fetching entire history causing lag
+        // Also removed sequential awaits inside loop
         const incomingMessagesQuery = query(
           collection(db, "messages"),
-          where("to", "==", myUID)
+          where("to", "==", myUID),
+          orderBy("timestamp", "desc"),
+          limit(50)
         );
 
         const incomingMessagesUnsubscribe = onSnapshot(incomingMessagesQuery, async (snapshot) => {
-          for (const change of snapshot.docChanges()) {
+          // Collect new senders first to avoid multiple DB operations
+          const newSenders = new Set();
+
+          snapshot.docChanges().forEach(change => {
             if (change.type === 'added') {
-              const messageData = change.doc.data();
-              const senderUID = messageData.from;
-
-              // Auto-add sender to contacts if not already there
-              try {
-                const myUserRef = doc(db, "users", myUID);
-                const myUserDoc = await getDoc(myUserRef);
-                const myContacts = myUserDoc.data()?.contacts || [];
-
-                if (!myContacts.includes(senderUID) && senderUID !== myUID) {
-                  myContacts.push(senderUID);
-                  await updateDoc(myUserRef, { contacts: myContacts });
-                  console.log("✅ Auto-added", senderUID, "to contacts from incoming message");
-
-                  // Reload contacts to show new sender in chat list
-                  loadContacts();
-                }
-              } catch (err) {
-                console.warn("Could not auto-add sender to contacts:", err);
+              const data = change.doc.data();
+              if (data.from && data.from !== myUID) {
+                newSenders.add(data.from);
               }
             }
+          });
+
+          if (newSenders.size === 0) return;
+
+          try {
+            // Fetch user doc ONCE instead of N times
+            const myUserRef = doc(db, "users", myUID);
+            const myUserDoc = await getDoc(myUserRef);
+
+            if (!myUserDoc.exists()) return;
+
+            const myContacts = myUserDoc.data()?.contacts || [];
+            let updated = false;
+
+            for (const senderUID of newSenders) {
+              if (!myContacts.includes(senderUID)) {
+                myContacts.push(senderUID);
+                updated = true;
+                console.log("✅ Auto-added", senderUID, "to contacts");
+              }
+            }
+
+            if (updated) {
+              await updateDoc(myUserRef, { contacts: myContacts });
+              // Reload contacts to show new senders
+              if (typeof loadContacts === 'function') loadContacts();
+            }
+          } catch (err) {
+            console.warn("Could not auto-add sender to contacts:", err);
           }
         }, (error) => {
+          if (error.code === 'failed-precondition') {
+            console.warn("⚠️ Index missing for incoming messages query. Please create 'messages' index: to (Asc) + timestamp (Desc)");
+          }
           console.warn("Error listening to incoming messages:", error);
         });
 
@@ -4170,6 +4341,49 @@ async function setupInitialization() {
     document.querySelectorAll('input[name="theme"]').forEach(radio => {
       radio.addEventListener("change", saveSettingsPreferences, false);
     });
+
+    // Chat size radio buttons
+    document.querySelectorAll('input[name="chatSize"]').forEach(radio => {
+      radio.addEventListener("change", saveSettingsPreferences, false);
+    });
+
+    // Text Element Adjustment - Font Family
+    const fontFamilySelect = document.getElementById("fontFamilySelect");
+    if (fontFamilySelect) {
+      fontFamilySelect.addEventListener("change", saveSettingsPreferences, false);
+    }
+
+    // Text Element Adjustment - Letter Spacing
+    const letterSpacingRange = document.getElementById("letterSpacingRange");
+    if (letterSpacingRange) {
+      letterSpacingRange.addEventListener("input", (e) => {
+        document.getElementById("letterSpacingValue").textContent = e.target.value;
+        saveSettingsPreferences();
+      }, false);
+    }
+
+    // Text Element Adjustment - Line Height
+    const lineHeightRange = document.getElementById("lineHeightRange");
+    if (lineHeightRange) {
+      lineHeightRange.addEventListener("input", (e) => {
+        document.getElementById("lineHeightValue").textContent = e.target.value;
+        saveSettingsPreferences();
+      }, false);
+    }
+
+    // Text Element Adjustment - Text Alignment
+    const alignButtons = document.querySelectorAll(".text-align-btn");
+    alignButtons.forEach(btn => {
+      btn.addEventListener("click", (e) => {
+        alignButtons.forEach(b => {
+          b.style.background = "#444";
+          b.style.color = "#fff";
+        });
+        e.target.style.background = "#00ff66";
+        e.target.style.color = "#000";
+        saveSettingsPreferences();
+      }, false);
+    });
   };
 
   // Setup listeners when settings are visible
@@ -4269,12 +4483,12 @@ async function setupInitialization() {
 
   const loadChatBackground = async (chatId, chatType) => {
     try {
-      const bgDocPath = chatType === 'group' 
-        ? `groupBackgrounds/${chatId}` 
+      const bgDocPath = chatType === 'group'
+        ? `groupBackgrounds/${chatId}`
         : `directMessageBackgrounds/${myUID}_${chatId}`;
-      
+
       const bgDoc = await getDoc(doc(db, bgDocPath.split('/')[0], bgDocPath.split('/')[1]));
-      
+
       if (bgDoc.exists() && bgDoc.data().backgroundUrl) {
         applyBackgroundImage(bgDoc.data().backgroundUrl);
         localStorage.setItem(`chat_bg_${chatId}`, bgDoc.data().backgroundUrl);
@@ -4311,7 +4525,7 @@ async function setupInitialization() {
       const bgPath = currentChatType === 'group'
         ? `chatBackgrounds/groups/${currentChatUser}/${Date.now()}`
         : `chatBackgrounds/direct/${myUID}_${currentChatUser}/${Date.now()}`;
-      
+
       const bgRef = storageRef(storage, bgPath);
       const snapshot = await uploadBytes(bgRef, file);
       const bgUrl = await getDownloadURL(snapshot.ref);
@@ -5934,7 +6148,7 @@ function viewStatus(status) {
 async function loadAnnouncements() {
   try {
     const announcementsFeed = document.getElementById('announcementsFeed');
-    
+
     const q = query(
       collection(db, 'announcements'),
       orderBy('createdAt', 'desc'),
@@ -5962,7 +6176,7 @@ async function loadAnnouncements() {
 
       const createdTime = announcement.createdAt?.toDate ? announcement.createdAt.toDate() : new Date(announcement.createdAt);
       const timeDiff = Math.floor((Date.now() - createdTime.getTime()) / 1000);
-      
+
       let timeText = 'Just now';
       if (timeDiff < 60) {
         timeText = 'Just now';
@@ -6021,6 +6235,14 @@ function initializeBasicUI() {
     return;
   }
   basicUIInitialized = true;
+
+  // Load and apply saved settings (chat size, theme, etc.)
+  try {
+    const savedSettings = JSON.parse(localStorage.getItem("nexchat_settings")) || {};
+    applySettings(savedSettings);
+  } catch (err) {
+    console.log("No saved settings found, using defaults");
+  }
 
   // Initialize emoji picker
   initializeEmojiPicker();
@@ -6390,6 +6612,57 @@ async function handleStatusPost(text, file) {
 
 // ============ GLOBAL UTILITY FUNCTIONS ============
 
+function filterChats(query) {
+  const chatItems = document.querySelectorAll("#contactList .chat-list-item");
+  query = query.toLowerCase();
+
+  chatItems.forEach(item => {
+    // Skip chronex or empty state if needed, or filter them too
+    const nameEl = item.querySelector(".chat-name");
+    const name = nameEl ? nameEl.textContent.toLowerCase() : "";
+
+    // Also search in preview
+    const previewEl = item.querySelector(".chat-preview");
+    const preview = previewEl ? previewEl.textContent.toLowerCase() : "";
+
+    if (name.includes(query) || preview.includes(query)) {
+      item.style.display = "flex";
+    } else {
+      item.style.display = "none";
+    }
+  });
+}
+
+function applyFilter(filterType) {
+  const chatItems = document.querySelectorAll("#contactList .chat-list-item");
+  // Reset all first
+  if (filterType === 'all') {
+    chatItems.forEach(item => {
+      item.style.display = "flex";
+    });
+    return;
+  }
+
+  chatItems.forEach(item => {
+    let shouldShow = false;
+
+    if (filterType === 'unread') {
+      // Check for unread badge or class
+      const unreadBadge = item.querySelector(".unread-badge");
+      const isUnread = item.classList.contains("unread") || (unreadBadge && unreadBadge.textContent.trim() !== "");
+      if (isUnread) shouldShow = true;
+    } else if (filterType === 'favorites') {
+      // Not implemented, show all or none? Show none for now as no favorites logic exists
+      shouldShow = false;
+    } else if (filterType === 'groups') {
+      const isGroup = item.querySelector(".group-avatar") || item.getAttribute('data-chat-id')?.length > 20; // heuristic
+      if (isGroup) shouldShow = true;
+    }
+
+    item.style.display = shouldShow ? "flex" : "none";
+  });
+}
+
 function switchDarkMode() {
   const body = document.body;
   const toggle = document.getElementById("darkModeToggle");
@@ -6550,7 +6823,7 @@ async function loadGroups() {
         }, 250);
       });
       li.addEventListener("touchend", () => clearTimeout(longPressTimer));
-      
+
       // Three-dot menu button click handler
       const menuBtn = li.querySelector(".chat-menu-btn");
       if (menuBtn) {
@@ -6559,7 +6832,7 @@ async function loadGroups() {
           if (typeof showChatContextMenu === 'function') showChatContextMenu(e, groupId);
         });
       }
-      
+
       groupsList.appendChild(li);
     });
   } catch (err) {
@@ -6572,57 +6845,62 @@ async function loadContacts() {
   const contactList = document.getElementById("contactList");
   if (!contactList || !myUID) return;
 
-  contactList.innerHTML = '<li style="text-align:center; padding:10px;">Loading contacts...</li>';
+  contactList.innerHTML = '<li style="text-align:center; padding:10px;">Loading chats...</li>';
   try {
     // Unsubscribe previous listener if exists
     if (typeof contactsListener === 'function') {
       try { contactsListener(); } catch (e) { /* ignore */ }
     }
 
-    const q = query(collection(db, "users"), limit(50));
+    contactList.innerHTML = "";
 
-    // Real-time listener so UI updates without hard reload
-    contactsListener = onSnapshot(q, async (snapshot) => {
-      if (!snapshot || snapshot.empty) {
-        contactList.innerHTML = `<li class="empty-state"><p>No users found</p></li>`;
-        return;
-      }
-
-      contactList.innerHTML = "";
-
-      // Add Chronex AI at the top
-      const chronexLi = document.createElement("li");
-      chronexLi.className = "chat-list-item chronex-ai-item";
-      chronexLi.setAttribute('data-chat-id', 'chronex-ai');
-      chronexLi.innerHTML = `
-        <div class="chat-avatar-container">
-          <div class="chat-avatar" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); font-size: 20px;">🤖</div>
+    // Add Chronex AI at the top
+    const chronexLi = document.createElement("li");
+    chronexLi.className = "chat-list-item chronex-ai-item";
+    chronexLi.setAttribute('data-chat-id', 'chronex-ai');
+    chronexLi.innerHTML = `
+      <div class="chat-avatar-container">
+        <div class="chat-avatar" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); font-size: 20px;">🤖</div>
+      </div>
+      <div class="chat-item-content">
+        <div class="chat-item-header">
+          <span class="chat-name">Chronex AI</span>
         </div>
-        <div class="chat-item-content">
-          <div class="chat-item-header">
-            <span class="chat-name">Chronex AI</span>
-          </div>
-          <p class="chat-preview">AI Assistant</p>
-        </div>
-        <div class="chat-time-container">
-          <span class="chat-item-time">Now</span>
-        </div>
-        <button class="chat-menu-btn" title="Options">⋮</button>
-      `;
+        <p class="chat-preview">AI Assistant</p>
+      </div>
+      <div class="chat-time-container">
+        <span class="chat-item-time">Now</span>
+      </div>
+      <button class="chat-menu-btn" title="Options">⋮</button>
+    `;
 
-      chronexLi.addEventListener("click", async (e) => {
-        e.stopPropagation();
-        if (myUID) chronexAI.setUserId(myUID);
-        await openChat("chronex-ai", "Chronex AI", null, "ai");
-        if (typeof showChatDetailView === 'function') showChatDetailView();
-      });
+    chronexLi.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      if (myUID) chronexAI.setUserId(myUID);
+      await openChat("chronex-ai", "Chronex AI", null, "ai");
+      if (typeof showChatDetailView === 'function') showChatDetailView();
+    });
 
-      contactList.appendChild(chronexLi);
+    contactList.appendChild(chronexLi);
 
-      snapshot.forEach(async docSnap => {
-        if (docSnap.id === myUID) return;
-        const user = docSnap.data();
-        const uid = docSnap.id;
+    // Get user's contact list
+    const myUserDoc = await getDoc(doc(db, "users", myUID));
+    const myContacts = myUserDoc.data()?.contacts || [];
+
+    if (myContacts.length === 0) {
+      contactList.innerHTML += `<li class="empty-state"><p>No chats yet. Start a conversation!</p></li>`;
+      return;
+    }
+
+    // Load only users in the contact list
+    for (const uid of myContacts) {
+      if (uid === myUID) continue;
+
+      try {
+        const userDoc = await getDoc(doc(db, "users", uid));
+        if (!userDoc.exists()) continue;
+
+        const user = userDoc.data();
         const name = user.username || user.name || "User";
         const pic = user.profilePic || null;
 
@@ -6638,7 +6916,7 @@ async function loadContacts() {
 
         try {
           const messagesRef = collection(db, "messages");
-          
+
           // Get the last message (from either direction)
           const q1 = query(
             messagesRef,
@@ -6647,7 +6925,7 @@ async function loadContacts() {
             orderBy("timestamp", "desc"),
             limit(1)
           );
-          
+
           const q2 = query(
             messagesRef,
             where("from", "==", uid),
@@ -6721,23 +6999,23 @@ async function loadContacts() {
           console.log("Error loading message preview for", uid, e);
         }
 
-        // Build HTML with new structure including preview and unread badge
-        const unreadBadgeHTML = unreadCount > 0 ? `<span class="unread-badge">${unreadCount > 99 ? '99+' : unreadCount}</span>` : '';
-        
+        // Build HTML with unread badge (green dot with count)
+        const unreadBadgeHTML = unreadCount > 0 ? `<div class="unread-badge" title="${unreadCount} unread">${unreadCount > 99 ? '99+' : unreadCount}</div>` : '';
+
         li.innerHTML = `
-           <div class="chat-avatar-container">${avatar}</div>
-           <div class="chat-item-content ${unreadCount > 0 ? 'unread' : ''}">
-             <div class="chat-item-header">
-               <span class="chat-name">${escape(name)}</span>
-             </div>
-             <p class="chat-preview">${escape(lastMessage)}</p>
-           </div>
-           <div class="chat-time-container">
-             <span class="chat-item-time">${lastMessageTime}</span>
-             ${unreadBadgeHTML}
-           </div>
-           <button class="chat-menu-btn" title="Options">⋮</button>
-         `;
+          <div class="chat-avatar-container">${avatar}</div>
+          <div class="chat-item-content ${unreadCount > 0 ? 'unread' : ''}">
+            <div class="chat-item-header">
+              <span class="chat-name">${escape(name)}</span>
+            </div>
+            <p class="chat-preview">${escape(lastMessage)}</p>
+          </div>
+          <div class="chat-time-container">
+            <span class="chat-item-time">${lastMessageTime}</span>
+            ${unreadBadgeHTML}
+          </div>
+          <button class="chat-menu-btn" title="Options">⋮</button>
+        `;
 
         li.addEventListener("click", async () => {
           await openChat(uid, name, pic, "direct");
@@ -6771,10 +7049,10 @@ async function loadContacts() {
         }
 
         contactList.appendChild(li);
-      });
-    }, (err) => {
-      console.error('Contacts listener error', err);
-    });
+      } catch (contactErr) {
+        console.error("Error loading contact", uid, contactErr);
+      }
+    }
   } catch (err) {
     console.error("Contacts error", err);
   }

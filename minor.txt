@@ -1,7 +1,55 @@
-pwa-install.js:155 ✅ PWA Service Worker registered successfully: ServiceWorkerRegistration
-pwa-install.js:156 Scope: https://demonalexander526-alt.github.io/NEXCHAT/
-pwa-install.js:157 State: activated
-button-setup.js:5 🔗 Setting up ALL button event listeners...
-✅ chat.js:6222 FIXED - Removed duplicate 'loadContacts' declaration (was at line 2154)
-button-setup.js:9 ✅ Attaching button listeners
-✅ button-setup.js:14 FIXED - Added fallback for goBackToDashboard from chat.js
+ ✅ PWA Service Worker registered successfully: ServiceWorkerRegistration
+ Scope: https://alex-dot-dot.github.io/NEXCHAT/
+ State: activated
+ 🔗 Setting up button event listeners...
+chat.js:6628 Uncaught 
+ ✅ Messaging features initialized
+ ✅ Attaching button listeners
+ ✅ Back button
+ ✅ Search button
+ ✅ Settings button
+ ✅ Fullscreen button
+ ✅ Back to chat list button
+ ✅ Create group button
+ ✅ Filter tabs (5 buttons)
+ ✅ Upload status image button
+ ✅ Post status button
+ ✅ Attach file button
+ ✅ Remove attachment button
+ ✅ Emoji button
+ ✅ Close emoji button
+button-setup.js:208 ✅ Sticker button
+button-setup.js:223 ✅ Poll button
+button-setup.js:236 ✅ Close search button
+button-setup.js:247 ✅ Browse users button
+button-setup.js:257 ✅ Close info button
+button-setup.js:266 ✅ Close info button 2
+button-setup.js:295 ✅ Bottom navigation buttons (7 buttons)
+button-setup.js:306 ✅ Poll modal close button
+button-setup.js:318 ✅ Create group modal close button
+button-setup.js:332 ✅ Settings modal close button
+button-setup.js:347 ✅ Settings logout button
+button-setup.js:362 ✅ File input change handler
+button-setup.js:378 ✅ Status image input handler
+button-setup.js:381 ✅✅✅ ALL BUTTON LISTENERS ATTACHED ✅✅✅
+messaging-features.js:130 ✅ Swipe-to-reply setup complete
+button-setup.js:5 openSearch not yet loaded from chat.js
+window.openSearch @ button-setup.js:5
+(anonymous) @ button-setup.js:63
+button-setup.js:35 ⚠️ Button functions not fully loaded after 5 seconds, proceeding anyway
+(anonymous) @ button-setup.js:35
+button-setup.js:5 openSearch not yet loaded from chat.js
+window.openSearch @ button-setup.js:5
+(anonymous) @ button-setup.js:63
+button-setup.js:8 openSettingsModal not yet loaded from chat.js
+window.openSettingsModal @ button-setup.js:8
+(anonymous) @ button-setup.js:75
+button-setup.js:8 openSettingsModal not yet loaded from chat.js
+window.openSettingsModal @ button-setup.js:8
+(anonymous) @ button-setup.js:75
+button-setup.js:8 openSettingsModal not yet loaded from chat.js
+window.openSettingsModal @ button-setup.js:8
+(anonymous) @ button-setup.js:75
+button-setup.js:8 openSettingsModal not yet loaded from chat.js
+window.openSettingsModal @ button-setup.js:8
+(anonymous) @ button-setup.js:75

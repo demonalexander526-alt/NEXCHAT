@@ -1,0 +1,11 @@
+flask
+flask-cors
+requests
+python-dotenv
+openai
+Pillow
+psutil
+transformers
+nltk
+numpy
+boolean.py

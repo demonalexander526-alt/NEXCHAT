@@ -11,28 +11,23 @@ import {
 import { setDoc, doc, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 import { ref, set } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
-// ===== RATE LIMITING =====
-const loginAttempts = new Map(); // Track login attempts: email -> {count, timestamp}
-const registerAttempts = new Map(); // Track registration attempts: ip -> {count, timestamp}
+const loginAttempts = new Map();
+const registerAttempts = new Map();
 
 function checkRateLimit(identifier, type = 'login', maxAttempts = 5, windowMs = 60000) {
   const now = Date.now();
   const record = (type === 'login' ? loginAttempts : registerAttempts).get(identifier);
 
   if (!record) {
-    // First attempt
     (type === 'login' ? loginAttempts : registerAttempts).set(identifier, { count: 1, timestamp: now });
     return { allowed: true };
   }
 
-  // Check if time window expired
   if (now - record.timestamp > windowMs) {
-    // Reset the counter
     (type === 'login' ? loginAttempts : registerAttempts).set(identifier, { count: 1, timestamp: now });
     return { allowed: true };
   }
 
-  // Within time window, check attempt count
   if (record.count >= maxAttempts) {
     return {
       allowed: false,
@@ -40,41 +35,33 @@ function checkRateLimit(identifier, type = 'login', maxAttempts = 5, windowMs = 
     };
   }
 
-  // Increment and allow
   record.count++;
   return { allowed: true };
 }
 
-// ===== PASSWORD STRENGTH VALIDATION =====
 function validatePassword(password) {
   const errors = [];
-
-  // Check minimum length (8 characters)
+  
   if (password.length < 8) {
     errors.push('at least 8 characters');
   }
 
-  // Check for uppercase letters
   if (!/[A-Z]/.test(password)) {
     errors.push('at least one uppercase letter (A-Z)');
   }
 
-  // Check for lowercase letters
   if (!/[a-z]/.test(password)) {
     errors.push('at least one lowercase letter (a-z)');
   }
 
-  // Check for numbers
   if (!/\d/.test(password)) {
     errors.push('at least one number (0-9)');
   }
 
-  // Check for special characters
   if (!/[!@#$%^&*()_+\-=\[\]{};:'",.<>?/\\|`~]/.test(password)) {
     errors.push('at least one special character (!@#$%^&*, etc)');
   }
 
-  // Check for common weak passwords
   const commonPasswords = ['password', '123456', 'qwerty', 'admin', 'letmein', 'welcome', 'monkey', 'dragon', 'master', 'user'];
   if (commonPasswords.some(weak => password.toLowerCase().includes(weak))) {
     errors.push('use a less common password');
@@ -114,12 +101,10 @@ function getRandomSticker() {
   return randomStickers[Math.floor(Math.random() * randomStickers.length)];
 }
 
-// IP and VPN Detection function
 async function detectIPAndVPN() {
   try {
     console.log("🔍 Detecting IP and VPN...");
 
-    // Fetch IP data from free API
     const response = await fetch('https://ipapi.co/json/', { timeout: 5000 });
     const data = await response.json();
 
@@ -142,7 +127,6 @@ async function detectIPAndVPN() {
   }
 }
 
-// Check if IP already registered
 async function checkIPRegistration(ipAddress) {
   try {
     const usersRef = collection(db, "users");
@@ -160,7 +144,6 @@ async function checkIPRegistration(ipAddress) {
   }
 }
 
-// Helper to show result message
 function showResult(msg, isError = false) {
   const el = document.getElementById('result');
   if (!el) return;
@@ -168,7 +151,6 @@ function showResult(msg, isError = false) {
   el.style.color = isError ? '#ff4d4d' : '#00ff66';
 }
 
-// REGISTER
 const registerForm = document.getElementById('registerForm');
 if (registerForm) {
   registerForm.addEventListener('submit', async e => {
@@ -184,7 +166,6 @@ if (registerForm) {
       return;
     }
 
-    // Validate password strength
     const passwordValidation = validatePassword(pass);
     if (!passwordValidation.isValid) {
       const errorMsg = `❌ Password must have: ${passwordValidation.errors.join(', ')}`;

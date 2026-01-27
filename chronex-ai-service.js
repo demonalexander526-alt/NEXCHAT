@@ -19,7 +19,7 @@ const CHRONEX_CONFIG = {
   model: {
     name: "Chronex AI v1.0",
     type: "advanced-neural-network",
-    temperature: 0.7,  // 0.0-1.0 (lower = more deterministic)
+    temperature: 0.7,
     maxTokens: 2000,
     topP: 0.9,
     frequencyPenalty: 0.6,
@@ -39,157 +39,221 @@ const CHRONEX_CONFIG = {
 
   // Backend Options
   backends: {
-    javascript: {
-      enabled: true,
-      endpoint: "/api/chronex/chat",
-      timeout: 30000,
-    },
     python: {
-      enabled: true,
+      enabled: true,  // Enabled by default to try connecting to "Brain"
       endpoint: "http://localhost:5000/ai/chat",
-      timeout: 60000,
+      timeout: 10000, // Reduced timeout for faster fallback
     },
+    cloud: {
+      enabled: false,
+      provider: "openai",
+      apiKey: ""
+    }
   },
 
-  // Processing Parameters
-  parameters: {
-    maxProcessingLimit: 5_000_000_000,  // 5 BILLION
-    description: "Maximum processing capacity per session"
-  },
-
-  // API Keys and Tokens
-  apiKeys: {
-    openaiKey: null, // API keys from browser environment
-    huggingfaceKey: null,
-    customKey: null,
-  },
-
-  // Response Settings
+  // Caching Settings
   response: {
-    streaming: true,
     caching: true,
-    cacheDuration: 3600, // seconds
-    maxCacheSize: 100,   // MB
-  },
-
-  // Safety and Moderation
-  safety: {
-    contentModeration: true,
-    flagInappropriate: true,
-    autoFilter: true,
-    reportThreshold: 0.8,
-  },
+    cacheDuration: 3600, // 1 hour
+    maxCacheSize: 100
+  }
 };
 
-// ============ RANDOM RESPONSE GENERATOR (def_random) ============
-/**
- * Generates random varied responses for AI replies
- * Ensures no two consecutive messages are identical
- */
-function def_random(responseArray) {
-  if (!responseArray || responseArray.length === 0) {
-    return "I'm here to help! What would you like to know?";
-  }
-  
-  const randomIndex = Math.floor(Math.random() * responseArray.length);
-  return responseArray[randomIndex];
-}
-
-// ============ CHRONEX AI SERVICE CLASS ============
+// ============ CHRONEX AI CLASS ============
 class ChronexAI {
-  constructor(config = CHRONEX_CONFIG) {
+  constructor(config) {
     this.config = config;
-    this.conversationHistory = [];
     this.cache = new Map();
+    this.conversationHistory = [];
+    this.lastResponses = [];
     this.uid = null;
-    this.lastResponses = []; // Track last 5 responses to avoid repetition
+    console.log("🧠 Chronex AI Service Initialized");
   }
 
-  // Get creator information
-  getCreator() {
-    return {
-      name: CREATOR,
-      role: "Developer",
-      system: "Chronex AI JavaScript Service",
-      version: "1.0"
-    };
-  }
-
-  // Initialize with user ID
   setUserId(uid) {
     this.uid = uid;
   }
 
-  // Main chat method
-  async chat(message, conversationId = null) {
-    try {
-      if (!this.uid) {
-        throw new Error("User not authenticated");
-      }
-
-      // Check cache
-      const cached = this.getFromCache(message);
-      if (cached) {
-        return cached;
-      }
-
-      // Add to history
-      this.conversationHistory.push({
-        role: "user",
-        content: message,
-        timestamp: new Date(),
-      });
-
-      // Get AI response from Python backend
-      let response;
-      if (this.config.backends.python.enabled) {
-        response = await this.getPythonResponse(message);
-      } else {
-        response = await this.getJavaScriptResponse(message);
-      }
-
-      // Cache response
-      this.cacheResponse(message, response);
-
-      // Save to database
-      await this.saveConversation(message, response, conversationId);
-
-      // Add to history
-      this.conversationHistory.push({
-        role: "assistant",
-        content: response,
-        timestamp: new Date(),
-      });
-
-      return response;
-    } catch (error) {
-      console.error("Chronex AI Error:", error);
-      return this.getErrorResponse(error);
-    }
-  }
-
-  // JavaScript implementation (local processing)
+  // JavaScript implementation (local processing - SUPER ENHANCED)
   async getJavaScriptResponse(message) {
-    // Detect message type
-    const messageType = this.detectMessageType(message);
+    const msg = message.toLowerCase();
 
-    switch (messageType) {
-      case "code":
-        return this.analyzeCode(message);
-      case "math":
-        return this.solveMath(message);
-      case "question":
-        return this.answerQuestion(message);
-      case "greeting":
-        return this.handleGreeting(message);
-      default:
-        return this.generateGeneralResponse(message);
+    // Track conversation context
+    this.conversationHistory.push({ role: 'user', content: message });
+
+    // ============ CREATOR INFORMATION ============
+    if (msg.includes("creator") || msg.includes("who made you") || msg.includes("who created") || msg.includes("demon alex")) {
+      const creatorResponses = [
+        "I was created by **DEMON ALEX**, the brilliant developer behind CHRONEX AI and NEXCHAT. He's a master of AI systems, full-stack development, and cutting-edge technology! 🚀",
+        "My creator is **DEMON ALEX** - the genius behind CHRONEX AI! He built me with advanced neural network architecture and hybrid processing capabilities. 💡",
+        "**DEMON ALEX** is my creator! He's the mastermind developer who brought CHRONEX AI to life. His expertise in AI, Python, JavaScript, and system architecture is incredible! 👨‍💻✨",
+        "I'm proud to be created by **DEMON ALEX**, the developer of CHRONEX AI and NEXCHAT. He's pushing the boundaries of what's possible in AI-powered chat applications! 🌟"
+      ];
+      return creatorResponses[Math.floor(Math.random() * creatorResponses.length)];
     }
+
+    // ============ ADVANCED KNOWLEDGE BASE ============
+    const knowledgeBase = {
+      // Programming Languages
+      "javascript": {
+        keywords: ["javascript", "js", "node", "frontend", "react", "vue", "angular", "typescript"],
+        responses: [
+          "**JavaScript Mastery**: Use `const` and `let` instead of `var`. Arrow functions `() => {}` provide cleaner syntax and lexical `this` binding. For async operations, `async/await` is more readable than Promise chains.",
+          "**Modern JS**: Destructuring `const {name, age} = user` and spread operators `...array` make code cleaner. Template literals \\`${variable}\\` are better than string concatenation.",
+          "**Performance**: Use `map()`, `filter()`, `reduce()` for array operations. Avoid nested loops when possible. Debounce expensive operations and use `requestAnimationFrame` for animations.",
+          "**Best Practices**: Always use `===` for comparison, handle errors with try-catch, validate user input, and use ESLint for code quality. Modularize your code with ES6 modules."
+        ]
+      },
+      "python": {
+        keywords: ["python", "pip", "django", "flask", "ml", "ai", "pandas", "numpy", "pytorch"],
+        responses: [
+          "**Python Power**: List comprehensions `[x**2 for x in range(10)]` are faster than loops. Use f-strings `f'{variable}'` for string formatting. Virtual environments keep dependencies isolated.",
+          "**Data Science**: NumPy for numerical computing, Pandas for data manipulation, Matplotlib/Seaborn for visualization. Use Jupyter notebooks for interactive analysis.",
+          "**AI/ML**: PyTorch and TensorFlow for deep learning. Scikit-learn for traditional ML. Use GPU acceleration with CUDA for training neural networks.",
+          "**Best Practices**: Follow PEP 8 style guide. Use type hints for better code clarity. Write docstrings for functions. Use `with` statements for file operations."
+        ]
+      },
+      "web": {
+        keywords: ["html", "css", "web", "frontend", "backend", "api", "rest", "http"],
+        responses: [
+          "**Web Development**: Semantic HTML5 improves accessibility. CSS Grid and Flexbox for layouts. Progressive Web Apps (PWAs) work offline and feel native.",
+          "**Backend**: RESTful APIs use HTTP methods correctly (GET, POST, PUT, DELETE). Always validate and sanitize user input. Use JWT for authentication.",
+          "**Performance**: Minify CSS/JS, optimize images, use CDNs, enable gzip compression, lazy load images, and implement caching strategies.",
+          "**Security**: Use HTTPS, implement CORS properly, prevent XSS and SQL injection, use Content Security Policy, and keep dependencies updated."
+        ]
+      },
+      "database": {
+        keywords: ["database", "sql", "nosql", "mongodb", "postgres", "mysql", "firestore", "firebase"],
+        responses: [
+          "**SQL**: Use indexes for faster queries. Normalize data to reduce redundancy. Use prepared statements to prevent SQL injection. JOIN operations combine related data.",
+          "**NoSQL**: MongoDB for flexible schemas, Redis for caching, Firebase for real-time data. Choose based on your data structure and access patterns.",
+          "**Optimization**: Index frequently queried fields, use pagination for large datasets, implement connection pooling, and monitor query performance.",
+          "**Firebase**: Firestore for structured data with real-time sync. Use security rules to protect data. Batch writes for multiple operations. Offline persistence available."
+        ]
+      },
+      "math": {
+        keywords: ["math", "calculate", "equation", "algebra", "calculus", "statistics", "probability"],
+        responses: [
+          "**Mathematics**: I can help with algebra, calculus, statistics, and more! For derivatives: d/dx(x²) = 2x. For integrals: ∫x dx = x²/2 + C. Need a specific calculation?",
+          "**Statistics**: Mean (average), median (middle value), mode (most frequent). Standard deviation measures spread. Probability ranges from 0 to 1.",
+          "**Algebra**: Solve equations by isolating variables. Factor polynomials. Use quadratic formula: x = (-b ± √(b²-4ac)) / 2a for ax² + bx + c = 0.",
+          "**Calculus**: Derivatives show rate of change. Integrals find area under curves. Chain rule: d/dx[f(g(x))] = f'(g(x)) × g'(x)."
+        ]
+      },
+      "science": {
+        keywords: ["physics", "chemistry", "biology", "science", "quantum", "atom", "molecule"],
+        responses: [
+          "**Physics**: F = ma (Newton's 2nd law). E = mc² (Einstein's mass-energy equivalence). Light travels at 299,792,458 m/s in vacuum.",
+          "**Chemistry**: Periodic table organizes elements. Chemical bonds: ionic (electron transfer) and covalent (electron sharing). pH measures acidity (0-14).",
+          "**Biology**: DNA carries genetic information. Cells are life's basic units. Evolution occurs through natural selection over generations.",
+          "**Quantum**: Particles exhibit wave-particle duality. Heisenberg uncertainty principle. Quantum entanglement connects particles across distances."
+        ]
+      },
+      "ai": {
+        keywords: ["artificial intelligence", "machine learning", "neural network", "deep learning", "ai model"],
+        responses: [
+          "**AI Fundamentals**: Machine Learning learns from data. Deep Learning uses neural networks with multiple layers. Supervised learning uses labeled data, unsupervised finds patterns.",
+          "**Neural Networks**: Inspired by brain neurons. Input layer → Hidden layers → Output layer. Backpropagation adjusts weights. Activation functions add non-linearity.",
+          "**Training**: Split data into train/validation/test sets. Use loss functions to measure error. Optimize with gradient descent. Prevent overfitting with regularization.",
+          "**Applications**: Computer vision (image recognition), NLP (language understanding), recommendation systems, autonomous vehicles, and chatbots like me!"
+        ]
+      },
+      "nexchat": {
+        keywords: ["nexchat", "this app", "this application", "chat app"],
+        responses: [
+          "**NEXCHAT**: A powerful Progressive Web App built with Firebase, featuring real-time messaging, group chats, status updates, and me - CHRONEX AI! Created by DEMON ALEX.",
+          "**Features**: End-to-end encryption, file sharing, voice messages, polls, status updates, token system, marketplace, gaming hub, and advanced AI assistance.",
+          "**Technology**: Built with vanilla JavaScript, Firebase Firestore for data, Firebase Auth for security, and hybrid AI (Python + JavaScript) for intelligence.",
+          "**PWA**: Works offline, installable on any device, fast loading, push notifications, and native app-like experience without app stores!"
+        ]
+      }
+    };
+
+    // ============ INTELLIGENT PATTERN MATCHING ============
+
+    // Check comprehensive knowledge base
+    for (const [topic, data] of Object.entries(knowledgeBase)) {
+      if (data.keywords.some(k => msg.includes(k))) {
+        const response = data.responses[Math.floor(Math.random() * data.responses.length)];
+        this.lastResponses.push(response);
+        return response;
+      }
+    }
+
+    // ============ IDENTITY & CAPABILITIES ============
+    if (msg.includes("who are you") || msg.includes("what are you") || msg.includes("introduce yourself")) {
+      return "I am **CHRONEX AI v2.0** - an advanced AI assistant created by **DEMON ALEX**. I run on a hybrid architecture combining Python neural networks with JavaScript processing. I can help with programming, mathematics, science, web development, and much more! 🧠✨";
+    }
+
+    if (msg.includes("what can you do") || msg.includes("your capabilities") || msg.includes("help me")) {
+      return "**My Capabilities**:\n• 💻 Programming help (JavaScript, Python, C++, Java, etc.)\n• 🧮 Math & calculations\n• 🔬 Science explanations\n• 🌐 Web development guidance\n• 🤖 AI/ML concepts\n• 📊 Data analysis\n• 💡 Problem solving\n• 🎓 Learning assistance\n\nCreated by **DEMON ALEX** to be your intelligent companion!";
+    }
+
+    // ============ ADVANCED REASONING ============
+    if (msg.includes("why") || msg.includes("because") || msg.includes("reason")) {
+      return "Great question! Understanding causality is key to learning. The 'why' helps us grasp underlying principles. Can you provide more context about what you'd like to understand? I'm here to explain! 🤔";
+    }
+
+    if (msg.includes("how") || msg.includes("explain")) {
+      return "I'd be happy to explain! To give you the best answer, could you be more specific? For example:\n• How does [technology] work?\n• How to solve [problem]?\n• How to implement [feature]?\n\nThe more details you provide, the better I can help! 💡";
+    }
+
+    // ============ PROBLEM SOLVING ============
+    if (msg.includes("error") || msg.includes("bug") || msg.includes("not working") || msg.includes("broken")) {
+      return "**Debugging Mode Activated** 🔧\n\n1. Check console for error messages\n2. Verify syntax and logic\n3. Test with simple inputs first\n4. Use console.log() to trace execution\n5. Check variable types and values\n\nShare the error message or code snippet, and I'll help you fix it!";
+    }
+
+    if (msg.includes("best practice") || msg.includes("optimize") || msg.includes("improve")) {
+      return "**Optimization Tips**:\n• Write clean, readable code\n• Use meaningful variable names\n• Avoid premature optimization\n• Profile before optimizing\n• Comment complex logic\n• Follow language conventions\n• Test thoroughly\n• Keep it simple (KISS principle)\n\nWhat specific area would you like to optimize?";
+    }
+
+    // ============ LEARNING & EDUCATION ============
+    if (msg.includes("learn") || msg.includes("tutorial") || msg.includes("teach")) {
+      return "**Learning Path** 📚\n\n1. Start with fundamentals\n2. Practice with small projects\n3. Read documentation\n4. Build real applications\n5. Learn from mistakes\n6. Join communities\n7. Keep coding daily\n\nWhat topic would you like to learn? I can guide you through it!";
+    }
+
+    // ============ CODE-RELATED QUERIES ============
+    if (msg.includes("code") || msg.includes("program") || msg.includes("function") || msg.includes("algorithm")) {
+      return "**Coding Assistance** 💻\n\nI can help with:\n• Writing functions and algorithms\n• Code review and optimization\n• Debugging and error fixing\n• Best practices and patterns\n• Language-specific features\n\nShare your code or describe what you're trying to build, and I'll assist you!";
+    }
+
+    // ============ GREETINGS ============
+    if (msg.includes("hello") || msg.includes("hi ") || msg.includes("hey") || msg.includes("greetings")) {
+      const greetings = [
+        "Hello! 👋 I'm CHRONEX AI, created by DEMON ALEX. How can I help you today?",
+        "Hey there! 🌟 Ready to solve some problems together?",
+        "Greetings! 🤖 I'm CHRONEX AI - your intelligent assistant. What's on your mind?",
+        "Hi! 💡 Ask me anything about programming, math, science, or technology!"
+      ];
+      return greetings[Math.floor(Math.random() * greetings.length)];
+    }
+
+    // ============ GRATITUDE ============
+    if (msg.includes("thank") || msg.includes("thanks") || msg.includes("appreciate")) {
+      return "You're very welcome! 😊 I'm here anytime you need help. Created by DEMON ALEX to assist you! Feel free to ask more questions!";
+    }
+
+    // ============ CONTEXT-AWARE FALLBACK ============
+    if (this.conversationHistory.length > 2) {
+      return "I'm listening and learning from our conversation! 🧠 To unlock my **full potential** with advanced neural processing, make sure `CHRONEX-AI.py` is running. Currently in Enhanced Local Mode.\n\nCreated by **DEMON ALEX** - CREATOR OF CHRONEX AI\n\nCan you provide more details about what you need help with?";
+    }
+
+    // ============ DEFAULT INTELLIGENT RESPONSE ============
+    return "**CHRONEX AI v2.0** - Created by **DEMON ALEX** 🚀\n\nI'm here to help! I can assist with:\n• Programming & Development\n• Mathematics & Calculations\n• Science & Technology\n• Problem Solving\n• Learning & Education\n\n💡 **Pro Tip**: For even smarter responses with advanced neural processing, run `CHRONEX-AI.py` in your terminal!\n\nWhat would you like to know?";
   }
 
   // Python backend (ML/advanced processing)
   async getPythonResponse(message) {
+    // Fast fail check
+    if (!this.config.backends.python.enabled) return this.getJavaScriptResponse(message);
+
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), this.config.backends.python.timeout);
+
+      // Prepare context/history
+      const context = this.conversationHistory.slice(-5);
+
       const response = await fetch(this.config.backends.python.endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -197,133 +261,29 @@ class ChronexAI {
           message,
           model: this.config.model.name,
           temperature: this.config.model.temperature,
-          maxTokens: this.config.model.maxTokens,
-          history: this.conversationHistory,
+          history: context,
         }),
-        timeout: this.config.backends.python.timeout,
+        signal: controller.signal
       });
+
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         throw new Error(`Python backend error: ${response.status}`);
       }
 
       const data = await response.json();
-      return data.response || data.text;
+      const aiText = data.response || data.text;
+
+      // Update local history
+      this.conversationHistory.push({ role: 'user', content: message });
+      this.conversationHistory.push({ role: 'assistant', content: aiText });
+
+      return aiText;
     } catch (error) {
-      console.warn("Python backend unavailable, using JS fallback:", error);
+      console.warn("⚠️ Chronex AI Brain (Python) disconnected. Using Local Fallback.");
       return this.getJavaScriptResponse(message);
     }
-  }
-
-  // C++ backend (performance-critical operations)
-  // Detect message type
-  detectMessageType(message) {
-    const msg = message.toLowerCase();
-
-    if (msg.includes("code") || msg.includes("function") || msg.includes("javascript") || msg.includes("python")) {
-      return "code";
-    }
-    if (msg.includes("solve") || msg.includes("calculate") || msg.includes("=") || msg.includes("math")) {
-      return "math";
-    }
-    if (msg.includes("?") || msg.includes("what") || msg.includes("how") || msg.includes("why") || msg.includes("explain")) {
-      return "question";
-    }
-    if (msg.includes("hello") || msg.includes("hi") || msg.includes("hey") || msg.includes("greetings")) {
-      return "greeting";
-    }
-
-    return "general";
-  }
-
-  // Handle greetings with varied responses
-  handleGreeting(message) {
-    const greetings = [
-      "Hey there! 👋 I'm Chronex AI, your intelligent assistant. How can I help you today?",
-      "Hello! Welcome to Chronex AI! What would you like to know? 🤖",
-      "Greetings! I'm ready to assist you with any questions or tasks. 💡",
-      "Hi! Great to meet you! What can I help you with? 🚀",
-      "Welcome! 🌟 I'm Chronex AI. How may I assist you today?",
-      "Yo! 👋 Thanks for reaching out. What's on your mind?",
-      "Hey! 🙌 I'm Chronex AI. Ready to help with anything!",
-      "Sup! 🤖 What can I do for you today?",
-    ];
-
-    return def_random(greetings);
-  }
-
-  // General response with varied replies
-  generateGeneralResponse(message) {
-    const responses = [
-      `💬 **Response**\n\nThanks for your message! I'm Chronex AI, and I can help with:\n• Code analysis and suggestions\n• Mathematical problems\n• Answering questions\n• Writing assistance\n• Data analysis\n\nWhat would you like to explore?`,
-      
-      `That's interesting! 🤔 I can assist you with:\n• Programming and code reviews\n• Complex calculations\n• Detailed explanations\n• Creative writing\n• Data insights\n\nHow can I help?`,
-      
-      `I hear you! 👂 Here are some things I'm great at:\n• 💻 Code analysis\n• 📊 Data processing\n• ❓ Answering questions\n• ✍️ Writing help\n• 🔢 Math solutions\n\nLet's dive in!`,
-      
-      `Thanks for reaching out! 🙋 I'm equipped to help with:\n• Software development\n• Problem-solving\n• Research and analysis\n• Writing and editing\n• Technical explanations\n\nWhat's your need?`,
-      
-      `Nice to chat! 💭 I specialize in:\n• Code review & optimization\n• Mathematical solutions\n• In-depth explanations\n• Writing assistance\n• Data analysis\n\nWhat shall we work on?`,
-      
-      `Got you! 👍 I can help with:\n• JavaScript, Python, C++ & more\n• Complex calculations\n• Detailed Q&A\n• Content creation\n• Analytics\n\nWhat's next?`,
-      
-      `Perfect timing! ⏰ My skills include:\n• Full-stack development support\n• Advanced mathematics\n• Comprehensive answers\n• Creative content\n• Information analysis\n\nHow can I assist?`,
-    ];
-
-    return def_random(responses);
-  }
-
-  // Code analysis with varied responses
-  analyzeCode(message) {
-    const languages = this.config.capabilities.languageSupport;
-    const detectedLang = languages.find(lang => message.toLowerCase().includes(lang.toLowerCase()));
-
-    const baseAnalyses = [
-      `📝 **Code Review**\n\n${detectedLang ? `**Language:** ${detectedLang}\n\n` : ''}**Recommendations:**\n• Ensure proper error handling\n• Optimize performance bottlenecks\n• Add comprehensive comments\n• Follow best practices\n• Test edge cases thoroughly`,
-
-      `🔍 **Code Analysis**\n\n${detectedLang ? `**Detected:** ${detectedLang}\n\n` : ''}**Insights:**\n• Structure and readability look good\n• Consider modularization\n• Add unit tests\n• Implement logging\n• Security check needed`,
-
-      `💻 **Development Review**\n\n${detectedLang ? `**Language:** ${detectedLang}\n\n` : ''}**Feedback:**\n• Code organization is solid\n• Performance: check loops\n• Add documentation\n• Implement error handlers\n• Consider DRY principle`,
-
-      `✅ **Code Quality Check**\n\n${detectedLang ? `**Analyzed:** ${detectedLang}\n\n` : ''}**Suggestions:**\n• Variable naming: improve clarity\n• Function complexity: consider refactoring\n• Add type hints/types\n• Increase test coverage\n• Optimize imports`,
-    ];
-
-    return def_random(baseAnalyses);
-  }
-
-  // Math solving with varied responses
-  solveMath(message) {
-    const mathResponses = [
-      `🔢 **Math Solution**\n\nI can help solve mathematical problems! Please provide a specific equation or problem.\n\n**Supported:**\n• Algebra\n• Calculus\n• Statistics\n• Geometry\n• Linear Algebra`,
-
-      `📐 **Mathematics Assistance**\n\nShare your math problem and I'll work through it with you!\n\n**I handle:**\n• Equations & formulas\n• Calculus problems\n• Statistical analysis\n• Geometric calculations\n• Matrix operations`,
-
-      `🧮 **Let's Solve This!**\n\nPost your math question and I'll provide detailed solutions.\n\n**Expertise in:**\n• Elementary to advanced math\n• Real-world applications\n• Step-by-step solutions\n• Formula derivations\n• Problem-solving strategies`,
-
-      `🎯 **Math Problem Solver**\n\nReady to tackle your mathematical challenges!\n\n**I specialize in:**\n• Pure mathematics\n• Applied mathematics\n• Numerical analysis\n• Statistical methods\n• Engineering math`,
-    ];
-
-    return def_random(mathResponses);
-  }
-
-  // Answer questions with varied responses
-  answerQuestion(message) {
-    const questionResponses = [
-      `❓ **Answer**\n\nThat's a great question! I can help you explore this topic further.\n\n**Capabilities:**\n• Explain concepts\n• Provide examples\n• Suggest resources\n• Break down complex ideas`,
-
-      `🤔 **Let's Explore This**\n\nExcellent question! I'm here to provide clarity.\n\n**I can:**\n• Give detailed explanations\n• Offer real-world examples\n• Share relevant resources\n• Simplify complex topics`,
-
-      `💡 **Insight & Explanation**\n\nGreat thinking! Let me help you understand this better.\n\n**What I offer:**\n• In-depth analysis\n• Practical examples\n• Learning resources\n• Conceptual breakdown`,
-
-      `🎓 **Question Response**\n\nFantastic question! Let's dive deep into this.\n\n**I provide:**\n• Clear explanations\n• Concrete examples\n• Reference materials\n• Simplified breakdowns`,
-    ];
-
-    return def_random(questionResponses);
-  }
-
-  // Error response
-  getErrorResponse(error) {
-    return `⚠️ **Error**\n\nSorry, I encountered an issue: ${error.message}\n\nPlease try again or rephrase your question.`;
   }
 
   // Cache management
@@ -334,7 +294,6 @@ class ChronexAI {
         timestamp: Date.now(),
       });
 
-      // Limit cache size
       if (this.cache.size > this.config.response.maxCacheSize) {
         const firstKey = this.cache.keys().next().value;
         this.cache.delete(firstKey);
@@ -389,7 +348,7 @@ class ChronexAI {
             messages.push(child.val());
           });
           resolve(messages);
-        });
+        }, { onlyOnce: true });
       });
     } catch (error) {
       console.error("Error fetching history:", error);

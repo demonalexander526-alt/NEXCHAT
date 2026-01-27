@@ -98,7 +98,8 @@ body.light-mode .gaming-title {
 }
 
 .header-spacer {
-  width: 44px; /* Same width as back button to center title */
+  width: 44px;
+  /* Same width as back button to center title */
 }
 
 /* ========== Search Bar ========== */
@@ -497,21 +498,22 @@ body.light-mode .empty-state p {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.8);
+  background: rgba(0, 0, 0, 0.85);
   display: flex;
-  align-items: flex-end;
+  align-items: center;
+  justify-content: center;
   z-index: 1000;
-  animation: slideUpModal 0.3s ease-out;
-  overflow: auto;
+  animation: fadeInModal 0.3s ease-out;
+  padding: 20px;
+  backdrop-filter: blur(5px);
 }
 
-@keyframes slideUpModal {
+@keyframes fadeInModal {
   from {
-    transform: translateY(100%);
     opacity: 0;
   }
+
   to {
-    transform: translateY(0);
     opacity: 1;
   }
 }
@@ -519,15 +521,28 @@ body.light-mode .empty-state p {
 .game-detail-content {
   background: #1a1f3a;
   width: 100%;
-  max-height: 90vh;
-  border-radius: 24px 24px 0 0;
-  border: 1px solid rgba(0, 255, 102, 0.2);
-  border-bottom: none;
-  box-shadow: 0 -4px 20px rgba(0, 255, 102, 0.15);
+  max-width: 500px;
+  max-height: 85vh;
+  border-radius: 24px;
+  border: 1px solid rgba(0, 255, 102, 0.3);
+  box-shadow: 0 10px 40px rgba(0, 255, 102, 0.2);
   display: flex;
   flex-direction: column;
   position: relative;
-  overflow-y: auto;
+  overflow: hidden;
+  animation: scaleInModal 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes scaleInModal {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 body.light-mode .game-detail-content {
@@ -1338,8 +1353,15 @@ body.light-mode .nav-tab.active {
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.7;
+  }
 }
 
 .session-info {
@@ -1400,6 +1422,7 @@ body.light-mode .nav-tab.active {
   from {
     transform: translateY(100%);
   }
+
   to {
     transform: translateY(0);
   }
@@ -1570,4 +1593,3 @@ body.light-mode .nav-tab.active {
   text-align: center;
   padding: 20px;
 }
-

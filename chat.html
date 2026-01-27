@@ -26,7 +26,18 @@
     <header class="top-header">
       <div class="header-left">
         <button id="dashboardBackBtn" class="back-button" title="Back to Dashboard">← </button>
-        <h1 class="header-logo">NEXCHAT</h1>
+        <!-- Header shows NEXCHAT logo by default, contact name when in chat -->
+        <div id="headerLogoContainer">
+          <h1 class="header-logo" id="headerLogoText">NEXCHAT</h1>
+        </div>
+        <!-- Active chat contact info (shows when in chat) -->
+        <div id="activeChatHeader" class="active-chat-header" style="display: none;">
+          <img id="activeChatAvatar" src="" alt="Contact" class="active-chat-avatar">
+          <div class="active-chat-info">
+            <div id="activeChatName" class="active-chat-name">Contact Name</div>
+            <div id="activeChatStatus" class="active-chat-status">Online</div>
+          </div>
+        </div>
       </div>
       <div class="header-center">
         <div id="tokenDisplay" class="token-display" title="Your tokens">
@@ -205,6 +216,17 @@
 
         <!-- Message Input -->
         <div class="message-input-area">
+          <!-- User Profile Display (shows in active chat) -->
+          <div id="chatUserProfile" class="chat-user-profile" style="display: none;">
+            <div class="chat-user-info">
+              <img id="chatUserAvatar" src="" alt="User" class="chat-user-avatar">
+              <div class="chat-user-details">
+                <div id="chatUserName" class="chat-user-name">User Name</div>
+                <div id="chatUserStatus" class="chat-user-status">Online</div>
+              </div>
+            </div>
+          </div>
+
           <form id="message-form" class="message-form">
             <button type="button" id="attach-btn" class="input-btn" title="Attach file">📎</button>
             <input type="file" id="file-input" style="display: none;" accept="image/*,video/*,.pdf,.doc,.docx" />
@@ -509,7 +531,65 @@
             </div>
 
             <div class="settings-section">
-              <h3>🖼️ Background Image</h3>
+              <h3>✏️ Text Element Adjustment</h3>
+              <div class="setting-item">
+                <label for="fontFamilySelect"><strong>Font Family</strong></label>
+                <select id="fontFamilySelect" style="width: 100%; padding: 8px; background: #2a2a2a; border: 1px solid #00ff66; border-radius: 6px; color: #00ff66; margin-top: 6px;">
+                  <option value="Arial, sans-serif">Arial</option>
+                  <option value="'Segoe UI', Tahoma, Geneva, Verdana, sans-serif">Segoe UI</option>
+                  <option value="'Courier New', monospace">Courier New</option>
+                  <option value="Georgia, serif">Georgia</option>
+                  <option value="'Trebuchet MS', sans-serif">Trebuchet MS</option>
+                </select>
+              </div>
+              <div class="setting-item">
+                <label for="letterSpacingRange"><strong>Letter Spacing: <span id="letterSpacingValue">0</span>px</strong></label>
+                <input type="range" id="letterSpacingRange" min="-2" max="5" value="0" step="0.5" style="width: 100%; margin-top: 6px;">
+              </div>
+              <div class="setting-item">
+                <label for="lineHeightRange"><strong>Line Height: <span id="lineHeightValue">1.5</span></strong></label>
+                <input type="range" id="lineHeightRange" min="1" max="2.5" value="1.5" step="0.1" style="width: 100%; margin-top: 6px;">
+              </div>
+              <div class="setting-item">
+                <label><strong>Text Alignment</strong></label>
+                <div style="display: flex; gap: 8px; margin-top: 8px;">
+                  <button id="alignLeft" class="text-align-btn" style="flex: 1; padding: 8px; background: #00ff66; color: #000; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">Left</button>
+                  <button id="alignCenter" class="text-align-btn" style="flex: 1; padding: 8px; background: #444; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">Center</button>
+                  <button id="alignRight" class="text-align-btn" style="flex: 1; padding: 8px; background: #444; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">Right</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="settings-section">
+              <h3>💬 Chat Text Size</h3>
+              <div class="setting-item">
+                <label>
+                  <input type="radio" name="chatSize" value="small" id="chatSizeSmall">
+                  Small
+                </label>
+              </div>
+              <div class="setting-item">
+                <label>
+                  <input type="radio" name="chatSize" value="medium" id="chatSizeMedium" checked>
+                  Medium (Default)
+                </label>
+              </div>
+              <div class="setting-item">
+                <label>
+                  <input type="radio" name="chatSize" value="large" id="chatSizeLarge">
+                  Large
+                </label>
+              </div>
+              <div class="setting-item">
+                <label>
+                  <input type="radio" name="chatSize" value="extra-large" id="chatSizeExtraLarge">
+                  Extra Large
+                </label>
+              </div>
+            </div>
+
+            <div class="settings-section">
+              <h3>�️ Background Image</h3>
               <div class="setting-item">
                 <label><strong>Change Chat Background</strong></label>
                 <input type="file" id="backgroundImageInput" accept="image/*"

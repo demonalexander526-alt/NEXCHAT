@@ -1,8 +1,3 @@
-// Button Event Listeners Setup
-// This script runs AFTER chat.js module is fully loaded
-// It attaches listeners to ALL interactive buttons in the app
-
-// Create fallback functions to prevent "undefined" errors before chat.js loads
 if (typeof window.goBackToDashboard !== 'function') {
   window.goBackToDashboard = () => console.warn('goBackToDashboard not yet loaded from chat.js');
 }
@@ -22,10 +17,14 @@ if (typeof window.goBack !== 'function') {
   window.goBack = () => console.warn('goBack not yet loaded from chat.js');
 }
 
-// Helper function to wait for functions to be available
 function waitForFunctions() {
   return new Promise((resolve) => {
+    let attempts = 0;
+    const maxAttempts = 50; // 5 seconds total (50 * 100ms)
+
     const checkInterval = setInterval(() => {
+      attempts++;
+
       if (
         typeof window.goBackToDashboard === 'function' &&
         typeof window.openSearch === 'function' &&
@@ -33,19 +32,18 @@ function waitForFunctions() {
         typeof window.toggleFullscreen === 'function'
       ) {
         clearInterval(checkInterval);
+        console.log('✅ All button functions loaded successfully');
+        resolve();
+      } else if (attempts >= maxAttempts) {
+        clearInterval(checkInterval);
+        console.warn('⚠️ Button functions not fully loaded after 5 seconds, proceeding anyway');
         resolve();
       }
     }, 100);
-    // Timeout after 5 seconds to prevent infinite waiting
-    setTimeout(() => {
-      clearInterval(checkInterval);
-      console.warn('⚠️ Button functions not fully loaded after 5 seconds, proceeding anyway');
-      resolve();
-    }, 5000);
   });
 }
 
-console.log("🔗 Setting up ALL button event listeners...");
+console.log("🔗 Setting up button event listeners...");
 
 function attachAllButtonListeners() {
   console.log("✅ Attaching button listeners");
@@ -279,7 +277,7 @@ function attachAllButtonListeners() {
     item.addEventListener("click", (e) => {
       e.preventDefault();
       const navSection = item.dataset.nav;
-      
+
       if (navSection === 'logout') {
         // Handle logout
         if (confirm('Are you sure you want to logout?')) {

@@ -1,22 +1,10 @@
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js';
-import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js';
-import { getFirestore, collection, addDoc, getDocs, query, where, deleteDoc, doc, updateDoc, getDoc } from 'https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js';
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.5.0/firebase-storage.js';
+import { auth, db, storage } from './firebase-config.js';
+import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
+import { collection, addDoc, getDocs, query, where, deleteDoc, doc, updateDoc, getDoc } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
+import { ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js';
 
-// Firebase Config
-const firebaseConfig = {
-  apiKey: "AIzaSyDqVfm5VzXZXq0VzXZXq0VzXZXq0VzXZXq",
-  authDomain: "nexchat-app.firebaseapp.com",
-  projectId: "nexchat-app",
-  storageBucket: "nexchat-app.appspot.com",
-  messagingSenderId: "123456789012",
-  appId: "1:123456789012:web:abcdef1234567890"
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-const storage = getStorage(app);
+// Configuration and app initialization are handled in firebase-config.js
+// We import the initialized services directly.
 
 // Token prices for duration plans
 const DURATION_PLANS = {
@@ -43,7 +31,7 @@ onAuthStateChanged(auth, async (user) => {
     currentUser = user;
     userUID = user.uid;
     userEmail = user.email || 'No email';
-    
+
     // Get user data from Firestore
     try {
       const userRef = doc(db, 'users', userUID);
@@ -72,7 +60,7 @@ onAuthStateChanged(auth, async (user) => {
     // Load ads
     loadAllAds();
     loadCartFromLocalStorage();
-    
+
     // Check for expired ads periodically
     checkExpiredAds();
     setInterval(checkExpiredAds, 60000); // Check every minute
@@ -275,16 +263,16 @@ async function deductUserTokens(amount) {
   try {
     const userRef = doc(db, 'users', userUID);
     const userSnap = await getDoc(userRef);
-    
+
     if (userSnap.exists()) {
       const currentTokens = userSnap.data().tokens || 0;
       const newTokens = Math.max(0, currentTokens - amount);
-      
+
       await updateDoc(userRef, {
         tokens: newTokens,
         lastTokenUpdate: new Date()
       });
-      
+
       userTokens = newTokens;
       updateTokenDisplay();
     }
@@ -298,7 +286,7 @@ async function deductUserTokens(amount) {
 async function checkExpiredAds() {
   try {
     const now = new Date();
-    
+
     const querySnapshot = await getDocs(query(
       collection(db, 'advertisements'),
       where('status', '==', 'active')
@@ -306,14 +294,14 @@ async function checkExpiredAds() {
 
     for (const docSnapshot of querySnapshot.docs) {
       const ad = docSnapshot.data();
-      
+
       if (ad.expiresAt) {
         const expirationDate = ad.expiresAt.toDate ? ad.expiresAt.toDate() : new Date(ad.expiresAt);
-        
+
         if (expirationDate <= now) {
           // Ad has expired, delete it
           await deleteDoc(doc(db, 'advertisements', docSnapshot.id));
-          
+
           console.log(`Ad expired and removed: ${ad.productName}`);
         }
       }
@@ -334,12 +322,12 @@ async function loadAllAds() {
     allAds = [];
     querySnapshot.forEach((doc) => {
       const adData = doc.data();
-      
+
       // Check if ad has expired
       if (adData.expiresAt) {
         const expirationDate = adData.expiresAt.toDate ? adData.expiresAt.toDate() : new Date(adData.expiresAt);
         const now = new Date();
-        
+
         if (expirationDate > now) {
           allAds.push({
             id: doc.id,
@@ -371,7 +359,7 @@ async function loadUserAds() {
     const userAds = [];
     querySnapshot.forEach((doc) => {
       const adData = doc.data();
-      
+
       // Include expired ads in user's view but mark them
       userAds.push({
         id: doc.id,
@@ -389,7 +377,7 @@ async function loadUserAds() {
 // ============= DISPLAY ADS =============
 function displayAds(ads) {
   const container = document.getElementById('adsList');
-  
+
   if (ads.length === 0) {
     container.innerHTML = `
       <div class="empty-state">
@@ -403,7 +391,7 @@ function displayAds(ads) {
   container.innerHTML = ads.map(ad => {
     const expiresAt = ad.expiresAt?.toDate ? ad.expiresAt.toDate() : new Date(ad.expiresAt);
     const timeLeft = Math.ceil((expiresAt - new Date()) / 3600000); // hours
-    
+
     return `
     <div class="ad-card" onclick="viewAdDetail('${ad.id}')">
       <img src="${ad.imageURL}" alt="${ad.productName}" class="ad-card-image">
@@ -441,7 +429,7 @@ function displayUserAds(ads) {
     const now = new Date();
     const isExpired = expiresAt <= now;
     const timeLeft = Math.ceil((expiresAt - now) / 3600000); // hours
-    
+
     return `
     <div class="ad-card ${isExpired ? 'expired' : ''}">
       <img src="${ad.imageURL}" alt="${ad.productName}" class="ad-card-image">
@@ -494,12 +482,12 @@ document.getElementById('contactSellerBtn')?.addEventListener('click', () => {
   // Redirect to chat with seller
   const sellerUID = currentDetailAd.sellerUID;
   const sellerUsername = currentDetailAd.sellerUsername;
-  
+
   // Store in session and redirect
   sessionStorage.setItem('targetUserUID', sellerUID);
   sessionStorage.setItem('targetUsername', sellerUsername);
   sessionStorage.setItem('fromAdvertisement', 'true');
-  
+
   window.location.href = 'chat.html';
 });
 
@@ -515,7 +503,7 @@ function addToCartFromCard(e, adId) {
 
 function addToCart(ad) {
   const existingItem = cartItems.find(item => item.id === ad.id);
-  
+
   if (existingItem) {
     existingItem.quantity++;
   } else {
@@ -648,7 +636,7 @@ function loadCartFromLocalStorage() {
 // ============= DELETE AD =============
 async function deleteAd(e, adId) {
   e.stopPropagation();
-  
+
   if (!confirm('Are you sure you want to delete this advertisement?')) {
     return;
   }
@@ -794,7 +782,7 @@ onAuthStateChanged(auth, async (user) => {
     currentUser = user;
     userUID = user.uid;
     userEmail = user.email || 'No email';
-    
+
     // Get user data from Firestore
     try {
       const userRef = doc(db, 'users', userUID);
@@ -1004,7 +992,7 @@ async function loadUserAds() {
 // ============= DISPLAY ADS =============
 function displayAds(ads) {
   const container = document.getElementById('adsList');
-  
+
   if (ads.length === 0) {
     container.innerHTML = `
       <div class="empty-state">
@@ -1096,12 +1084,12 @@ document.getElementById('contactSellerBtn')?.addEventListener('click', () => {
   // Redirect to chat with seller
   const sellerUID = currentDetailAd.sellerUID;
   const sellerUsername = currentDetailAd.sellerUsername;
-  
+
   // Store in session and redirect
   sessionStorage.setItem('targetUserUID', sellerUID);
   sessionStorage.setItem('targetUsername', sellerUsername);
   sessionStorage.setItem('fromAdvertisement', 'true');
-  
+
   window.location.href = 'chat.html';
 });
 
@@ -1117,7 +1105,7 @@ function addToCartFromCard(e, adId) {
 
 function addToCart(ad) {
   const existingItem = cartItems.find(item => item.id === ad.id);
-  
+
   if (existingItem) {
     existingItem.quantity++;
   } else {
@@ -1250,7 +1238,7 @@ function loadCartFromLocalStorage() {
 // ============= DELETE AD =============
 async function deleteAd(e, adId) {
   e.stopPropagation();
-  
+
   if (!confirm('Are you sure you want to delete this advertisement?')) {
     return;
   }
