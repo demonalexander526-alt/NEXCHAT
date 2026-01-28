@@ -46,9 +46,9 @@ let mentionPopupOpen = false;
 let groupMembers = [];
 
 const notificationSounds = {
-  success: 'data:audio/wav;base64,UklGRiYAAABXQVZFZm10IBAAAAABAAEAQB8AAAB9AAACABAAZGF0YQIAAAAAAA==',
-  error: 'data:audio/wav;base64,UklGRiYAAABXQVZFZm10IBAAAAABAAEAQB8AAAB9AAACABAAZGF0YQIAAAAAAA==',
-  info: 'data:audio/wav;base64,UklGRiYAAABXQVZFZm10IBAAAAABAAEAQB8AAAB9AAACABAAZGF0YQIAAAAAAA=='
+  success: 'assets/notification.mp3', // Using standard notification sound
+  error: 'assets/error.mp3',
+  info: 'assets/pop.mp3'
 };
 
 let basicUIInitialized = false;
@@ -170,34 +170,48 @@ function showNotif(msg, type = "info", duration = 3000) {
 // Play notification sound
 function playNotificationSound(type = "info") {
   try {
-    // Create a simple beep sound using Web Audio API
+    const soundPath = notificationSounds[type] || notificationSounds.info;
+    const audio = new Audio(soundPath);
+
+    // Attempt to play the sound file
+    const playPromise = audio.play();
+
+    if (playPromise !== undefined) {
+      playPromise.catch(error => {
+        console.warn("Audio play failed, falling back to beep:", error);
+        // Fallback to oscillator if file fails
+        playBeep(type);
+      });
+    }
+  } catch (err) {
+    console.warn("Could not play notification sound:", err);
+    playBeep(type);
+  }
+}
+
+// Fallback beep function
+function playBeep(type) {
+  try {
     const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-
-    const frequencies = {
-      success: 800,
-      error: 300,
-      info: 500
-    };
-
-    const frequency = frequencies[type] || 500;
-    const duration = 0.2;
-
     const oscillator = audioContext.createOscillator();
     const gainNode = audioContext.createGain();
 
     oscillator.connect(gainNode);
     gainNode.connect(audioContext.destination);
 
-    oscillator.frequency.value = frequency;
-    oscillator.type = 'sine';
+    // Different frequencies for different types
+    if (type === 'error') oscillator.frequency.value = 300;
+    else if (type === 'success') oscillator.frequency.value = 800;
+    else oscillator.frequency.value = 500;
 
-    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+    oscillator.type = 'sine';
+    gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
 
     oscillator.start(audioContext.currentTime);
-    oscillator.stop(audioContext.currentTime + duration);
-  } catch (err) {
-    console.warn("Could not play notification sound:", err);
+    oscillator.stop(audioContext.currentTime + 0.2);
+  } catch (e) {
+    console.error("Audio context not supported", e);
   }
 }
 

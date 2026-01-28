@@ -11,7 +11,6 @@ from flask_cors import CORS
 import json
 import os
 import random
-import boolean 
 import string
 from datetime import datetime
 import logging
@@ -963,69 +962,6 @@ I've got you covered with image capabilities!
 Ready to scan? Upload an image! 🚀📸""",
         ]
         return def_random(image_responses)
-
-    def process_message(self, message, conversation_history=None):
-        """Process incoming message"""
-        try:
-            message_type = self.detect_message_type(message)
-            
-            # Add to history
-            if conversation_history is None:
-                conversation_history = []
-            
-            conversation_history.append({
-                "role": "user",
-                "content": message,
-                "timestamp": datetime.now().isoformat()
-            })
-
-            # Try real AI first for any message
-            context = f"Message type: {message_type}. Conversation history: {len(conversation_history)} messages"
-            real_response = self.get_ai_response(message, context)
-            
-            if real_response:
-                response = real_response
-            else:
-                # Fallback to categorized responses
-                if message_type == "status":
-                    response = self.check_status(message)
-                elif message_type == "creator":
-                    response = self.handle_creator_query(message)
-                elif message_type == "code":
-                    response = self.analyze_code(message)
-                elif message_type == "math":
-                    response = self.solve_math(message)
-                elif message_type == "image":
-                    response = self.handle_image_query(message)
-                elif message_type == "question":
-                    response = self.answer_question(message)
-                elif message_type == "greeting":
-                    response = self.handle_greeting(message)
-                else:
-                    response = self.generate_general_response(message)
-
-            # Add AI response to history
-            conversation_history.append({
-                "role": "assistant",
-                "content": response,
-                "timestamp": datetime.now().isoformat()
-            })
-
-            return {
-                "success": True,
-                "response": response,
-                "type": message_type,
-                "model": self.config["model"]["name"],
-                "history": conversation_history
-            }
-
-        except Exception as e:
-            logger.error(f"Error processing message: {str(e)}")
-            return {
-                "success": False,
-                "error": str(e),
-                "response": "⚠️ An error occurred while processing your message."
-            }
 
 # Initialize AI
 chronex_python = ChronexAIPython(CHRONEX_CONFIG)

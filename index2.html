@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,42 +8,106 @@
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="register.css">
 </head>
+
 <body>
 
-<main class="reset-container" role="main" aria-labelledby="registerTitle">
-  <img src="logo.jpg" class="logo" alt="NEXCHAT Logo">
-  <h2 id="registerTitle">Create Your Account</h2>
+  <main class="reset-container" role="main" aria-labelledby="registerTitle">
+    <img src="logo.jpg" class="logo" alt="NEXCHAT Logo">
+    <h2 id="registerTitle">Create Your Account</h2>
 
-  <form id="registerForm" aria-describedby="result">
-    <label for="regName" class="visually-hidden">Full name</label>
-    <input type="text" id="regName" placeholder="Full Name" required aria-required="true" minlength="2" maxlength="50">
+    <form id="registerForm" aria-describedby="result">
+      <label for="regName" class="visually-hidden">Full name</label>
+      <input type="text" id="regName" placeholder="Full Name" required aria-required="true" minlength="2"
+        maxlength="50">
 
-    <label for="regUsername" class="visually-hidden">Username</label>
-    <input type="text" id="regUsername" placeholder="Username (3-20 characters)" required aria-required="true" minlength="3" maxlength="20">
+      <label for="regUsername" class="visually-hidden">Username</label>
+      <input type="text" id="regUsername" placeholder="Username (3-20 characters)" required aria-required="true"
+        minlength="3" maxlength="20">
 
-    <label for="regEmail" class="visually-hidden">Email address</label>
-    <input type="email" id="regEmail" placeholder="Email Address" required aria-required="true">
+      <label for="regEmail" class="visually-hidden">Email address</label>
+      <input type="email" id="regEmail" placeholder="Email Address" required aria-required="true">
 
-    <label for="regPassword" class="visually-hidden">Password</label>
-    <input type="password" id="regPassword" placeholder="Password (min 6 characters)" required aria-required="true" minlength="6">
+      <label for="regPassword" class="visually-hidden">Password</label>
+      <input type="password" id="regPassword" placeholder="Password (min 6 characters)" required aria-required="true"
+        minlength="6">
 
-    <label for="regPasswordConfirm" class="visually-hidden">Confirm password</label>
-    <input type="password" id="regPasswordConfirm" placeholder="Confirm Password" required aria-required="true" minlength="6">
+      <label for="regPasswordConfirm" class="visually-hidden">Confirm password</label>
+      <input type="password" id="regPasswordConfirm" placeholder="Confirm Password" required aria-required="true"
+        minlength="6">
 
-    <button type="submit" class="auth-btn">Register</button>
-  </form>
+      <div class="avatar-selection-container" style="margin-bottom: 20px; text-align: center;">
+        <label style="display: block; color: #00ff66; margin-bottom: 10px; font-family: 'Orbitron', monospace;">Profile
+          Picture</label>
 
-  <p class="switch">Already have an account? <span onclick="location.href='index.html'">Login</span></p>
-  <p id="result" aria-live="polite"></p>
-</main>
+        <div id="avatarPreviewContainer"
+          style="width: 100px; height: 100px; margin: 0 auto 15px; border-radius: 50%; background: rgba(0, 255, 102, 0.1); border: 2px solid #00ff66; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative;">
+          <img id="selectedAvatarImg" src="" alt=""
+            style="width: 100%; height: 100%; object-fit: cover; display: none;">
+          <span id="avatarPlaceholder" style="font-size: 30px;">👤</span>
+        </div>
 
-<script src="app-prompt.js"></script>
-<script type="module" src="firebase-config.js"></script>
-<script type="module" src="auth.js"></script>
+        <button type="button" id="chooseAvatarBtn" class="auth-btn"
+          style="background: transparent; border: 1px solid #00ff66; color: #00ff66; margin-bottom: 10px; font-size: 14px; padding: 8px;">🎨
+          Choose NEX Avatar</button>
+        <input type="hidden" id="selectedAvatarData" value="">
+      </div>
 
-<style>
-.visually-hidden{position:absolute!important;height:1px;width:1px;overflow:hidden;clip:rect(1px,1px,1px,1px);white-space:nowrap}
-</style>
+      <button type="submit" class="auth-btn">Register</button>
+    </form>
+
+    <script>
+      const chooseBtn = document.getElementById('chooseAvatarBtn');
+      const avatarDataInput = document.getElementById('selectedAvatarData');
+      const avatarImg = document.getElementById('selectedAvatarImg');
+      const avatarPlaceholder = document.getElementById('avatarPlaceholder');
+
+      chooseBtn.addEventListener('click', () => {
+        // Calculate center of screen
+        const width = 1000;
+        const height = 800;
+        const left = (screen.width - width) / 2;
+        const top = (screen.height - height) / 2;
+
+        window.open('profile-avatars.html', 'ChooseAvatar',
+          `width=${width},height=${height},top=${top},left=${left},scrollbars=yes,resizable=yes`);
+      });
+
+      window.addEventListener('message', (event) => {
+        if (event.data.type === 'avatarSelected') {
+          const avatar = event.data.avatar;
+          // Support both new URL based avatars and legacy SVG data URIs
+          const avatarSrc = avatar.url || avatar.svg;
+
+          avatarDataInput.value = avatarSrc;
+          avatarImg.src = avatarSrc;
+          avatarImg.style.display = 'block';
+          avatarPlaceholder.style.display = 'none';
+
+          chooseBtn.textContent = `✓ Selected: ${avatar.name}`;
+          chooseBtn.style.background = 'rgba(0, 255, 102, 0.1)';
+        }
+      });
+    </script>
+
+    <p class="switch">Already have an account? <span onclick="location.href='index.html'">Login</span></p>
+    <p id="result" aria-live="polite"></p>
+  </main>
+
+  <script src="app-prompt.js"></script>
+  <script type="module" src="firebase-config.js"></script>
+  <script type="module" src="auth.js"></script>
+
+  <style>
+    .visually-hidden {
+      position: absolute !important;
+      height: 1px;
+      width: 1px;
+      overflow: hidden;
+      clip: rect(1px, 1px, 1px, 1px);
+      white-space: nowrap
+    }
+  </style>
 
 </body>
+
 </html>

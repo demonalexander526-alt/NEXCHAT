@@ -25,7 +25,8 @@
   --safe-area-right: env(safe-area-inset-right, 0px);
 }
 
-html, body {
+html,
+body {
   width: 100%;
   height: 100%;
   background: #0a0a0a;
@@ -195,8 +196,15 @@ html, body {
 }
 
 @keyframes tokenPulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.6; }
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.6;
+  }
 }
 
 .header-right {
@@ -289,14 +297,14 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(255,252,0,0.3);
+  box-shadow: 0 4px 12px rgba(255, 252, 0, 0.3);
   font-size: 32px;
   transition: all 0.2s;
 }
 
 .story-item:active .story-avatar-wrapper {
   transform: scale(0.95);
-  box-shadow: 0 2px 6px rgba(255,252,0,0.2);
+  box-shadow: 0 2px 6px rgba(255, 252, 0, 0.2);
 }
 
 .camera-icon {
@@ -334,7 +342,7 @@ html, body {
 }
 
 /* Hide NEX-STATUS when chat detail view is open */
-.chat-detail-view ~ * .nex-status-container,
+.chat-detail-view~* .nex-status-container,
 .app.chat-detail-active .nex-status-container {
   display: none;
 }
@@ -948,12 +956,12 @@ html, body {
   font-size: 20px;
   cursor: pointer;
   transition: all 0.2s;
-  box-shadow: 0 4px 12px rgba(255,252,0,0.3);
+  box-shadow: 0 4px 12px rgba(255, 252, 0, 0.3);
 }
 
 .new-chat-btn:hover {
   transform: scale(1.05);
-  box-shadow: 0 6px 16px rgba(255,252,0,0.4);
+  box-shadow: 0 6px 16px rgba(255, 252, 0, 0.4);
 }
 
 .new-chat-btn:active {
@@ -1045,10 +1053,15 @@ html, body {
 
 /* Chronex AI Item Styling */
 .chronex-ai-item {
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
-  border-bottom: 2px solid rgba(102, 126, 234, 0.3);
+  background: linear-gradient(135deg, rgba(138, 43, 226, 0.15) 0%, rgba(0, 212, 255, 0.1) 50%, rgba(255, 0, 255, 0.15) 100%),
+    radial-gradient(circle at 20% 50%, rgba(0, 255, 102, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 80% 50%, rgba(255, 0, 255, 0.08) 0%, transparent 50%);
+  border-bottom: 2px solid rgba(0, 255, 102, 0.4);
+  border-left: 3px solid transparent;
+  border-image: linear-gradient(180deg, #00ff66, #00d4ff, #ff00ff) 1;
   position: relative;
   overflow: hidden;
+  box-shadow: 0 0 15px rgba(0, 255, 102, 0.2), inset 0 0 20px rgba(138, 43, 226, 0.1);
 }
 
 .chronex-ai-item::before {
@@ -1058,20 +1071,54 @@ html, body {
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-  animation: shimmer 2s infinite;
+  background: linear-gradient(90deg, transparent, rgba(0, 255, 102, 0.2), rgba(0, 212, 255, 0.2), rgba(255, 0, 255, 0.2), transparent);
+  animation: shimmer 3s infinite;
   pointer-events: none;
 }
 
+.chronex-ai-item::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image:
+    repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 255, 102, 0.03) 2px, rgba(0, 255, 102, 0.03) 4px),
+    repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(0, 212, 255, 0.03) 2px, rgba(0, 212, 255, 0.03) 4px);
+  pointer-events: none;
+  opacity: 0.5;
+}
+
 @keyframes shimmer {
-  0% { left: -100%; }
-  100% { left: 100%; }
+  0% {
+    left: -100%;
+  }
+
+  100% {
+    left: 100%;
+  }
+}
+
+@keyframes pulse-glow {
+
+  0%,
+  100% {
+    box-shadow: 0 0 15px rgba(0, 255, 102, 0.2), inset 0 0 20px rgba(138, 43, 226, 0.1);
+  }
+
+  50% {
+    box-shadow: 0 0 25px rgba(0, 255, 102, 0.4), inset 0 0 30px rgba(138, 43, 226, 0.2);
+  }
 }
 
 .chronex-ai-item:hover {
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%);
-  border-bottom: 2px solid rgba(102, 126, 234, 0.5);
-  box-shadow: 0 0 20px rgba(102, 126, 234, 0.2);
+  background: linear-gradient(135deg, rgba(138, 43, 226, 0.25) 0%, rgba(0, 212, 255, 0.15) 50%, rgba(255, 0, 255, 0.25) 100%),
+    radial-gradient(circle at 20% 50%, rgba(0, 255, 102, 0.12) 0%, transparent 50%),
+    radial-gradient(circle at 80% 50%, rgba(255, 0, 255, 0.12) 0%, transparent 50%);
+  border-bottom: 2px solid rgba(0, 255, 102, 0.6);
+  animation: pulse-glow 2s infinite;
+  transform: translateX(2px);
 }
 
 .chat-info {
@@ -1287,7 +1334,7 @@ html, body {
   right: 10px;
   background: var(--snap-white);
   border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
   z-index: 100;
   min-width: 200px;
   overflow: hidden;
@@ -1385,23 +1432,51 @@ html, body {
 }
 
 @keyframes slideInUp {
-  from { transform: translateY(20px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 @keyframes slideInLeft {
-  from { transform: translateX(-100%); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 
 @keyframes slideInRight {
-  from { transform: translateX(100%); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 
 @keyframes slideOutRight {
-  from { transform: translateX(0); opacity: 1; }
-  to { transform: translateX(100%); opacity: 0; }
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
 }
 
 .message-wrapper.sent {
@@ -1503,7 +1578,9 @@ html, body {
 
 .chat-size-extra-large .message-time {
   font-size: 14px;
-}.message-attachment {
+}
+
+.message-attachment {
   margin-top: 10px;
   padding: 10px;
   background: rgba(0, 255, 102, 0.1);
@@ -1653,8 +1730,18 @@ html, body {
 }
 
 @keyframes typing {
-  0%, 60%, 100% { transform: translateY(0); opacity: 0.6; }
-  30% { transform: translateY(-8px); opacity: 1; }
+
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.6;
+  }
+
+  30% {
+    transform: translateY(-8px);
+    opacity: 1;
+  }
 }
 
 /* MESSAGE INPUT */
@@ -1893,7 +1980,8 @@ html, body {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  display: none; /* toggled via JS */
+  display: none;
+  /* toggled via JS */
   align-items: center;
   justify-content: center;
   cursor: pointer;
@@ -1905,7 +1993,9 @@ html, body {
   box-shadow: 0 2px 8px rgba(0, 255, 102, 0.28);
 }
 
-.audio-send-btn:active { transform: scale(0.95); }
+.audio-send-btn:active {
+  transform: scale(0.95);
+}
 
 .send-btn:active {
   transform: scale(0.95);
@@ -1929,6 +2019,7 @@ html, body {
     opacity: 0;
     transform: translateY(-10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -2057,9 +2148,12 @@ html, body {
 }
 
 @keyframes pulse {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 1;
   }
+
   50% {
     opacity: 0.5;
   }
@@ -2198,7 +2292,7 @@ html, body {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0,0,0,0.8);
+  background: rgba(0, 0, 0, 0.8);
   z-index: 100;
   display: flex;
   align-items: flex-start;
@@ -2209,8 +2303,13 @@ html, body {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 .search-modal {
@@ -2229,11 +2328,12 @@ html, body {
 }
 
 @keyframes slideUp {
-  from { 
+  from {
     transform: translateY(30px);
     opacity: 0;
   }
-  to { 
+
+  to {
     transform: translateY(0);
     opacity: 1;
   }
@@ -2604,7 +2704,9 @@ html, body {
 .info-btn:active {
   background: #1a1a1a;
   transform: scale(0.95);
-}.info-btn.danger {
+}
+
+.info-btn.danger {
   background: #FFE0E0;
   color: #D32F2F;
 }
@@ -2647,7 +2749,7 @@ html, body {
   right: 16px;
   background: var(--snap-white);
   border-radius: 12px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
   z-index: 60;
   min-width: 180px;
   overflow: hidden;
@@ -2712,8 +2814,8 @@ html, body {
   bottom: env(safe-area-inset-bottom, 0px);
   display: flex;
   gap: 0;
-  background: linear-gradient(180deg, rgba(10,10,10,0.95), rgba(10,10,10,0.9));
-  border-top: 1px solid rgba(0,255,102,0.06);
+  background: linear-gradient(180deg, rgba(10, 10, 10, 0.95), rgba(10, 10, 10, 0.9));
+  border-top: 1px solid rgba(0, 255, 102, 0.06);
   padding: 6px 8px;
   z-index: 999;
   backdrop-filter: blur(6px);
@@ -2788,7 +2890,7 @@ html, body {
   margin-bottom: 10px;
   font-size: 14px;
   font-weight: 500;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
   pointer-events: auto;
   animation: slideInRight 0.3s ease-out;
   border-left: 4px solid #2196F3;
@@ -2857,13 +2959,16 @@ html, body {
     padding: 16px 24px;
   }
 }
+
 /* ============================================================
    ANDROID & MOBILE RESPONSIVE DESIGN
    ============================================================ */
 
 /* Small phones (320px - 374px) */
 @media (max-width: 374px) {
-  html, body {
+
+  html,
+  body {
     font-size: 13px;
   }
 
@@ -2964,7 +3069,9 @@ html, body {
 
 /* Standard Android phones (375px - 428px) */
 @media (min-width: 375px) and (max-width: 428px) {
-  html, body {
+
+  html,
+  body {
     font-size: 14px;
   }
 
@@ -3070,7 +3177,7 @@ html, body {
 
 /* High DPI devices (Retina, etc.) */
 @media (-webkit-min-device-pixel-ratio: 2),
-       (min-resolution: 192dpi) {
+(min-resolution: 192dpi) {
   * {
     -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
@@ -3285,6 +3392,7 @@ html, body {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -3295,6 +3403,7 @@ html, body {
     transform: translateY(30px);
     opacity: 0;
   }
+
   to {
     transform: translateY(0);
     opacity: 1;
@@ -3394,30 +3503,30 @@ html, body {
     max-height: 90vh;
     border-radius: 24px 24px 0 0;
   }
-  
+
   .settings-header {
     padding: 16px;
   }
-  
+
   .settings-body {
     padding: 16px;
   }
-  
+
   .setting-item {
     padding: 16px 12px;
     min-height: 56px;
   }
-  
+
   .settings-action-btn {
     min-height: 52px;
     padding: 16px;
   }
-  
+
   /* Improve readability on small screens */
   .settings-header h2 {
     font-size: 18px;
   }
-  
+
   .setting-item label {
     font-size: 16px;
   }
@@ -3429,7 +3538,7 @@ html, body {
     -webkit-user-select: none;
     user-select: none;
   }
-  
+
   .setting-item input[type="checkbox"],
   .setting-item input[type="radio"] {
     -webkit-appearance: none;
@@ -4204,8 +4313,13 @@ body.light-mode .chat-list {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 .status-viewer-image-container {
@@ -4291,6 +4405,7 @@ body.light-mode .chat-list {
     transform: translateY(-100%);
     opacity: 0;
   }
+
   to {
     transform: translateY(0);
     opacity: 1;
@@ -4303,8 +4418,15 @@ body.light-mode .chat-list {
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.5;
+  }
 }
 
 .offline-text {
@@ -4384,6 +4506,7 @@ body.light-mode .chat-list {
     opacity: 0;
     transform: scale(0.95);
   }
+
   to {
     opacity: 1;
     transform: scale(1);
@@ -4403,6 +4526,7 @@ body.light-mode .chat-list {
 .chat-context-menu button:last-child {
   border-radius: 0 0 8px 8px;
 }
+
 /* ============================================================
    UNREAD BADGE STYLES
    ============================================================ */
@@ -4433,9 +4557,19 @@ body.light-mode .chat-list {
 }
 
 @keyframes popIn {
-  0% { transform: scale(0); opacity: 0; }
-  60% { transform: scale(1.1); }
-  100% { transform: scale(1); opacity: 1; }
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+
+  60% {
+    transform: scale(1.1);
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 .chat-item-content.unread .chat-name {
@@ -4448,4 +4582,3 @@ body.light-mode .chat-list {
   color: #00ff66;
   font-weight: 600;
 }
-

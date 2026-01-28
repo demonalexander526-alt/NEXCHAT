@@ -41,7 +41,7 @@ function checkRateLimit(identifier, type = 'login', maxAttempts = 5, windowMs = 
 
 function validatePassword(password) {
   const errors = [];
-  
+
   if (password.length < 8) {
     errors.push('at least 8 characters');
   }
@@ -223,7 +223,12 @@ if (registerForm) {
       const cred = await createUserWithEmailAndPassword(auth, email, pass);
       console.log('✅ User created in Auth:', cred.user.uid);
 
+      // Check for selected avatar
+      const selectedAvatarInput = document.getElementById('selectedAvatarData');
+      const customAvatar = selectedAvatarInput && selectedAvatarInput.value ? selectedAvatarInput.value : null;
+
       const randomSticker = getRandomSticker();
+      const finalProfilePic = customAvatar || randomSticker;
 
       showResult('⏳ Saving user data to database...', false);
 
@@ -235,8 +240,8 @@ if (registerForm) {
         tokens: 2000,
         createdAt: new Date().toISOString(),
         online: true,
-        profilePic: randomSticker,
-        profilePicUrl: randomSticker,
+        profilePic: finalProfilePic,
+        profilePicUrl: finalProfilePic,
         uid: cred.user.uid,
         registrationTimestamp: new Date().toISOString(),
         // NOTE: IP, country, city, ISP removed from public profile for privacy
