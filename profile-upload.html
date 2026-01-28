@@ -21,14 +21,21 @@
   <link rel="icon" type="image/x-icon" href="logo.jpg">
   <link rel="apple-touch-icon" href="logo.jpg">
   <style>
-    /* Prevent any layout shifts or side panels */
+    /* ALLOW SCROLLING */
     html,
     body {
       margin: 0;
       padding: 0;
       width: 100%;
       height: 100%;
-      overflow: hidden;
+      overflow-y: auto;
+      /* Allow vertical scroll */
+      overflow-x: hidden;
+    }
+
+    .profile-container {
+      padding-bottom: 50px;
+      /* Ensure space for bottom button */
     }
 
     body {
@@ -169,6 +176,14 @@
 
         result.textContent = `✅ NEX Avatar Selected: ${avatar.name}`;
         result.style.color = '#00ccff';
+
+        // Update button text and scroll to it to make next step obvious
+        const submitBtn = profileForm.querySelector('button[type="submit"]');
+        submitBtn.innerHTML = "🚀 Confirm Identity & Enter";
+        submitBtn.style.background = "#00ccff";
+        submitBtn.style.color = "#000";
+        submitBtn.style.boxShadow = "0 0 20px #00ccff";
+        submitBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
     });
 

@@ -362,7 +362,7 @@
                     Verified by NEX Core Identity Systems.
                     Ready for neural upload.
                 </p>
-                <button class="confirm-btn" onclick="confirmIdentity()">INITIALIZE UPLOAD</button>
+                <button class="confirm-btn" onclick="confirmIdentity(event)">INITIALIZE UPLOAD</button>
                 <div
                     style="margin-top:20px; border-top:1px solid #333; padding-top:20px; color:#444; font-size:12px; text-align:center;">
                     POWERED BY NEX_DEV
@@ -495,10 +495,14 @@
             document.getElementById('modal').classList.remove('open');
         }
 
-        function confirmIdentity() {
+        function confirmIdentity(event) {
+            // Visual feedback
+            const btn = event ? event.target : document.querySelector('.confirm-btn');
+            if (btn) btn.innerText = "PROCESSING...";
+
             if (window.opener) {
                 window.opener.postMessage({ type: 'avatarSelected', avatar: selectedAvatar }, '*');
-                window.close();
+                setTimeout(() => window.close(), 100); // Small delay to show feedback
             } else {
                 alert('Local Copy: Identity Saved');
             }
