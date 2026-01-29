@@ -149,6 +149,10 @@ function showView(view) {
 }
 
 // ============= IMAGE UPLOAD =============
+document.getElementById('imageUploadArea')?.addEventListener('click', () => {
+  document.getElementById('productImage').click();
+});
+
 document.getElementById('productImage')?.addEventListener('change', (e) => {
   const file = e.target.files[0];
   if (file) {

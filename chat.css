@@ -331,14 +331,18 @@ body {
    ============================================================ */
 
 .nex-status-container {
-  background: linear-gradient(180deg, rgba(0, 255, 102, 0.08) 0%, rgba(0, 255, 102, 0.04) 100%);
-  border-bottom: 1px solid rgba(0, 255, 102, 0.3);
+  background: #0a0a0a;
   padding: 16px;
-  max-height: 240px;
-  overflow-x: auto;
-  overflow-y: hidden;
-  -webkit-overflow-scrolling: touch;
-  transition: opacity 0.3s ease, max-height 0.3s ease;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 20;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  animation: slideInLeft 0.3s ease-out;
 }
 
 /* Hide NEX-STATUS when chat detail view is open */

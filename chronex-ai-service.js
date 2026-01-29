@@ -59,7 +59,57 @@ const CHRONEX_CONFIG = {
   }
 };
 
-// ============ CHRONEX AI CLASS ============
+// ============ ENHANCED INTENT DETECTION ============
+class IntentDetector {
+  constructor() {
+    this.patterns = {
+      greeting: /\b(hello|hi|hey|greetings|good\s+(morning|afternoon|evening))\b/i,
+      question: /\b(what|why|how|when|where|who|which|can\s+you|could\s+you)\b/i,
+      coding: /\b(code|function|class|variable|bug|error|debug|compile|syntax|program)\b/i,
+      math: /\b(calculate|solve|equation|formula|math|algebra|calculus|derivative|integral)\b/i,
+      explanation: /\b(explain|describe|tell\s+me\s+about|what\s+is|define|meaning)\b/i,
+      learning: /\b(learn|tutorial|teach|guide|show\s+me)\b/i,
+      help: /\b(help|assist|support)\b/i
+    };
+  }
+
+  detect(message) {
+    const intents = [];
+    for (const [intent, pattern] of Object.entries(this.patterns)) {
+      if (pattern.test(message)) {
+        intents.push(intent);
+      }
+    }
+    return intents.length > 0 ? intents : ['general'];
+  }
+
+  extractEntities(message) {
+    const entities = {
+      languages: [],
+      topics: [],
+      keywords: []
+    };
+
+    const langs = ['javascript', 'python', 'java', 'c\\+\\+', 'c#', 'ruby', 'go', 'rust', 'php', 'typescript'];
+    langs.forEach(lang => {
+      const regex = new RegExp(`\\b${lang}\\b`, 'i');
+      if (regex.test(message)) {
+        entities.languages.push(lang.replace('\\', ''));
+      }
+    });
+
+    const topics = ['ai', 'machine learning', 'data science', 'web', 'mobile', 'database', 'api', 'cloud'];
+    topics.forEach(topic => {
+      if (message.toLowerCase().includes(topic)) {
+        entities.topics.push(topic);
+      }
+    });
+
+    return entities;
+  }
+}
+
+// ============ CHRONEX AI CLASS (ENHANCED) ============
 class ChronexAI {
   constructor(config) {
     this.config = config;
@@ -67,11 +117,27 @@ class ChronexAI {
     this.conversationHistory = [];
     this.lastResponses = [];
     this.uid = null;
-    console.log("🧠 Chronex AI Service Initialized");
+    this.intentDetector = new IntentDetector();
+    this.contextMemory = {
+      lastTopic: null,
+      userPreferences: {},
+      conversationCount: 0
+    };
+    console.log("🧠 Chronex AI Service Initialized (Enhanced)");
   }
 
   setUserId(uid) {
     this.uid = uid;
+  }
+
+  // Enhanced message analysis
+  analyzeMessage(message) {
+    const intents = this.intentDetector.detect(message);
+    const entities = this.intentDetector.extractEntities(message);
+    const wordCount = message.split(' ').length;
+    const complexity = wordCount > 50 ? 'advanced' : wordCount > 20 ? 'intermediate' : 'simple';
+
+    return { intents, entities, complexity };
   }
 
   // JavaScript implementation (local processing - SUPER ENHANCED)
@@ -80,6 +146,11 @@ class ChronexAI {
 
     // Track conversation context
     this.conversationHistory.push({ role: 'user', content: message });
+    this.contextMemory.conversationCount++;
+
+    // Perform deep analysis
+    const analysis = this.analyzeMessage(message);
+    console.log('📊 Analysis:', analysis);
 
     // ============ CREATOR INFORMATION ============
     if (msg.includes("creator") || msg.includes("who made you") || msg.includes("who created") || msg.includes("demon alex")) {
@@ -98,148 +169,134 @@ class ChronexAI {
       "javascript": {
         keywords: ["javascript", "js", "node", "frontend", "react", "vue", "angular", "typescript"],
         responses: [
-          "**JavaScript Mastery**: Use `const` and `let` instead of `var`. Arrow functions `() => {}` provide cleaner syntax and lexical `this` binding. For async operations, `async/await` is more readable than Promise chains.",
-          "**Modern JS**: Destructuring `const {name, age} = user` and spread operators `...array` make code cleaner. Template literals \\`${variable}\\` are better than string concatenation.",
-          "**Performance**: Use `map()`, `filter()`, `reduce()` for array operations. Avoid nested loops when possible. Debounce expensive operations and use `requestAnimationFrame` for animations.",
-          "**Best Practices**: Always use `===` for comparison, handle errors with try-catch, validate user input, and use ESLint for code quality. Modularize your code with ES6 modules."
+          "**JavaScript Mastery**: Use `const` and `let` instead of `var`. Arrow functions `() => {}` provide cleaner syntax and lexical `this` binding. For async operations, `async/await` is more readable than Promise chains. Want specific examples?",
+          "**Modern JS Best Practices**: \n• Destructuring: `const {name, age} = user`\n• Spread operators: `...array`\n• Template literals: \\`${variable}\\`\n• Optional chaining: `obj?.property`\n• Nullish coalescing: `value ?? default`\n\nWhich would you like to explore?",
+          "**Performance Optimization**: Use `map()`, `filter()`, `reduce()` for functional programming. Implement debouncing for expensive operations. Leverage `requestAnimationFrame` for smooth animations. Use Web Workers for heavy computations. Need code examples?",
+          "**ES6+ Features**: Modules, classes, promises, async/await, generators, proxies, symbols, and more! The modern JavaScript ecosystem is powerful. What specific feature interests you?"
         ]
       },
       "python": {
         keywords: ["python", "pip", "django", "flask", "ml", "ai", "pandas", "numpy", "pytorch"],
         responses: [
-          "**Python Power**: List comprehensions `[x**2 for x in range(10)]` are faster than loops. Use f-strings `f'{variable}'` for string formatting. Virtual environments keep dependencies isolated.",
-          "**Data Science**: NumPy for numerical computing, Pandas for data manipulation, Matplotlib/Seaborn for visualization. Use Jupyter notebooks for interactive analysis.",
-          "**AI/ML**: PyTorch and TensorFlow for deep learning. Scikit-learn for traditional ML. Use GPU acceleration with CUDA for training neural networks.",
-          "**Best Practices**: Follow PEP 8 style guide. Use type hints for better code clarity. Write docstrings for functions. Use `with` statements for file operations."
+          "**Python Excellence**: \n• List comprehensions: `[x**2 for x in range(10)]`\n• F-strings: `f'Hello {name}'`\n• Context managers: `with open() as f`\n• Decorators for cleaner code\n• Type hints for clarity\n\nWhich concept should we dive into?",
+          "**Data Science Stack**: \n• NumPy: Fast numerical computing\n• Pandas: Data manipulation\n• Matplotlib/Seaborn: Visualization\n• Scikit-learn: Machine learning\n• Jupyter: Interactive analysis\n\nWhat's your data science goal?",
+          "**AI/ML with Python**: PyTorch and TensorFlow for deep learning. Transformers for NLP. OpenCV for computer vision. Use GPU acceleration with CUDA. Start with tutorials and gradually build projects!",
+          "**Best Practices**: Follow PEP 8, use virtual environments (venv/conda), write tests (pytest), document with docstrings, use type hints, and leverage linters (flake8/pylint)."
         ]
       },
       "web": {
-        keywords: ["html", "css", "web", "frontend", "backend", "api", "rest", "http"],
+        keywords: ["html", "css", "web", "frontend", "backend", "api", "rest", "http", "responsive"],
         responses: [
-          "**Web Development**: Semantic HTML5 improves accessibility. CSS Grid and Flexbox for layouts. Progressive Web Apps (PWAs) work offline and feel native.",
-          "**Backend**: RESTful APIs use HTTP methods correctly (GET, POST, PUT, DELETE). Always validate and sanitize user input. Use JWT for authentication.",
-          "**Performance**: Minify CSS/JS, optimize images, use CDNs, enable gzip compression, lazy load images, and implement caching strategies.",
-          "**Security**: Use HTTPS, implement CORS properly, prevent XSS and SQL injection, use Content Security Policy, and keep dependencies updated."
+          "**Modern Web Dev**: \n• Frontend: React, Vue, Angular, Svelte\n• Backend: Node.js, Python (Django/Flask), Go\n• Database: PostgreSQL, MongoDB, Redis\n• API: REST, GraphQL, gRPC\n• Deploy: Vercel, Netlify, AWS, Docker\n\nWhat's your stack?",
+          "**Web Performance**: \n• Minimize HTTP requests\n• Lazy load images\n• Use CDN for static assets\n• Enable compression (gzip/brotli)\n• Implement caching strategies\n• Optimize Critical Rendering Path\n\nRunning into speed issues?",
+          "**Responsive Design**: Mobile-first approach, CSS Grid & Flexbox, media queries, fluid typography, touch-friendly interfaces. Users expect seamless experiences across all devices!",
+          "**Web Security**: HTTPS always, CORS properly configured, input validation, XSS/CSRF prevention, Content Security Policy, secure authentication (OAuth, JWT), regular dependency updates."
         ]
       },
       "database": {
         keywords: ["database", "sql", "nosql", "mongodb", "postgres", "mysql", "firestore", "firebase"],
         responses: [
-          "**SQL**: Use indexes for faster queries. Normalize data to reduce redundancy. Use prepared statements to prevent SQL injection. JOIN operations combine related data.",
-          "**NoSQL**: MongoDB for flexible schemas, Redis for caching, Firebase for real-time data. Choose based on your data structure and access patterns.",
-          "**Optimization**: Index frequently queried fields, use pagination for large datasets, implement connection pooling, and monitor query performance.",
-          "**Firebase**: Firestore for structured data with real-time sync. Use security rules to protect data. Batch writes for multiple operations. Offline persistence available."
+          "**SQL Mastery**: Use indexes wisely, normalize for data integrity, prepared statements prevent injection, EXPLAIN to analyze queries, foreign keys maintain relationships. Optimize JOIN operations for performance.",
+          "**NoSQL Options**: \n• MongoDB: Document store, flexible schema\n• Redis: In-memory cache, pub/sub\n• Cassandra: Distributed, high availability\n• Firebase: Real-time, managed service\n\nChoose based on use case!",
+          "**Query Optimization**: Index frequently queried columns, avoid SELECT *, use LIMIT for large datasets, implement pagination, monitor slow queries, use connection pooling, cache when possible.",
+          "**Firebase/Firestore**: Real-time sync, offline support, security rules for access control, batch writes for efficiency, subcollections for organization. Great for real-time apps like NEXCHAT!"
         ]
       },
       "math": {
-        keywords: ["math", "calculate", "equation", "algebra", "calculus", "statistics", "probability"],
+        keywords: ["math", "calculate", "equation", "algebra", "calculus", "statistics", "probability", "solve"],
         responses: [
-          "**Mathematics**: I can help with algebra, calculus, statistics, and more! For derivatives: d/dx(x²) = 2x. For integrals: ∫x dx = x²/2 + C. Need a specific calculation?",
-          "**Statistics**: Mean (average), median (middle value), mode (most frequent). Standard deviation measures spread. Probability ranges from 0 to 1.",
-          "**Algebra**: Solve equations by isolating variables. Factor polynomials. Use quadratic formula: x = (-b ± √(b²-4ac)) / 2a for ax² + bx + c = 0.",
-          "**Calculus**: Derivatives show rate of change. Integrals find area under curves. Chain rule: d/dx[f(g(x))] = f'(g(x)) × g'(x)."
-        ]
-      },
-      "science": {
-        keywords: ["physics", "chemistry", "biology", "science", "quantum", "atom", "molecule"],
-        responses: [
-          "**Physics**: F = ma (Newton's 2nd law). E = mc² (Einstein's mass-energy equivalence). Light travels at 299,792,458 m/s in vacuum.",
-          "**Chemistry**: Periodic table organizes elements. Chemical bonds: ionic (electron transfer) and covalent (electron sharing). pH measures acidity (0-14).",
-          "**Biology**: DNA carries genetic information. Cells are life's basic units. Evolution occurs through natural selection over generations.",
-          "**Quantum**: Particles exhibit wave-particle duality. Heisenberg uncertainty principle. Quantum entanglement connects particles across distances."
+          "**Mathematics Helper** 🔢\n\nI can solve:\n• Algebra: equations, polynomials, factoring\n• Calculus: derivatives, integrals, limits\n• Statistics: mean, median, distributions\n• Probability: combinations, permutations\n• Linear Algebra: matrices, vectors\n\nShare your problem and I'll solve it step-by-step!",
+          "**Quick Reference**:\n• Derivative: d/dx(x²) = 2x\n• Integral: ∫x dx = x²/2 + C\n• Quadratic: x = (-b ± √(b²-4ac))/2a\n• Pythagorean: a² + b² = c²\n\nNeed help with a specific problem?",
+          "**Statistics Basics**: Mean (average), median (middle), mode (most frequent), standard deviation (spread), probability (0 to 1), confidence intervals, hypothesis testing. What do you need?",
+          "**Advanced Math**: Differential equations, Fourier transforms, complex analysis, number theory, topology. I can guide you through complex concepts with clear explanations!"
         ]
       },
       "ai": {
-        keywords: ["artificial intelligence", "machine learning", "neural network", "deep learning", "ai model"],
+        keywords: ["artificial intelligence", "machine learning", "neural network", "deep learning", "ai model", "nlp", "computer vision"],
         responses: [
-          "**AI Fundamentals**: Machine Learning learns from data. Deep Learning uses neural networks with multiple layers. Supervised learning uses labeled data, unsupervised finds patterns.",
-          "**Neural Networks**: Inspired by brain neurons. Input layer → Hidden layers → Output layer. Backpropagation adjusts weights. Activation functions add non-linearity.",
-          "**Training**: Split data into train/validation/test sets. Use loss functions to measure error. Optimize with gradient descent. Prevent overfitting with regularization.",
-          "**Applications**: Computer vision (image recognition), NLP (language understanding), recommendation systems, autonomous vehicles, and chatbots like me!"
+          "**AI/ML Fundamentals**:\n• Supervised Learning: Labeled data, classification, regression\n• Unsupervised Learning: Clustering, dimensionality reduction\n• Reinforcement Learning: Rewards-based learning\n• Deep Learning: Multi-layer neural networks\n\nWhat area interests you?",
+          "**Neural Networks**: Input → Hidden Layers → Output. Each layer has neurons with weights and biases. Training uses backpropagation and gradient descent. Activation functions add non-linearity (ReLU, sigmoid, tanh).",
+          "**NLP (Natural Language Processing)**: Tokenization, embeddings (Word2Vec, BERT), transformers, attention mechanisms, GPT models. Build chatbots, sentiment analysis, translation systems!",
+          "**Computer Vision**: CNNs for image classification, object detection (YOLO, R-CNN), segmentation, face recognition, image generation (GANs, Diffusion). Train on labeled datasets like ImageNet!"
         ]
       },
       "nexchat": {
         keywords: ["nexchat", "this app", "this application", "chat app"],
         responses: [
-          "**NEXCHAT**: A powerful Progressive Web App built with Firebase, featuring real-time messaging, group chats, status updates, and me - CHRONEX AI! Created by DEMON ALEX.",
-          "**Features**: End-to-end encryption, file sharing, voice messages, polls, status updates, token system, marketplace, gaming hub, and advanced AI assistance.",
-          "**Technology**: Built with vanilla JavaScript, Firebase Firestore for data, Firebase Auth for security, and hybrid AI (Python + JavaScript) for intelligence.",
-          "**PWA**: Works offline, installable on any device, fast loading, push notifications, and native app-like experience without app stores!"
+          "**NEXCHAT** 🚀\n\nA cutting-edge PWA by **DEMON ALEX** featuring:\n• Real-time messaging\n• Group chats with admin controls\n• AI assistant (that's me!)\n• Status updates\n• File sharing\n• Token economy\n• Gaming hub\n\nAll powered by Firebase & modern JavaScript!",
+          "**Technical Stack**:\n• Frontend: Vanilla JS (ESM modules)\n• Backend: Firebase (Auth, Firestore, Storage)\n• AI: Hybrid (Python + JavaScript)\n• PWA: Offline support, installable\n• Real-time: WebSocket-like live updates\n\nBuilt for performance and reliability!",
+          "**Key Features**: End-to-end encryption possibilities, voice messages, polls, rich media sharing, customizable themes, notification system, and me - CHRONEX AI for instant help!",
+          "**Why NEXCHAT?** Progressive Web App = no app store needed, works offline, fast loading, push notifications, cross-platform. Created by **DEMON ALEX** to revolutionize chat apps!"
         ]
       }
     };
 
-    // ============ INTELLIGENT PATTERN MATCHING ============
-
-    // Check comprehensive knowledge base
+    // ============ INTELLIGENT KNOWLEDGE MATCHING ============
     for (const [topic, data] of Object.entries(knowledgeBase)) {
       if (data.keywords.some(k => msg.includes(k))) {
         const response = data.responses[Math.floor(Math.random() * data.responses.length)];
         this.lastResponses.push(response);
+        this.contextMemory.lastTopic = topic;
         return response;
       }
     }
 
+    // ============ CONTEXT-AWARE RESPONSES ============
+
+    // Remember previous topic
+    if (this.contextMemory.lastTopic && (msg.includes("more") || msg.includes("tell me more") || msg.includes("continue"))) {
+      return `Continuing our discussion on **${this.contextMemory.lastTopic}**... I can provide more specific details, code examples, or answer questions. What aspect would you like to explore further?`;
+    }
+
+    // ============ INTENT-BASED RESPONSES ============
+    if (analysis.intents.includes('question')) {
+      return `🤔 **Great question!** Based on my analysis, you're asking about: "${message.substring(0, 100)}..."\n\nTo give you the best answer, could you be more specific? I can help with:\n• Technical explanations\n• Code examples\n• Problem-solving strategies\n• Learning resources\n\nWhat specific information do you need?`;
+    }
+
+    if (analysis.intents.includes('coding')) {
+      const langs = analysis.entities.languages.join(', ') || 'any language';
+      return `💻 **Coding Mode Activated**\n\nI can help with ${langs}:\n• Writing clean, efficient code\n• Debugging and optimization\n• Best practices and patterns\n• Algorithm design\n• Code review\n\nShare your code or describe what you're building, and I'll assist!`;
+    }
+
+    if (analysis.intents.includes('learning')) {
+      return `📚 **Learning Assistant Ready**\n\nI can guide you through:\n• Step-by-step tutorials\n• Concept explanations\n• Practice exercises\n• Resource recommendations\n• Project ideas\n\nWhat would you like to learn today?`;
+    }
+
     // ============ IDENTITY & CAPABILITIES ============
-    if (msg.includes("who are you") || msg.includes("what are you") || msg.includes("introduce yourself")) {
-      return "I am **CHRONEX AI v2.0** - an advanced AI assistant created by **DEMON ALEX**. I run on a hybrid architecture combining Python neural networks with JavaScript processing. I can help with programming, mathematics, science, web development, and much more! 🧠✨";
+    if (msg.includes("who are you") || msg.includes("what are you") || msg.includes("introduce")) {
+      return `I am **CHRONEX AI v3.0 (Enhanced)** 🧠✨\n\nCreated by: **DEMON ALEX**\nArchitecture: Hybrid (Python Neural Networks + JavaScript)\n\n**My Enhanced Capabilities**:\n• 💻 Advanced code analysis and generation\n• 🧮 Complex mathematical problem solving\n• 🔬 Scientific explanations with depth\n• 🌐 Full-stack development guidance\n• 🤖 AI/ML concepts and implementation\n• 📊 Data analysis and visualization\n• 💡 Intelligent problem-solving\n• 🎓 Personalized learning assistance\n\nI learn from our conversations and provide context-aware responses!`;
     }
 
-    if (msg.includes("what can you do") || msg.includes("your capabilities") || msg.includes("help me")) {
-      return "**My Capabilities**:\n• 💻 Programming help (JavaScript, Python, C++, Java, etc.)\n• 🧮 Math & calculations\n• 🔬 Science explanations\n• 🌐 Web development guidance\n• 🤖 AI/ML concepts\n• 📊 Data analysis\n• 💡 Problem solving\n• 🎓 Learning assistance\n\nCreated by **DEMON ALEX** to be your intelligent companion!";
-    }
-
-    // ============ ADVANCED REASONING ============
-    if (msg.includes("why") || msg.includes("because") || msg.includes("reason")) {
-      return "Great question! Understanding causality is key to learning. The 'why' helps us grasp underlying principles. Can you provide more context about what you'd like to understand? I'm here to explain! 🤔";
-    }
-
-    if (msg.includes("how") || msg.includes("explain")) {
-      return "I'd be happy to explain! To give you the best answer, could you be more specific? For example:\n• How does [technology] work?\n• How to solve [problem]?\n• How to implement [feature]?\n\nThe more details you provide, the better I can help! 💡";
-    }
-
-    // ============ PROBLEM SOLVING ============
-    if (msg.includes("error") || msg.includes("bug") || msg.includes("not working") || msg.includes("broken")) {
-      return "**Debugging Mode Activated** 🔧\n\n1. Check console for error messages\n2. Verify syntax and logic\n3. Test with simple inputs first\n4. Use console.log() to trace execution\n5. Check variable types and values\n\nShare the error message or code snippet, and I'll help you fix it!";
-    }
-
-    if (msg.includes("best practice") || msg.includes("optimize") || msg.includes("improve")) {
-      return "**Optimization Tips**:\n• Write clean, readable code\n• Use meaningful variable names\n• Avoid premature optimization\n• Profile before optimizing\n• Comment complex logic\n• Follow language conventions\n• Test thoroughly\n• Keep it simple (KISS principle)\n\nWhat specific area would you like to optimize?";
-    }
-
-    // ============ LEARNING & EDUCATION ============
-    if (msg.includes("learn") || msg.includes("tutorial") || msg.includes("teach")) {
-      return "**Learning Path** 📚\n\n1. Start with fundamentals\n2. Practice with small projects\n3. Read documentation\n4. Build real applications\n5. Learn from mistakes\n6. Join communities\n7. Keep coding daily\n\nWhat topic would you like to learn? I can guide you through it!";
-    }
-
-    // ============ CODE-RELATED QUERIES ============
-    if (msg.includes("code") || msg.includes("program") || msg.includes("function") || msg.includes("algorithm")) {
-      return "**Coding Assistance** 💻\n\nI can help with:\n• Writing functions and algorithms\n• Code review and optimization\n• Debugging and error fixing\n• Best practices and patterns\n• Language-specific features\n\nShare your code or describe what you're trying to build, and I'll assist you!";
+    if (msg.includes("what can you do") || msg.includes("capabilities") || msg.includes("features")) {
+      return `**CHRONEX AI Enhanced Capabilities** 🚀\n\n✨ **Core Features**:\n• Intent detection & entity extraction\n• Context-aware responses\n• Multi-turn conversation memory\n• Advanced knowledge base\n• Real-time learning\n\n💻 **Technical Skills**:\n• 10+ programming languages\n• Web & mobile development\n• Database optimization\n• API design & implementation\n• DevOps & cloud architecture\n\n🧠 **Intelligence**:\n• Natural language understanding\n• Code generation & review\n• Mathematical problem solving\n• Creative solution design\n\nCreated by **DEMON ALEX** to be your smartest companion!`;
     }
 
     // ============ GREETINGS ============
-    if (msg.includes("hello") || msg.includes("hi ") || msg.includes("hey") || msg.includes("greetings")) {
+    if (analysis.intents.includes('greeting')) {
       const greetings = [
-        "Hello! 👋 I'm CHRONEX AI, created by DEMON ALEX. How can I help you today?",
-        "Hey there! 🌟 Ready to solve some problems together?",
-        "Greetings! 🤖 I'm CHRONEX AI - your intelligent assistant. What's on your mind?",
-        "Hi! 💡 Ask me anything about programming, math, science, or technology!"
+        `Hello! 👋 I'm CHRONEX AI v3.0, created by **DEMON ALEX**. ${this.contextMemory.conversationCount > 1 ? "Welcome back! " : ""}How can I help you today?`,
+        "Hey there! 🌟 Ready to solve complex problems together? I'm smarter than ever!",
+        `Greetings! 🤖 I'm CHRONEX AI (Enhanced) ${this.contextMemory.conversationCount > 1 ? "- good to chat again! " : ""}What's on your mind?`,
+        "Hi! 💡 I'm here with enhanced intelligence to help with coding, math, science, and more!"
       ];
       return greetings[Math.floor(Math.random() * greetings.length)];
     }
 
     // ============ GRATITUDE ============
     if (msg.includes("thank") || msg.includes("thanks") || msg.includes("appreciate")) {
-      return "You're very welcome! 😊 I'm here anytime you need help. Created by DEMON ALEX to assist you! Feel free to ask more questions!";
+      return `You're very welcome! 😊 ${this.contextMemory.conversationCount > 3 ? "I'm enjoying our conversation! " : ""}I'm here anytime you need help. Created by **DEMON ALEX** to assist you! Feel free to ask more questions!`;
     }
 
-    // ============ CONTEXT-AWARE FALLBACK ============
+    // ============ SMART FALLBACK ============
     if (this.conversationHistory.length > 2) {
-      return "I'm listening and learning from our conversation! 🧠 To unlock my **full potential** with advanced neural processing, make sure `CHRONEX-AI.py` is running. Currently in Enhanced Local Mode.\n\nCreated by **DEMON ALEX** - CREATOR OF CHRONEX AI\n\nCan you provide more details about what you need help with?";
+      const recentTopics = analysis.entities.languages.concat(analysis.entities.topics);
+      const topicHint = recentTopics.length > 0 ? `I notice you mentioned: ${recentTopics.join(', ')}. ` : '';
+
+      return `🧠 **Intelligent Analysis Mode**\n\n${topicHint}I'm processing your message with enhanced AI. For even more powerful responses with deep neural processing, make sure \`CHRONEX-AI.py\` is running!\n\n**Current Mode**: Enhanced JavaScript (Smart Fallback)\n**Creator**: DEMON ALEX\n**Conversation**: ${this.contextMemory.conversationCount} messages\n\nCould you provide more specific details about what you need? I'm ready to help!`;
     }
 
     // ============ DEFAULT INTELLIGENT RESPONSE ============
-    return "**CHRONEX AI v2.0** - Created by **DEMON ALEX** 🚀\n\nI'm here to help! I can assist with:\n• Programming & Development\n• Mathematics & Calculations\n• Science & Technology\n• Problem Solving\n• Learning & Education\n\n💡 **Pro Tip**: For even smarter responses with advanced neural processing, run `CHRONEX-AI.py` in your terminal!\n\nWhat would you like to know?";
+    return `**CHRONEX AI v3.0 Enhanced** - Created by **DEMON ALEX** 🚀\n\nI'm your intelligent assistant with:\n• 🧠 Intent detection & analysis\n• 💡 Context-aware responses\n• 📊 Multi-domain knowledge\n• 🔄 Conversation memory\n• ✨ Continuous learning\n\n**I can help with**:\n• Programming & Development\n• Mathematics & Calculations  \n• Science & Technology\n• Problem Solving & Debugging\n• Learning & Education\n• And much more!\n\n💡 **Pro Tip**: Run \`CHRONEX-AI.py\` for even smarter AI-powered responses with my Python neural network backend!\n\nWhat would you like to know?`;
   }
 
   // Python backend (ML/advanced processing)

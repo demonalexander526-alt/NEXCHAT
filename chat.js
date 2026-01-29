@@ -2974,6 +2974,9 @@ function startCall(isVideo = false) {
 }
 
 function showCallUI(isVideo = false) {
+  // Get active chat avatar
+  const avatarSrc = document.getElementById('activeChatAvatar')?.src || '';
+
   // Create call overlay
   const callOverlay = document.createElement('div');
   callOverlay.id = 'call-overlay';
@@ -2983,17 +2986,18 @@ function showCallUI(isVideo = false) {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.9);
+    background: rgba(0, 0, 0, 0.95);
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     z-index: 999;
     padding: 20px;
+    backdrop-filter: blur(10px);
     `;
 
   callOverlay.innerHTML = `
-      < div style = "text-align: center; color: #fff;" >
+      <div style="text-align: center; color: #fff; display: flex; flex-direction: column; align-items: center; width: 100%;">
         ${isVideo ? `
         <div id="video-container" style="
           width: 100%;
@@ -3006,26 +3010,59 @@ function showCallUI(isVideo = false) {
           display: flex;
           align-items: center;
           justify-content: center;
+          overflow: hidden;
+          position: relative;
         ">
-          <span style="color: #00ff66; font-size: 14px;">📹 Video stream active</span>
+          <!-- Show profile pic as placeholder/background for video -->
+          <img src="${avatarSrc}" style="width: 100%; height: 100%; object-fit: cover; opacity: 0.5; position: absolute;">
+          <span style="color: #00ff66; font-size: 14px; position: relative; z-index: 2; text-shadow: 0 0 4px #000;">📹 Video stream active</span>
         </div>
-      ` : ''
-    }
-      <h2 style="margin: 0 0 10px 0; color: #00ff66;">📞 ${isVideo ? 'Video' : 'Voice'} Call Active</h2>
-      <p id="call-duration" style="margin: 0 0 20px 0; font-size: 32px; color: #00ff66; font-weight: 700;">0:00</p>
-      <p style="margin: 0 0 20px 0; color: #aaa;">with ${currentChatUser}</p>
+      ` : `
+        <!-- Audio Call Profile Pic -->
+        <div style="
+          width: 120px; 
+          height: 120px; 
+          border-radius: 50%; 
+          border: 3px solid #00ff66; 
+          padding: 3px;
+          margin-bottom: 30px;
+          box-shadow: 0 0 30px rgba(0,255,102,0.3);
+          animation: pulse-ring 2s infinite;
+        ">
+          <img src="${avatarSrc}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
+        </div>
+      `}
+      
+      <h2 style="margin: 0 0 10px 0; color: #00ff66; font-size: 24px;">${isVideo ? 'Video' : 'Voice'} Call Active</h2>
+      <p id="call-duration" style="margin: 0 0 10px 0; font-size: 42px; color: #fff; font-weight: 300; font-family: monospace;">0:00</p>
+      <p style="margin: 0 0 30px 0; color: #888; font-size: 16px;">with <span style="color: #00ff66; font-weight: bold;">${currentChatUser}</span></p>
+      
       <button id="end-call-btn" style="
-        padding: 12px 30px;
+        padding: 15px 40px;
         background: #ff4444;
         color: #fff;
         border: none;
-        border-radius: 8px;
-        font-size: 16px;
+        border-radius: 50px;
+        font-size: 18px;
         font-weight: 700;
         cursor: pointer;
         transition: all 0.2s;
-      ">🔴 End Call</button>
-    </div >
+        box-shadow: 0 4px 15px rgba(255, 68, 68, 0.4);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      ">
+        <span style="font-size: 24px;">📞</span> End Call
+      </button>
+      
+      <style>
+        @keyframes pulse-ring {
+          0% { box-shadow: 0 0 0 0 rgba(0, 255, 102, 0.4); }
+          70% { box-shadow: 0 0 0 20px rgba(0, 255, 102, 0); }
+          100% { box-shadow: 0 0 0 0 rgba(0, 255, 102, 0); }
+        }
+      </style>
+    </div>
       `;
 
   document.body.appendChild(callOverlay);
@@ -3046,6 +3083,26 @@ function showCallUI(isVideo = false) {
   };
   document.addEventListener('keydown', handleEscape);
 }
+
+// Add listener for instant audio sending
+document.addEventListener('audioMessageReady', (e) => {
+  if (e.detail && e.detail.file) {
+    console.log("🎤 Audio message ready received in chat.js");
+    // Set the selected file
+    selectedFile = e.detail.file;
+
+    // Trigger submit on the form
+    const form = document.getElementById('message-form');
+    if (form) {
+      // Create and dispatch event
+      const submitEvent = new Event('submit', {
+        'bubbles': true,
+        'cancelable': true
+      });
+      form.dispatchEvent(submitEvent);
+    }
+  }
+});
 
 function endCall() {
   if (callTimer) clearInterval(callTimer);
@@ -3382,12 +3439,33 @@ async function uploadFileToStorage(file, chatId, isGroup = false) {
 
 
 async function transferTokens() {
+  console.log("🚀 Transfer Tokens button clicked!");
+  console.log("📌 Current myUID:", myUID);
+
   const recipientUID = document.getElementById("recipientUID")?.value.trim();
   const amount = parseInt(document.getElementById("transferAmount")?.value || 0);
   const resultEl = document.getElementById("transferResult");
   const transferBtn = document.getElementById("transferTokensBtn");
 
-  if (!resultEl) return;
+  console.log("📝 Recipient UID input:", recipientUID);
+  console.log("💰 Amount input:", amount);
+  console.log("🎯 Result element:", resultEl);
+  console.log("🔘 Transfer button:", transferBtn);
+
+  // Check if user is authenticated
+  if (!myUID) {
+    if (resultEl) {
+      resultEl.innerHTML = `<span style="color: #ff6b6b;">❌ Please log in first. If you are logged in, try refreshing the page.</span>`;
+    }
+    showNotif("❌ Authentication required", "error");
+    console.error("❌ myUID is null - user not authenticated");
+    return;
+  }
+
+  if (!resultEl) {
+    console.error("❌ Transfer result element not found!");
+    return;
+  }
 
   // Validation
   if (!recipientUID) {
@@ -4472,7 +4550,14 @@ async function setupInitialization() {
     }
   }, false);
 
-  document.getElementById("transferTokensBtn")?.addEventListener("click", transferTokens, false);
+  const transferTokensBtnEl = document.getElementById("transferTokensBtn");
+  if (transferTokensBtnEl) {
+    transferTokensBtnEl.addEventListener("click", transferTokens, false);
+    console.log("✅ Transfer Tokens button listener attached successfully");
+  } else {
+    console.error("❌ Transfer Tokens button not found in DOM!");
+  }
+
 
   document.getElementById("adminPanelBtn")?.addEventListener("click", () => {
     window.location.href = "../NEXCHAT-ADMIN DASH BOARD/admin-dashboard.html";

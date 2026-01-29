@@ -227,10 +227,10 @@ document.addEventListener("DOMContentLoaded", () => {
   loadGames();
   setupEventListeners();
   setupMainNavigation();
-  
+
   // Initialize Firebase connection management
   initializeFirebaseConnection();
-  
+
   console.log("🎮 Gaming Hub fully initialized!");
 });
 
@@ -286,7 +286,7 @@ function setupEventListeners() {
 function initializeDarkMode() {
   const savedDarkMode = localStorage.getItem("darkMode");
   darkMode = savedDarkMode !== "false";
-  
+
   if (!darkMode) {
     document.body.classList.add("light-mode");
   } else {
@@ -297,7 +297,7 @@ function initializeDarkMode() {
 // Load and display games
 function loadGames() {
   displayLoadingState(true);
-  
+
   // Simulate loading delay
   setTimeout(() => {
     displayLoadingState(false);
@@ -357,8 +357,8 @@ function displayGames(games) {
         </div>
         <div class="game-card-rating">
           ${Array(Math.round(game.rating))
-            .fill("⭐")
-            .join("")}
+          .fill("⭐")
+          .join("")}
         </div>
       </div>
     </div>
@@ -375,7 +375,7 @@ function viewGameDetail(gameId) {
   const modal = document.getElementById("game-detail-modal");
   document.getElementById("game-detail-image").innerHTML = selectedGame.emoji;
   document.getElementById("game-detail-name").textContent = selectedGame.name;
-  document.getElementById("game-detail-category").textContent = 
+  document.getElementById("game-detail-category").textContent =
     selectedGame.category.charAt(0).toUpperCase() + selectedGame.category.slice(1);
   document.getElementById("game-detail-players").textContent = formatNumber(selectedGame.playersNow);
   document.getElementById("game-detail-rating").textContent = `${selectedGame.rating} ⭐`;
@@ -402,12 +402,12 @@ function playGame(game) {
     showNotification(`Game ${game.name} not yet available`, "error");
     return;
   }
-  
+
   showNotification(`🎮 Launching ${game.name}...`, "success");
-  
+
   // Log game play event
   console.log(`▶️ Playing online game: ${game.name} | URL: ${game.gameUrl}`);
-  
+
   // Open game in new tab after a short delay
   setTimeout(() => {
     window.open(game.gameUrl, "_blank");
@@ -419,7 +419,7 @@ function playGame(game) {
 // Share game
 function shareGame(game) {
   const shareText = `🎮 Check out ${game.name}! ${game.emoji}\n\n${game.description}\n\nRate: ${game.rating}⭐`;
-  
+
   if (navigator.share) {
     navigator.share({
       title: game.name,
@@ -474,7 +474,7 @@ function showNotification(message, type = "info", duration = 2000) {
     box-shadow: 0 4px 16px ${type === "success" ? "rgba(0, 255, 102, 0.3)" : "rgba(0, 204, 255, 0.3)"};
     max-width: 320px;
   `;
-  
+
   notification.textContent = message;
   document.body.appendChild(notification);
 
@@ -714,39 +714,74 @@ const SESSIONS_DATABASE = [
 // Setup main navigation tabs
 function setupMainNavigation() {
   const navTabs = document.querySelectorAll(".nav-tab");
-  
+
   navTabs.forEach(tab => {
     tab.addEventListener("click", () => {
       const section = tab.dataset.section;
-      
+
       // Update active tab
       document.querySelectorAll(".nav-tab").forEach(t => t.classList.remove("active"));
       tab.classList.add("active");
-      
+
       // Hide all sections
       const gamesSection = document.getElementById("gamesSection");
       const gamersSection = document.getElementById("gamersSection");
       const squadsSection = document.getElementById("squadsSection");
       const sessionsSection = document.getElementById("sessionsSection");
-      
-      if (gamesSection) {
-        gamesSection.style.display = section === "games" ? "block" : "none";
+
+      // Headers to toggle
+      const gameSearchArea = document.querySelector(".gaming-search-area");
+      const categoryTabs = document.querySelector(".category-tabs");
+      const gamingTitle = document.querySelector(".gaming-title");
+
+      // Handle visibility based on section
+      // DEFAULT: Hide everything first
+      if (gamesSection) gamesSection.style.display = "none";
+      if (gamersSection) gamersSection.style.display = "none";
+      if (squadsSection) squadsSection.style.display = "none";
+      if (sessionsSection) sessionsSection.style.display = "none";
+
+      if (section === "games") {
+        if (gamesSection) gamesSection.style.display = "block";
+
+        // Show games specific header items
+        if (gameSearchArea) gameSearchArea.style.display = "block";
+        if (categoryTabs) categoryTabs.style.display = "flex";
+        if (gamingTitle) gamingTitle.textContent = "🎮 Gaming Hub";
       }
-      if (gamersSection) {
-        gamersSection.style.display = section === "gamers" ? "block" : "none";
-        if (section === "gamers") loadGamers();
+      else if (section === "gamers") {
+        if (gamersSection) gamersSection.style.display = "block";
+
+        // Hide games specific header items
+        if (gameSearchArea) gameSearchArea.style.display = "none";
+        if (categoryTabs) categoryTabs.style.display = "none";
+        if (gamingTitle) gamingTitle.textContent = "👾 Gamers";
+
+        loadGamers();
       }
-      if (squadsSection) {
-        squadsSection.style.display = section === "squads" ? "block" : "none";
-        if (section === "squads") loadSquads();
+      else if (section === "squads") {
+        if (squadsSection) squadsSection.style.display = "block";
+
+        // Hide games specific header items
+        if (gameSearchArea) gameSearchArea.style.display = "none";
+        if (categoryTabs) categoryTabs.style.display = "none";
+        if (gamingTitle) gamingTitle.textContent = "🎖️ Squads";
+
+        loadSquads();
       }
-      if (sessionsSection) {
-        sessionsSection.style.display = section === "sessions" ? "block" : "none";
-        if (section === "sessions") loadSessions();
+      else if (section === "sessions") {
+        if (sessionsSection) sessionsSection.style.display = "block";
+
+        // Hide games specific header items
+        if (gameSearchArea) gameSearchArea.style.display = "none";
+        if (categoryTabs) categoryTabs.style.display = "none";
+        if (gamingTitle) gamingTitle.textContent = "🎮 Sessions";
+
+        loadSessions();
       }
     });
   });
-  
+
   // Ensure games section is visible on load
   const gamesSection = document.getElementById("gamesSection");
   if (gamesSection) {
@@ -757,41 +792,41 @@ function setupMainNavigation() {
 // Load and display gamers
 function loadGamers() {
   const gamersList = document.getElementById("gamersList");
-  
+
   // Setup dropdown filters
   const usernameFilter = document.getElementById("usernameFilter");
   const gameFilter = document.getElementById("gameFilter");
   const skillFilter = document.getElementById("skillFilter");
   const statusFilter = document.getElementById("statusFilter");
-  
+
   const filterGamers = () => {
     let filtered = GAMERS_DATABASE;
-    
+
     if (usernameFilter && usernameFilter.value) {
       filtered = filtered.filter(g => g.username.toLowerCase().includes(usernameFilter.value.toLowerCase()));
     }
-    
+
     if (gameFilter && gameFilter.value) {
       filtered = filtered.filter(g => g.games.includes(gameFilter.value));
     }
-    
+
     if (skillFilter && skillFilter.value) {
       filtered = filtered.filter(g => g.skill === skillFilter.value);
     }
-    
+
     if (statusFilter && statusFilter.value) {
       filtered = filtered.filter(g => g.status === statusFilter.value);
     }
-    
+
     displayGamers(filtered);
   };
-  
+
   // Add event listeners to dropdowns
   if (usernameFilter) usernameFilter.addEventListener("change", filterGamers);
   if (gameFilter) gameFilter.addEventListener("change", filterGamers);
   if (skillFilter) skillFilter.addEventListener("change", filterGamers);
   if (statusFilter) statusFilter.addEventListener("change", filterGamers);
-  
+
   // Initial display
   filterGamers();
 }
@@ -821,7 +856,7 @@ function displayGamers(gamers) {
 function viewGamerProfile(gamerId) {
   const gamer = GAMERS_DATABASE.find(g => g.id === gamerId);
   if (!gamer) return;
-  
+
   const profileHTML = `
     <div class="gamer-profile-modal">
       <button class="close-modal" onclick="closeGamerProfile()">✕</button>
@@ -872,7 +907,7 @@ function viewGamerProfile(gamerId) {
       </div>
     </div>
   `;
-  
+
   // Create modal overlay
   const overlay = document.createElement("div");
   overlay.className = "modal-overlay";
@@ -880,7 +915,7 @@ function viewGamerProfile(gamerId) {
   overlay.onclick = (e) => {
     if (e.target === overlay) closeGamerProfile();
   };
-  
+
   document.body.appendChild(overlay);
   setTimeout(() => overlay.classList.add("active"), 10);
 }
@@ -980,10 +1015,10 @@ function initializeFirebaseConnection() {
   try {
     // Heartbeat - check connection every 30 seconds
     connectionCheckInterval = setInterval(checkFirebaseConnection, 30000);
-    
+
     // Immediate check
     checkFirebaseConnection();
-    
+
     console.log("✅ Firebase connection monitor started");
   } catch (error) {
     console.warn("⚠️ Firebase initialization warning:", error.message);
@@ -995,7 +1030,7 @@ function checkFirebaseConnection() {
     if (typeof db !== 'undefined' || typeof auth !== 'undefined') {
       console.log("✅ Firebase connection is active");
       isFirebaseConnected = true;
-      
+
       // Clear any existing timeout
       if (firebaseConnectionTimeout) {
         clearTimeout(firebaseConnectionTimeout);
@@ -1047,5 +1082,146 @@ console.log("🎮 Gaming Hub Firebase connection management loaded!");
 // Initialize expanded features on DOM ready
 document.addEventListener("DOMContentLoaded", () => {
   setupMainNavigation();
+
+  // Create Squad Button Listener
+  document.getElementById("createSquadBtn")?.addEventListener("click", () => {
+    showCreateSquadModal();
+  });
 });
+
+// Show Create Squad Modal
+function showCreateSquadModal() {
+  const modalHTML = `
+    <div class="squad-modal-overlay">
+      <div class="squad-modal">
+        <div class="squad-modal-header">
+          <h2>🛡️ Register New Clan</h2>
+          <button class="close-modal-btn" onclick="closeSquadModal()">✕</button>
+        </div>
+        <form id="createSquadForm" onsubmit="handleSquadCreation(event)">
+          <div class="form-group">
+            <label>Clan Name</label>
+            <input type="text" id="clanName" placeholder="Enter clan name..." required>
+          </div>
+          <div class="form-group">
+            <label>Clan Tag (e.g. [FAZE])</label>
+            <input type="text" id="clanTag" placeholder="[TAG]" maxlength="6" required>
+          </div>
+          <div class="form-group">
+            <label>Main Game</label>
+            <select id="clanGame" required>
+              <option value="PUBG Mobile">PUBG Mobile</option>
+              <option value="Call of Duty Mobile">CODM</option>
+              <option value="Free Fire">Free Fire</option>
+              <option value="Valorant">Valorant</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Description</label>
+            <textarea id="clanDescription" placeholder="Describe your clan..." rows="3"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Clan Logo (Emoji)</label>
+            <input type="text" id="clanLogo" placeholder="🦁" maxlength="2" value="🛡️">
+          </div>
+          <button type="submit" class="create-btn">🚀 Register Clan</button>
+        </form>
+      </div>
+    </div>
+  `;
+
+  // Add modal to body
+  const existingModal = document.querySelector('.squad-modal-overlay');
+  if (existingModal) existingModal.remove();
+
+  const modalContainer = document.createElement('div');
+  modalContainer.innerHTML = modalHTML;
+  document.body.appendChild(modalContainer.firstElementChild);
+
+  // Add styles dynamically if not present
+  if (!document.getElementById('squad-modal-styles')) {
+    const style = document.createElement('style');
+    style.id = 'squad-modal-styles';
+    style.textContent = `
+      .squad-modal-overlay {
+        position: fixed;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.8);
+        display: flex; justify-content: center; align-items: center;
+        z-index: 2000;
+        backdrop-filter: blur(5px);
+      }
+      .squad-modal {
+        background: #1a1a1a;
+        width: 90%; max-width: 400px;
+        border-radius: 16px;
+        border: 1px solid #00ff66;
+        padding: 20px;
+        box-shadow: 0 0 20px rgba(0,255,102,0.2);
+      }
+      .squad-modal-header {
+        display: flex; justify-content: space-between; align-items: center;
+        margin-bottom: 20px;
+        border-bottom: 1px solid #333;
+        padding-bottom: 10px;
+      }
+      .squad-modal-header h2 { color: #00ff66; margin: 0; }
+      .form-group { margin-bottom: 15px; }
+      .form-group label { display: block; color: #888; margin-bottom: 5px; font-size: 12px; }
+      .form-group input, .form-group select, .form-group textarea {
+        width: 100%; padding: 10px;
+        background: #0a0a0a; border: 1px solid #333;
+        border-radius: 8px; color: #fff;
+        outline: none;
+      }
+      .form-group input:focus { border-color: #00ff66; }
+      .create-btn {
+        width: 100%; padding: 12px;
+        background: #00ff66; color: #000;
+        border: none; border-radius: 8px;
+        font-weight: bold; font-size: 16px;
+        margin-top: 10px;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+}
+
+// Close Squad Modal
+window.closeSquadModal = function () {
+  const modal = document.querySelector('.squad-modal-overlay');
+  if (modal) modal.remove();
+};
+
+// Handle Squad Creation
+window.handleSquadCreation = function (e) {
+  e.preventDefault();
+  const name = document.getElementById('clanName').value;
+  const tag = document.getElementById('clanTag').value;
+
+  showNotification(`✅ Clan "${name}" [${tag}] Registered Successfully!`, "success");
+  closeSquadModal();
+
+  // Optimistically add to list
+  const squadsList = document.getElementById("mySquadsList");
+  if (squadsList) {
+    const emptyText = squadsList.querySelector('.empty-text');
+    if (emptyText) emptyText.remove();
+
+    squadsList.innerHTML += `
+      <div class="squad-card" style="border-left: 4px solid #00ff66;">
+        <div class="squad-header">
+          <span class="squad-emoji">${document.getElementById('clanLogo').value}</span>
+          <span class="squad-skill-badge">LEADER</span>
+        </div>
+        <h3>${name} <span style="color:#888;font-size:12px;">${tag}</span></h3>
+        <p class="squad-game">🎮 ${document.getElementById('clanGame').value}</p>
+        <div class="squad-stats">
+          <span>👥 1/20</span>
+          <span>🏆 0 wins</span>
+        </div>
+      </div>
+    `;
+  }
+};
 

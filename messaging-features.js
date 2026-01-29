@@ -143,7 +143,7 @@ async function handleSwipeReply(messageElement) {
 
     // Extract message data from the element
     const messageText = messageElement.querySelector("p")?.textContent || "Message";
-    
+
     // Get sender info from wrapper
     const wrapper = messageElement.closest(".message-wrapper");
     const isOwn = wrapper?.classList.contains("sent");
@@ -162,7 +162,7 @@ async function handleSwipeReply(messageElement) {
 
     // Show reply preview
     showReplyPreview(replyingToMessage);
-    
+
     // Focus on input
     const input = document.getElementById("message-input");
     if (input) {
@@ -256,8 +256,8 @@ async function startAudioRecording() {
     audioChunks = [];
 
     // Create MediaRecorder with appropriate mime type
-    const mimeType = MediaRecorder.isTypeSupported(AUDIO_CONFIG.mimeType) 
-      ? AUDIO_CONFIG.mimeType 
+    const mimeType = MediaRecorder.isTypeSupported(AUDIO_CONFIG.mimeType)
+      ? AUDIO_CONFIG.mimeType
       : 'audio/mp4';
 
     mediaRecorder = new MediaRecorder(stream, {
@@ -308,7 +308,7 @@ async function stopAudioRecording() {
         try {
           // Create blob from chunks
           const audioBlob = new Blob(audioChunks, { type: mediaRecorder.mimeType });
-          
+
           // Stop all tracks
           mediaRecorder.stream.getTracks().forEach(track => track.stop());
 
@@ -372,7 +372,7 @@ async function cancelAudioRecording() {
 function showAudioRecordingUI() {
   const recordingUI = document.getElementById("audioRecordingUI");
   const messageForm = document.getElementById("message-form");
-  
+
   if (recordingUI) {
     recordingUI.style.display = "flex";
   }
@@ -387,7 +387,7 @@ function showAudioRecordingUI() {
 function hideAudioRecordingUI() {
   const recordingUI = document.getElementById("audioRecordingUI");
   const messageForm = document.getElementById("message-form");
-  
+
   if (recordingUI) {
     recordingUI.style.display = "none";
   }
@@ -457,7 +457,7 @@ function createAudioPlayerElement(audioUrl, duration = 0) {
 
   playBtn.addEventListener("click", (e) => {
     e.stopPropagation();
-    
+
     if (audio.paused) {
       audio.play();
       playBtn.textContent = "⏸️";
@@ -491,7 +491,7 @@ function createAudioPlayerElement(audioUrl, duration = 0) {
  */
 function formatAudioDuration(seconds) {
   if (!seconds || isNaN(seconds)) return "0:00";
-  
+
   const mins = Math.floor(seconds / 60);
   const secs = Math.floor(seconds % 60);
   return `${mins}:${secs.toString().padStart(2, '0')}`;
@@ -507,14 +507,14 @@ document.addEventListener("DOMContentLoaded", () => {
   if (audioRecordBtn) {
     audioRecordBtn.addEventListener("click", async (e) => {
       e.preventDefault();
-      
+
       if (mediaRecorder && mediaRecorder.state !== "inactive") {
         // Stop recording
         const audioFile = await stopAudioRecording();
         if (audioFile) {
           // Store audio file temporarily for sending
           selectedFile = audioFile;
-          try { document.dispatchEvent(new CustomEvent('selectedFileChanged')); } catch(e){}
+          try { document.dispatchEvent(new CustomEvent('selectedFileChanged')); } catch (e) { }
           document.getElementById("attachment-preview").style.display = "flex";
           document.getElementById("attachment-name").textContent = `🎤 ${audioFile.name}`;
         }
@@ -533,7 +533,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const audioFile = await stopAudioRecording();
       if (audioFile) {
         selectedFile = audioFile;
-        try { document.dispatchEvent(new CustomEvent('selectedFileChanged')); } catch(e){}
+        try { document.dispatchEvent(new CustomEvent('selectedFileChanged')); } catch (e) { }
         document.getElementById("attachment-preview").style.display = "flex";
         document.getElementById("attachment-name").textContent = `🎤 ${audioFile.name}`;
         showNotif("🎤 Audio ready to send", "success", 2000);
@@ -547,6 +547,23 @@ document.addEventListener("DOMContentLoaded", () => {
     audioCancelBtn.addEventListener("click", async (e) => {
       e.preventDefault();
       await cancelAudioRecording();
+    });
+  }
+
+  // Audio Send Now Button
+  const audioSendNowBtn = document.getElementById("audioSendNowBtn");
+  if (audioSendNowBtn) {
+    audioSendNowBtn.addEventListener("click", async (e) => {
+      e.preventDefault();
+      const audioFile = await stopAudioRecording();
+      if (audioFile) {
+        // We need to pass this file to the chat.js logic
+        // Dispatch event with the file
+        const event = new CustomEvent('audioMessageReady', { detail: { file: audioFile } });
+        document.dispatchEvent(event);
+
+        showNotif("🚀 Sending audio...", "success", 1000);
+      }
     });
   }
 

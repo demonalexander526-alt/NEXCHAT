@@ -231,10 +231,13 @@
             <input type="file" id="file-input" style="display: none;" accept="image/*,video/*,.pdf,.doc,.docx" />
             <input type="text" id="message-input" class="message-input" placeholder="Say something..."
               autocomplete="off" maxlength="1000" />
-            <button type="button" id="emoji-btn" class="input-btn">😊</button>
+            <!-- <button type="button" id="emoji-btn" class="input-btn">😊</button> -->
             <button type="button" id="poll-btn" class="input-btn" title="Create Poll" style="display: none;">📊</button>
             <button type="button" id="audio-record-btn" class="input-btn" title="Record audio">🎤</button>
-            <button type="button" id="sticker-btn" class="sticker-btn" title="Post Status">✨</button>
+            <!-- <button type="button" id="sticker-btn" class="sticker-btn" title="Post Status">✨</button> -->
+            <button type="button" id="vision-tester-btn" class="input-btn" title="Image Vision Tester"
+              onclick="window.location.href='image-vision-tester.html'"
+              style="background: linear-gradient(135deg, #00ff66, #00d4ff); color: #000; font-weight: 700;">🖼️</button>
             <button type="button" id="audio-send-btn" class="audio-send-btn" title="Send audio">›</button>
             <button type="submit" class="send-btn">✓</button>
           </form>
@@ -247,6 +250,8 @@
               <div class="audio-timer">
                 <span id="audioTimer">0:00</span>
               </div>
+              <button type="button" id="audioSendNowBtn" class="audio-control-btn send-btn" title="Send now"
+                style="background: #00ff66; color: #000; margin-left: 5px;">➤ Send</button>
               <button type="button" id="audioCancelBtn" class="audio-control-btn cancel-btn" title="Cancel">❌
                 Cancel</button>
             </div>
@@ -728,6 +733,7 @@
   <script src="pwa-install.js"></script>
   <script src="app-prompt.js"></script>
   <script src="messaging-features.js"></script>
+  <script src="chat-navigation.js"></script>
   <script type="module" src="chat.js"></script>
   <script src="button-setup.js"></script>
   <style>
