@@ -422,14 +422,17 @@
 
         // Generate 100 Avatars (25 per category) - FULL CAPACITY
         function init() {
+            // Enhanced randomness for seeds to ensure visual variety
+            const baseSeed = Math.floor(Math.random() * 99999);
+
             // Humans (25)
-            for (let i = 0; i < 25; i++) avatars.push({ type: 'human', name: `Subject ${(Math.random() * 9000 + 1000) | 0}`, seed: i });
+            for (let i = 0; i < 25; i++) avatars.push({ type: 'human', name: `Subject ${1000 + i}`, seed: baseSeed + i });
             // Skulls (25) 
-            for (let i = 0; i < 25; i++) avatars.push({ type: 'skull', name: `Reaper ${(Math.random() * 900 + 100) | 0}`, seed: i + 100 });
+            for (let i = 0; i < 25; i++) avatars.push({ type: 'skull', name: `Reaper ${100 + i}`, seed: baseSeed + i + 100 });
             // Hackers (25)
-            for (let i = 0; i < 25; i++) avatars.push({ type: 'hacker', name: `Ghost ${(Math.random() * 9000 + 1000) | 0}`, seed: i + 200 });
+            for (let i = 0; i < 25; i++) avatars.push({ type: 'hacker', name: `Ghost ${2000 + i}`, seed: baseSeed + i + 200 });
             // Mechs (25)
-            for (let i = 0; i < 25; i++) avatars.push({ type: 'mech', name: `Unit X-${(Math.random() * 90 + 10) | 0}`, seed: i + 300 });
+            for (let i = 0; i < 25; i++) avatars.push({ type: 'mech', name: `Unit X-${50 + i}`, seed: baseSeed + i + 300 });
 
             render();
         }

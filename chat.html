@@ -32,7 +32,7 @@
         </div>
         <!-- Active chat contact info (shows when in chat) -->
         <div id="activeChatHeader" class="active-chat-header" style="display: none;">
-          <img id="activeChatAvatar" src="" alt="Contact" class="active-chat-avatar">
+          <img id="activeChatAvatar" src="" alt="Contact" class="active-chat-avatar" style="cursor: pointer;">
           <div class="active-chat-info">
             <div id="activeChatName" class="active-chat-name">Contact Name</div>
             <div id="activeChatStatus" class="active-chat-status">Online</div>
@@ -47,8 +47,7 @@
       </div>
       <div class="header-right-scroll">
         <div class="header-right">
-          <button id="profile-sticker" class="header-icon-btn profile-sticker" title="Profile"
-            onclick="window.location.href='profile-upload.html'">👤</button>
+          <button id="profile-sticker" class="header-icon-btn profile-sticker" title="Profile">👤</button>
 
           <!-- Dark Mode Sliding Toggle Switch -->
           <div class="toggle-switch-container" title="Dark/Light Mode">
@@ -243,11 +242,13 @@
           <!-- Audio Recording UI -->
           <div id="audioRecordingUI" class="audio-recording-ui" style="display: none;">
             <div class="audio-record-controls">
-              <button type="button" id="audioStopBtn" class="audio-control-btn stop-btn" title="Stop recording">⏹️ Stop</button>
+              <button type="button" id="audioStopBtn" class="audio-control-btn stop-btn" title="Stop recording">⏹️
+                Stop</button>
               <div class="audio-timer">
                 <span id="audioTimer">0:00</span>
               </div>
-              <button type="button" id="audioCancelBtn" class="audio-control-btn cancel-btn" title="Cancel">❌ Cancel</button>
+              <button type="button" id="audioCancelBtn" class="audio-control-btn cancel-btn" title="Cancel">❌
+                Cancel</button>
             </div>
           </div>
 
@@ -408,7 +409,7 @@
         </div>
       </div>
 
-      <!-- STATUS VIEWER MODAL -->
+      <!-- STATUS VIEWER MODAL (Used for Profile Pics too) -->
       <div id="statusViewerModal" class="modal" style="display: none;">
         <div class="status-viewer-content">
           <button id="closeStatusViewerBtn" class="close-btn"
@@ -426,6 +427,23 @@
             </div>
             <p id="statusViewerCaption" class="status-viewer-caption">Caption text goes here</p>
           </div>
+        </div>
+      </div>
+
+      <!-- NEW PROFILE PIC MODAL -->
+      <div id="profilePicModal" class="modal"
+        style="display: none; align-items: center; justify-content: center; background: rgba(0,0,0,0.95);">
+        <div style="position: relative; max-width: 90%; max-height: 90%;">
+          <button id="closeProfileModal"
+            style="position: absolute; top: -40px; right: 0; background: none; border: none; color: white; font-size: 30px; cursor: pointer;">✕</button>
+          <img id="profileModalImg" src=""
+            style="max-width: 100%; max-height: 80vh; border: 2px solid #00ff66; box-shadow: 0 0 50px rgba(0, 255, 102, 0.2); border-radius: 8px;">
+          <h3 id="profileModalName"
+            style="color:white; text-align:center; margin-top: 15px; font-family: 'Rajdhani', sans-serif; letter-spacing: 2px;">
+            USER</h3>
+          <button id="editProfileBtnModal"
+            style="display:none; margin: 10px auto; display: block; background: #00ff66; color: #000; padding: 10px 20px; border: none; font-weight: bold; cursor: pointer; border-radius: 5px;">EDIT
+            AVATAR</button>
         </div>
       </div>
 
@@ -534,7 +552,8 @@
               <h3>✏️ Text Element Adjustment</h3>
               <div class="setting-item">
                 <label for="fontFamilySelect"><strong>Font Family</strong></label>
-                <select id="fontFamilySelect" style="width: 100%; padding: 8px; background: #2a2a2a; border: 1px solid #00ff66; border-radius: 6px; color: #00ff66; margin-top: 6px;">
+                <select id="fontFamilySelect"
+                  style="width: 100%; padding: 8px; background: #2a2a2a; border: 1px solid #00ff66; border-radius: 6px; color: #00ff66; margin-top: 6px;">
                   <option value="Arial, sans-serif">Arial</option>
                   <option value="'Segoe UI', Tahoma, Geneva, Verdana, sans-serif">Segoe UI</option>
                   <option value="'Courier New', monospace">Courier New</option>
@@ -543,19 +562,25 @@
                 </select>
               </div>
               <div class="setting-item">
-                <label for="letterSpacingRange"><strong>Letter Spacing: <span id="letterSpacingValue">0</span>px</strong></label>
-                <input type="range" id="letterSpacingRange" min="-2" max="5" value="0" step="0.5" style="width: 100%; margin-top: 6px;">
+                <label for="letterSpacingRange"><strong>Letter Spacing: <span
+                      id="letterSpacingValue">0</span>px</strong></label>
+                <input type="range" id="letterSpacingRange" min="-2" max="5" value="0" step="0.5"
+                  style="width: 100%; margin-top: 6px;">
               </div>
               <div class="setting-item">
                 <label for="lineHeightRange"><strong>Line Height: <span id="lineHeightValue">1.5</span></strong></label>
-                <input type="range" id="lineHeightRange" min="1" max="2.5" value="1.5" step="0.1" style="width: 100%; margin-top: 6px;">
+                <input type="range" id="lineHeightRange" min="1" max="2.5" value="1.5" step="0.1"
+                  style="width: 100%; margin-top: 6px;">
               </div>
               <div class="setting-item">
                 <label><strong>Text Alignment</strong></label>
                 <div style="display: flex; gap: 8px; margin-top: 8px;">
-                  <button id="alignLeft" class="text-align-btn" style="flex: 1; padding: 8px; background: #00ff66; color: #000; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">Left</button>
-                  <button id="alignCenter" class="text-align-btn" style="flex: 1; padding: 8px; background: #444; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">Center</button>
-                  <button id="alignRight" class="text-align-btn" style="flex: 1; padding: 8px; background: #444; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">Right</button>
+                  <button id="alignLeft" class="text-align-btn"
+                    style="flex: 1; padding: 8px; background: #00ff66; color: #000; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">Left</button>
+                  <button id="alignCenter" class="text-align-btn"
+                    style="flex: 1; padding: 8px; background: #444; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">Center</button>
+                  <button id="alignRight" class="text-align-btn"
+                    style="flex: 1; padding: 8px; background: #444; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">Right</button>
                 </div>
               </div>
             </div>
@@ -589,7 +614,7 @@
             </div>
 
             <div class="settings-section">
-              <h3>�️ Background Image</h3>
+              <h3>️ Background Image</h3>
               <div class="setting-item">
                 <label><strong>Change Chat Background</strong></label>
                 <input type="file" id="backgroundImageInput" accept="image/*"
@@ -615,7 +640,8 @@
               <button id="uploadChatBackgroundBtn" class="settings-action-btn"
                 style="background: #00d4ff; color: #000; width: 100%;">🎨 Set Chat Background</button>
               <button id="removeChatBackgroundBtn" class="settings-action-btn"
-                style="background: #ff9900; color: #000; width: 100%; margin-top: 8px;">🗑️ Remove Chat Background</button>
+                style="background: #ff9900; color: #000; width: 100%; margin-top: 8px;">🗑️ Remove Chat
+                Background</button>
             </div>
 
             <div class="settings-section">
@@ -634,23 +660,29 @@
 
             <div class="settings-section">
               <h3>💳 Transfer Tokens</h3>
-              <div class="setting-item" style="flex-direction: column; align-items: flex-start; border: none; padding: 0;">
-                <div style="width: 100%; background: rgba(0, 255, 102, 0.1); border: 1px solid #00ff66; border-radius: 8px; padding: 12px; margin-bottom: 12px;">
-                  <p style="color: #888; margin: 0 0 4px 0; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Your Balance</p>
+              <div class="setting-item"
+                style="flex-direction: column; align-items: flex-start; border: none; padding: 0;">
+                <div
+                  style="width: 100%; background: rgba(0, 255, 102, 0.1); border: 1px solid #00ff66; border-radius: 8px; padding: 12px; margin-bottom: 12px;">
+                  <p
+                    style="color: #888; margin: 0 0 4px 0; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">
+                    Your Balance</p>
                   <p style="color: #00ff66; margin: 0; font-size: 20px; font-weight: 700;">
                     <span id="currentTokenBalance">0</span>
                     <span style="font-size: 14px; opacity: 0.8;">⭐ Tokens</span>
                   </p>
                 </div>
               </div>
-              <div class="setting-item" style="flex-direction: column; align-items: flex-start; border: none; padding: 0;">
+              <div class="setting-item"
+                style="flex-direction: column; align-items: flex-start; border: none; padding: 0;">
                 <label style="font-size: 13px; margin-bottom: 8px;"><strong>Recipient UID:</strong></label>
                 <input type="text" id="recipientUID" placeholder="Paste recipient's UID here..."
-                  style="width: 100%; padding: 11px 12px; background: #2a2a2a; border: 1px solid #00ff66; border-radius: 8px; color: #00ff66; font-size: 12px; transition: all 0.2s ease;" 
+                  style="width: 100%; padding: 11px 12px; background: #2a2a2a; border: 1px solid #00ff66; border-radius: 8px; color: #00ff66; font-size: 12px; transition: all 0.2s ease;"
                   onfocus="this.style.borderColor='#00ff66'; this.style.boxShadow='0 0 12px rgba(0, 255, 102, 0.3)';"
                   onblur="this.style.boxShadow='none';">
               </div>
-              <div class="setting-item" style="flex-direction: column; align-items: flex-start; border: none; padding: 0; margin-top: 12px;">
+              <div class="setting-item"
+                style="flex-direction: column; align-items: flex-start; border: none; padding: 0; margin-top: 12px;">
                 <label style="font-size: 13px; margin-bottom: 8px;"><strong>Amount:</strong></label>
                 <input type="number" id="transferAmount" placeholder="Enter amount..." min="1" max="99999"
                   style="width: 100%; padding: 11px 12px; background: #2a2a2a; border: 1px solid #00ff66; border-radius: 8px; color: #00ff66; font-size: 12px; transition: all 0.2s ease;"
@@ -658,7 +690,8 @@
                   onblur="this.style.boxShadow='none';">
               </div>
               <button id="transferTokensBtn" class="settings-action-btn"
-                style="background: linear-gradient(135deg, #00ff66, #00dd55); color: #000; width: 100%; margin-top: 12px; font-weight: 700;">🚀 Send Tokens</button>
+                style="background: linear-gradient(135deg, #00ff66, #00dd55); color: #000; width: 100%; margin-top: 12px; font-weight: 700;">🚀
+                Send Tokens</button>
               <div id="transferResult"></div>
             </div>
 
@@ -681,8 +714,10 @@
       <button id="nav-status" class="nav-item" data-nav="updates" title="View Statuses">✨</button>
       <button id="nav-groups" class="nav-item" data-nav="communities" title="Groups">👥</button>
       <button id="nav-announcements" class="nav-item" data-nav="announcements" title="Announcements">📢</button>
-      <button id="nav-marketplace" class="nav-item" data-nav="marketplace" title="Marketplace" onclick="window.location.href='advertisement.html'">🛍️</button>
-      <button id="nav-games" class="nav-item" data-nav="games" title="Gaming Hub" onclick="window.location.href='gaminghub.html'">🎮</button>
+      <button id="nav-marketplace" class="nav-item" data-nav="marketplace" title="Marketplace"
+        onclick="window.location.href='advertisement.html'">🛍️</button>
+      <button id="nav-games" class="nav-item" data-nav="games" title="Gaming Hub"
+        onclick="window.location.href='gaminghub.html'">🎮</button>
       <button id="logout-btn" class="nav-item logout" title="Logout">🚪</button>
     </nav>
   </div>
@@ -798,167 +833,23 @@
     }
 
     .dark-label {
-      left: 6px;
+      right: 8px;
+      color: #00ff66;
       opacity: 1;
     }
 
-    .toggle-switch.active .dark-label {
-      opacity: 0.3;
+    .light-label {
+      left: 8px;
+      color: #ffaa00;
+      opacity: 0;
     }
 
-    .light-label {
-      right: 6px;
-      opacity: 0.3;
+    .toggle-switch.active .dark-label {
+      opacity: 0;
     }
 
     .toggle-switch.active .light-label {
       opacity: 1;
-    }
-
-    @media (max-width: 768px) {
-      .toggle-switch {
-        width: 55px;
-        height: 28px;
-      }
-
-      .toggle-slider {
-        width: 24px;
-        height: 24px;
-      }
-
-      .toggle-switch.active .toggle-slider {
-        left: 29px;
-      }
-
-      .toggle-label {
-        font-size: 12px;
-      }
-    }
-
-    /* 3-Dot Menu Button Styles */
-    .three-dots-menu {
-      background: transparent;
-      border: 2px solid #00ff66;
-      color: #00ff66;
-      font-size: 20px;
-      cursor: pointer;
-      padding: 6px 10px;
-      border-radius: 8px;
-      transition: all 0.3s ease;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      letter-spacing: 3px;
-      font-weight: bold;
-    }
-
-    .three-dots-menu:hover {
-      background: rgba(0, 255, 102, 0.1);
-      box-shadow: 0 0 10px rgba(0, 255, 102, 0.3);
-      transform: scale(1.05);
-    }
-
-    .three-dots-menu:active {
-      transform: scale(0.95);
-    }
-
-    /* Chat Options Dropdown Menu */
-    .chat-options-dropdown {
-      position: fixed;
-      background: linear-gradient(135deg, rgba(20, 20, 30, 0.98) 0%, rgba(30, 30, 40, 0.98) 100%);
-      border: 2px solid #00ff66;
-      border-radius: 12px;
-      min-width: 200px;
-      box-shadow: 0 10px 40px rgba(0, 255, 102, 0.2), 0 0 20px rgba(0, 255, 102, 0.1);
-      z-index: 2000;
-      padding: 8px 0;
-      backdrop-filter: blur(10px);
-      animation: dropdownSlideDown 0.3s ease-out;
-    }
-
-    @keyframes dropdownSlideDown {
-      from {
-        opacity: 0;
-        transform: translateY(-10px);
-      }
-
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    .dropdown-header {
-      padding: 10px 16px;
-      color: #00ff66;
-      font-size: 12px;
-      font-weight: bold;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      border-bottom: 1px solid rgba(0, 255, 102, 0.2);
-    }
-
-    .option-item {
-      width: 100%;
-      padding: 12px 16px;
-      background: transparent;
-      border: none;
-      color: #00ff66;
-      text-align: left;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 500;
-      transition: all 0.2s ease;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-family: inherit;
-    }
-
-    .option-item:hover {
-      background: rgba(0, 255, 102, 0.1);
-      padding-left: 20px;
-      text-shadow: 0 0 10px rgba(0, 255, 102, 0.4);
-    }
-
-    .option-item.danger {
-      color: #ff6b6b;
-    }
-
-    .option-item.danger:hover {
-      background: rgba(255, 107, 107, 0.1);
-      text-shadow: 0 0 10px rgba(255, 107, 107, 0.4);
-    }
-
-    .call-option::before {
-      content: '';
-      display: inline-block;
-      width: 4px;
-      height: 4px;
-      background: #00ff66;
-      border-radius: 50%;
-      flex-shrink: 0;
-    }
-
-    .video-option::before {
-      content: '';
-      display: inline-block;
-      width: 4px;
-      height: 4px;
-      background: #00ff66;
-      border-radius: 50%;
-      flex-shrink: 0;
-    }
-
-    .dropdown-divider {
-      height: 1px;
-      background: rgba(0, 255, 102, 0.2);
-      margin: 6px 0;
-    }
-
-    /* Adjust chat detail header for menu positioning */
-    .chat-detail-header {
-      position: relative;
     }
   </style>
 </body>

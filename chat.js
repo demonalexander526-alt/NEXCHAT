@@ -2419,7 +2419,43 @@ function updateChatProfileDisplay(username, profilePic, status = 'Online') {
 
     if (activeChatName) activeChatName.textContent = username;
     if (activeChatStatus) activeChatStatus.textContent = status;
-    if (activeChatAvatar) activeChatAvatar.src = profilePic || "👤";
+    if (activeChatAvatar) {
+      activeChatAvatar.src = profilePic || "👤";
+
+      // AVATAR CLICK → Show Profile Picture Modal
+      activeChatAvatar.style.cursor = 'pointer';
+      activeChatAvatar.onclick = (e) => {
+        e.stopPropagation();
+        if (profilePic && (profilePic.startsWith('http') || profilePic.startsWith('data:'))) {
+          const modal = document.getElementById('profilePicModal');
+          const modalImg = document.getElementById('profileModalImg');
+          const modalName = document.getElementById('profileModalName');
+
+          if (modal && modalImg && modalName) {
+            modalImg.src = profilePic;
+            modalName.textContent = username;
+            modal.style.display = 'flex';
+
+            // Hide edit button (not their profile)
+            const editBtn = document.getElementById('editProfileBtnModal');
+            if (editBtn) editBtn.style.display = 'none';
+          }
+        }
+      };
+    }
+
+    // USERNAME CLICK → Open User Info Panel
+    if (activeChatName) {
+      activeChatName.style.cursor = 'pointer';
+      activeChatName.onclick = (e) => {
+        e.stopPropagation();
+        if (currentChatUser && currentChatType === 'direct') {
+          showUserInfoPanel(currentChatUser);
+        } else if (currentChatUser && currentChatType === 'group') {
+          showGroupInfoPanel(currentChatUser);
+        }
+      };
+    }
   }
 
   // Update message input area profile display
@@ -2433,7 +2469,43 @@ function updateChatProfileDisplay(username, profilePic, status = 'Online') {
 
     if (chatUserName) chatUserName.textContent = username;
     if (chatUserStatus) chatUserStatus.textContent = status;
-    if (chatUserAvatar) chatUserAvatar.src = profilePic || "👤";
+    if (chatUserAvatar) {
+      chatUserAvatar.src = profilePic || "👤";
+
+      // AVATAR CLICK → Show Profile Picture Modal (input area)
+      chatUserAvatar.style.cursor = 'pointer';
+      chatUserAvatar.onclick = (e) => {
+        e.stopPropagation();
+        if (profilePic && (profilePic.startsWith('http') || profilePic.startsWith('data:'))) {
+          const modal = document.getElementById('profilePicModal');
+          const modalImg = document.getElementById('profileModalImg');
+          const modalName = document.getElementById('profileModalName');
+
+          if (modal && modalImg && modalName) {
+            modalImg.src = profilePic;
+            modalName.textContent = username;
+            modal.style.display = 'flex';
+
+            // Hide edit button
+            const editBtn = document.getElementById('editProfileBtnModal');
+            if (editBtn) editBtn.style.display = 'none';
+          }
+        }
+      };
+    }
+
+    // USERNAME CLICK → Open User Info Panel (input area)
+    if (chatUserName) {
+      chatUserName.style.cursor = 'pointer';
+      chatUserName.onclick = (e) => {
+        e.stopPropagation();
+        if (currentChatUser && currentChatType === 'direct') {
+          showUserInfoPanel(currentChatUser);
+        } else if (currentChatUser && currentChatType === 'group') {
+          showGroupInfoPanel(currentChatUser);
+        }
+      };
+    }
   }
 }
 
@@ -4078,11 +4150,45 @@ async function setupInitialization() {
               profileBtn.style.backgroundPosition = 'center';
               profileBtn.style.fontSize = '0';
               profileBtn.style.borderRadius = '50%';
+              profileBtn.onclick = (e) => {
+                e.preventDefault();
+                // Open modal logic
+                const modal = document.getElementById('profilePicModal');
+                const modalImg = document.getElementById('profileModalImg');
+                const modalName = document.getElementById('profileModalName');
+
+                if (modal && modalImg) {
+                  modalImg.src = myProfilePic;
+                  if (modalName) modalName.innerText = myUsername || "ME";
+                  modal.style.display = 'flex';
+
+                  const editBtn = document.getElementById('editProfileBtnModal');
+                  if (editBtn) {
+                    editBtn.style.display = 'block';
+                    editBtn.onclick = () => window.location.href = 'profile-upload.html';
+                  }
+                }
+              };
             }
             const statusImg = document.getElementById('myStatusPic');
             if (statusImg) {
               statusImg.src = myProfilePic;
             }
+          }
+
+          // Also handle close modal
+          const closeProfileModal = document.getElementById('closeProfileModal');
+          if (closeProfileModal) {
+            closeProfileModal.onclick = () => {
+              document.getElementById('profilePicModal').style.display = 'none';
+            };
+          }
+
+          const profilePicModal = document.getElementById('profilePicModal');
+          if (profilePicModal) {
+            profilePicModal.onclick = (e) => {
+              if (e.target === profilePicModal) profilePicModal.style.display = 'none';
+            };
           }
 
           const tokenCount = userData.tokens ?? 0;
@@ -4242,7 +4348,54 @@ async function setupInitialization() {
         showNotif("Error loading user data: " + err.message, "error");
       }
     } else {
-      window.location.href = "index.html";
+      // Prevent infinite redirect loop
+      console.warn("User not authenticated. Redirecting to login...");
+
+      // Show a friendly message before redirecting
+      const chatMain = document.querySelector('.chat-main');
+      if (chatMain) {
+        chatMain.innerHTML = `
+          <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:80vh;text-align:center;padding:20px;">
+            <div style="font-size:60px;margin-bottom:20px;">🔒</div>
+            <h2 style="color:#00ff66;margin-bottom:10px;">Authentication Required</h2>
+            <p style="color:#888;margin-bottom:30px;">Please log in to access NEXCHAT</p>
+            <div style="color:#00ff66;font-size:14px;">Redirecting to login in <span id="countdown">3</span>...</div>
+          </div>
+        `;
+
+        // Countdown timer
+        let timeLeft = 3;
+        const countdownEl = document.getElementById('countdown');
+        const countdownTimer = setInterval(() => {
+          timeLeft--;
+          if (countdownEl) countdownEl.textContent = timeLeft;
+          if (timeLeft <= 0) {
+            clearInterval(countdownTimer);
+          }
+        }, 1000);
+      }
+
+      // Check if we've already tried redirecting
+      if (!sessionStorage.getItem('auth_redirect_block')) {
+        sessionStorage.setItem('auth_redirect_block', 'true');
+        setTimeout(() => {
+          sessionStorage.removeItem('auth_redirect_block'); // Clear for next time
+          window.location.href = "index.html";
+        }, 3000); // Increased to 3 seconds
+      } else {
+        // If we're stuck in a loop, show manual option
+        sessionStorage.removeItem('auth_redirect_block');
+        if (chatMain) {
+          chatMain.innerHTML = `
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:80vh;text-align:center;padding:20px;">
+              <div style="font-size:60px;margin-bottom:20px;">⚠️</div>
+              <h2 style="color:#ff6666;margin-bottom:10px;">Authentication Issue</h2>
+              <p style="color:#888;margin-bottom:30px;">We couldn't verify your login details.</p>
+              <button onclick="window.location.href='index.html'" style="padding:15px 30px;background:#00ff66;color:#000;border:none;border-radius:8px;cursor:pointer;font-weight:bold;font-size:16px;box-shadow: 0 4px 12px rgba(0,255,102,0.3);">Go to Login Page</button>
+            </div>
+          `;
+        }
+      }
     }
   });
 

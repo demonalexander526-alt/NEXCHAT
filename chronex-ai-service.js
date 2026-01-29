@@ -316,6 +316,46 @@ class ChronexAI {
     return cached.value;
   }
 
+  // Main chat method - Entry point from chat.js
+  async chat(message, conversationId = "default") {
+    try {
+      console.log("🧠 Chronex AI processing message:", message);
+
+      // Check cache first
+      const cacheKey = message.toLowerCase().trim();
+      const cachedResponse = this.getFromCache(cacheKey);
+      if (cachedResponse) {
+        console.log("✅ Retrieved from cache");
+        return cachedResponse;
+      }
+
+      // Try Python backend first (if enabled), fallback to JavaScript
+      let aiResponse;
+      if (this.config.backends.python.enabled) {
+        console.log("🐍 Attempting Python backend...");
+        aiResponse = await this.getPythonResponse(message);
+      } else {
+        console.log("💻 Using JavaScript backend...");
+        aiResponse = await this.getJavaScriptResponse(message);
+      }
+
+      // Cache the response
+      this.cacheResponse(cacheKey, aiResponse);
+
+      // Save to Firebase
+      await this.saveConversation(message, aiResponse, conversationId);
+
+      console.log("✅ Chronex AI response generated successfully");
+      return aiResponse;
+
+    } catch (error) {
+      console.error("❌ Chronex AI chat error:", error);
+      // Always fallback to JavaScript on error
+      const fallbackResponse = await this.getJavaScriptResponse(message);
+      return fallbackResponse;
+    }
+  }
+
   // Save conversation to Firebase
   async saveConversation(userMessage, aiResponse, conversationId) {
     try {
