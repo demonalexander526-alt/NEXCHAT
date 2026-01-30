@@ -404,6 +404,69 @@
             </div>
           </div>
 
+          <!-- Mute/Block/Delete Actions -->
+          <div class="info-section">
+            <div class="section-item" id="muteUserItem" style="cursor: pointer;">
+              <span class="section-icon">🔇</span>
+              <div class="section-content" style="flex: 1;">
+                <div class="section-label">Mute User</div>
+              </div>
+              <div class="toggle-switch-small"
+                style="position: relative; display: inline-block; width: 40px; height: 24px;">
+                <input type="checkbox" id="muteUserToggle" style="opacity: 0; width: 0; height: 0;">
+                <span class="slider round"
+                  style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #333; transition: .4s; border-radius: 34px; border: 1px solid #555;"></span>
+                <style>
+                  #muteUserToggle:checked+.slider {
+                    background-color: #00ff66;
+                    border-color: #00ff66;
+                  }
+
+                  #muteUserToggle:checked+.slider:before {
+                    transform: translateX(16px);
+                    background-color: #000;
+                  }
+
+                  .slider:before {
+                    position: absolute;
+                    content: "";
+                    height: 16px;
+                    width: 16px;
+                    left: 3px;
+                    bottom: 3px;
+                    background-color: #888;
+                    transition: .4s;
+                    border-radius: 50%;
+                  }
+                </style>
+              </div>
+            </div>
+          </div>
+
+          <div class="info-section">
+            <div class="section-item" id="infoBlockBtn" style="cursor: pointer; color: #ff4d4d;">
+              <span class="section-icon" style="color: #ff4d4d;">🚫</span>
+              <div class="section-content">
+                <div class="section-label">Block User</div>
+              </div>
+            </div>
+            <div class="section-item" id="infoUnblockBtn" style="cursor: pointer; color: #00ff66; display: none;">
+              <span class="section-icon" style="color: #00ff66;">✅</span>
+              <div class="section-content">
+                <div class="section-label">Unblock User</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="info-section">
+            <div class="section-item" id="infoDeleteBtn" style="cursor: pointer; color: #ff4d4d;">
+              <span class="section-icon" style="color: #ff4d4d;">🗑️</span>
+              <div class="section-content">
+                <div class="section-label">Delete User</div>
+              </div>
+            </div>
+          </div>
+
           <!-- Members Section (for groups) -->
           <div class="info-section" id="membersList" style="display: none;">
             <div class="section-title">Members</div>
@@ -467,6 +530,23 @@
             onclick="document.getElementById('createGroupModal').style.display='none'">&times;</span>
           <h2>👥 Create Group</h2>
           <form id="createGroupForm">
+            <div class="form-group" style="text-align: center; margin-bottom: 20px;">
+              <label>Group Icon</label>
+              <div style="position: relative; width: 80px; height: 80px; margin: 0 auto;">
+                <img id="groupIconPreview" src="assets/default_group.png"
+                  onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDBmZjY2IiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PHBhdGggZD0iTTE3IDIxdjSZhLTgtNHoiPjwvcGF0aD48Y2lyY2xlIGN4PSI5IiBjeT0iNyIgcj0iNCI+PC9jaXJNsZT48cGF0aCBkPSJNMjMgMjF2LTIxYTgtNHoiPjwvcGF0aD48L3N2Zz4='"
+                  style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 2px solid #00ff66;">
+                <div onclick="document.getElementById('groupIconInput').click()"
+                  style="position: absolute; bottom: 0; right: 0; background: #00ff66; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 2px solid #000;">
+                  <span style="color: #000; font-size: 14px; font-weight: bold;">+</span>
+                </div>
+              </div>
+              <input type="file" id="groupIconInput" accept="image/*" style="display: none;"
+                onchange="const file=this.files[0];if(file){const reader=new FileReader();reader.onload=e=>document.getElementById('groupIconPreview').src=e.target.result;reader.readAsDataURL(file);}">
+              <button type="button" id="generateGroupAvatarBtn"
+                style="margin-top: 10px; background: transparent; border: 1px solid #00ff66; color: #00ff66; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;">🎲
+                Generate NEX Avatar</button>
+            </div>
             <div class="form-group">
               <label>Group Name</label>
               <input type="text" id="groupName" placeholder="Group name..." maxlength="50" required>
@@ -492,6 +572,42 @@
             <div id="groupCreateResult"
               style="margin-top: 15px; padding: 10px; border-radius: 6px; text-align: center; display: none;"></div>
           </form>
+        </div>
+      </div>
+
+      <!-- GROUP INFO MODAL -->
+      <div id="groupInfoModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 500px;">
+          <span class="close-modal"
+            onclick="document.getElementById('groupInfoModal').style.display='none'">&times;</span>
+          <div style="text-align: center; margin-bottom: 20px;">
+            <img id="infoGroupIcon" src=""
+              style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 3px solid #00ff66; margin-bottom: 10px;">
+            <h2 id="infoGroupName" style="margin: 0; color: #00ff66;">Group Name</h2>
+            <p id="infoGroupDesc" style="color: #aaa; font-size: 14px; margin-top: 5px;">Description</p>
+          </div>
+
+          <div class="settings-section">
+            <h3>👥 Members (<span id="infoMemberCount">0</span>)</h3>
+            <div id="infoMembersList" style="max-height: 250px; overflow-y: auto; margin-top: 10px;">
+              <!-- Members will be populated here -->
+            </div>
+          </div>
+
+          <div class="settings-section" id="adminActionsSection" style="display: none;">
+            <h3>🛡️ Admin Actions</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+              <button id="addMemberBtn" class="btn-secondary">➕ Add Member</button>
+              <!-- Delete Group Button (only for admin) -->
+              <button id="deleteGroupBtn"
+                style="background: #ff4d4d; color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer; font-weight: bold;">🗑️
+                Delete Group</button>
+            </div>
+          </div>
+
+          <button id="leaveGroupBtn"
+            style="width: 100%; margin-top: 20px; background: #333; color: #ff4d4d; border: 1px solid #ff4d4d; padding: 10px; border-radius: 8px; cursor: pointer; font-weight: bold;">🚪
+            Leave Group</button>
         </div>
       </div>
 

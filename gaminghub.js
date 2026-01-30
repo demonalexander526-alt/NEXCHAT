@@ -215,7 +215,7 @@ const GAMES_DATABASE = [
 ];
 
 // State management
-let allGames = [...GAMES_DATABASE];
+let allGames = [...GAMES_DATABASE].sort((a, b) => b.playersNow - a.playersNow);
 let currentCategory = "all";
 let currentSearchQuery = "";
 let selectedGame = null;

@@ -411,7 +411,7 @@ def creator():
         "secondary_creator": SECONDARY_CREATOR,
         "role": "Developer",
         "system": "Chronex AI Python Backend",
-        "version": "1.0"
+        "version": ""
     }
 
 # ============ CHRONEX AI CONFIGURATION ============
@@ -428,7 +428,7 @@ CHRONEX_CONFIG = {
         "description": "4B parameter model"
     },
     "model": {
-        "name": "Chronex AI v1.0 (Python 4B)",
+        "name": "Chronex AI (Python 4B)",
         "type": "advanced-neural-network",
         "parameters": 4_000_000_000,
         "temperature": 0.7,

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -7,6 +8,7 @@
   <link rel="stylesheet" href="gaminghub.css" />
   <link rel="stylesheet" href="reset.css" />
 </head>
+
 <body>
   <div class="gaming-hub-container">
     <!-- Header -->
@@ -17,15 +19,18 @@
         <div class="header-spacer"></div>
       </div>
 
+      <!-- Main Navigation Tabs -->
+      <div class="main-nav-tabs">
+        <button type="button" class="nav-tab active" data-section="games">🎮 Games</button>
+        <button type="button" class="nav-tab" data-section="gamers">👾 Gamers</button>
+        <button type="button" class="nav-tab" data-section="squads">🎖️ Squads</button>
+        <button type="button" class="nav-tab" data-section="sessions">🎮 Sessions</button>
+      </div>
+
       <!-- Search Bar -->
       <div class="gaming-search-area">
-        <input 
-          type="text" 
-          id="game-search-input" 
-          class="game-search-input" 
-          placeholder="Search games..."
-          autocomplete="off"
-        />
+        <input type="text" id="game-search-input" class="game-search-input" placeholder="Search games..."
+          autocomplete="off" />
       </div>
 
       <!-- Category Tabs -->
@@ -36,14 +41,6 @@
         <button type="button" class="category-tab" data-category="strategy">Strategy</button>
         <button type="button" class="category-tab" data-category="multiplayer">Multiplayer</button>
         <button type="button" class="category-tab" data-category="casual">Casual</button>
-      </div>
-
-      <!-- Main Navigation Tabs -->
-      <div class="main-nav-tabs">
-        <button type="button" class="nav-tab active" data-section="games">🎮 Games</button>
-        <button type="button" class="nav-tab" data-section="gamers">👾 Gamers</button>
-        <button type="button" class="nav-tab" data-section="squads">🎖️ Squads</button>
-        <button type="button" class="nav-tab" data-section="sessions">🎮 Sessions</button>
       </div>
     </div>
 
@@ -169,7 +166,7 @@
   <div id="game-detail-modal" class="game-detail-modal" style="display: none;">
     <div class="game-detail-content">
       <button type="button" id="close-game-modal-btn" class="close-modal-btn" title="Close">✕</button>
-      
+
       <div class="game-detail-header">
         <div id="game-detail-image" class="game-detail-image"></div>
       </div>
@@ -225,4 +222,5 @@
   <script src="global-exports.js"></script>
   <script src="gaminghub.js"></script>
 </body>
+
 </html>
