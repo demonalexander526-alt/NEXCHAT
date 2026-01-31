@@ -3,7 +3,8 @@
 
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
   <title>Gaming Hub - NEXCHAT</title>
   <link rel="stylesheet" href="gaminghub.css" />
   <link rel="stylesheet" href="reset.css" />
@@ -214,6 +215,24 @@
           </button>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- Full Screen Game Player Modal -->
+  <div id="game-player-modal" class="game-player-modal" style="display: none;">
+    <div class="game-player-header">
+      <div class="game-player-info">
+        <span id="player-game-emoji">🎮</span>
+        <span id="player-game-name">Loading...</span>
+      </div>
+      <button type="button" id="close-player-btn" class="close-player-btn">✕ Exit Game</button>
+    </div>
+    <div class="game-iframe-container">
+      <iframe id="game-iframe" src="" frameborder="0" allowfullscreen
+        allow="autoplay; gamepad; midi; clipboard-write; geolocaion; microphone"></iframe>
+    </div>
+    <div class="game-player-footer">
+      <p>Powered by NEX_DEV Hub</p>
     </div>
   </div>
 

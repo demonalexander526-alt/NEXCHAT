@@ -267,6 +267,9 @@ function setupEventListeners() {
     }
   });
 
+  // Close player button
+  document.getElementById("close-player-btn")?.addEventListener("click", closeGamePlayer);
+
   // Play button
   document.getElementById("play-game-btn")?.addEventListener("click", () => {
     if (selectedGame) {
@@ -396,24 +399,49 @@ function closeGameModal() {
   selectedGame = null;
 }
 
-// Play game - Open online game in new tab
+// Play game - Open online game in internal full-screen player
 function playGame(game) {
   if (!game.gameUrl) {
     showNotification(`Game ${game.name} not yet available`, "error");
     return;
   }
 
+  const playerModal = document.getElementById("game-player-modal");
+  const iframe = document.getElementById("game-iframe");
+  const playerEmoji = document.getElementById("player-game-emoji");
+  const playerName = document.getElementById("player-game-name");
+
+  if (!playerModal || !iframe) return;
+
   showNotification(`🎮 Launching ${game.name}...`, "success");
 
-  // Log game play event
-  console.log(`▶️ Playing online game: ${game.name} | URL: ${game.gameUrl}`);
+  // Update player UI
+  if (playerEmoji) playerEmoji.textContent = game.emoji;
+  if (playerName) playerName.textContent = game.name;
 
-  // Open game in new tab after a short delay
-  setTimeout(() => {
-    window.open(game.gameUrl, "_blank");
-    showNotification(`🎮 ${game.name} opened in new tab!`, "success", 2000);
-    closeGameModal();
-  }, 500);
+  // Set iframe source and show modal
+  iframe.src = game.gameUrl;
+  playerModal.style.display = "flex";
+
+  // Prevent background scroll
+  document.body.style.overflow = "hidden";
+
+  // Close the detail modal
+  closeGameModal();
+
+  console.log(`▶️ Playing online game: ${game.name} | URL: ${game.gameUrl}`);
+}
+
+// Close internal game player
+function closeGamePlayer() {
+  const playerModal = document.getElementById("game-player-modal");
+  const iframe = document.getElementById("game-iframe");
+
+  if (playerModal) playerModal.style.display = "none";
+  if (iframe) iframe.src = ""; // Stop the game content
+
+  // Restore background scroll
+  document.body.style.overflow = "auto";
 }
 
 // Share game

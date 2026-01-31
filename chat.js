@@ -4247,7 +4247,7 @@ async function setupInitialization() {
   initializeBasicUI();
 
   // Setup auth listener for post-auth initialization
-  auth.onAuthStateChanged(async (user) => {
+  onAuthStateChanged(auth, async (user) => {
     if (user) {
       myUID = user.uid;
       console.log("✅ User authenticated:", myUID);
@@ -4345,6 +4345,34 @@ async function setupInitialization() {
           } catch (createErr) {
             console.error("Error creating user document:", createErr);
           }
+        }
+
+        // --- HANDLE MARKETPLACE REDIRECTION ---
+        const fromAd = sessionStorage.getItem('fromAdvertisement');
+        const targetUID = sessionStorage.getItem('targetUserUID');
+        const targetName = sessionStorage.getItem('targetUsername');
+        const productName = sessionStorage.getItem('productName');
+
+        if (fromAd === 'true' && targetUID && targetUID !== myUID) {
+          console.log(`🛍️ Redirected from Marketplace to chat with ${targetName}`);
+
+          // Clear flags
+          sessionStorage.removeItem('fromAdvertisement');
+          sessionStorage.removeItem('targetUserUID');
+          sessionStorage.removeItem('targetUsername');
+          sessionStorage.removeItem('productName');
+
+          // Open the chat
+          setTimeout(async () => {
+            const initialText = productName ? `Hi, I'm interested in your advertisement: "${productName}"` : "Hi, I'm interested in your advertisement!";
+            await openChat(targetUID, targetName, null, 'direct');
+
+            const messageInput = document.getElementById('message-input');
+            if (messageInput) {
+              messageInput.value = initialText;
+              messageInput.focus();
+            }
+          }, 1000);
         }
 
         // Listen for real-time token updates - ONLY update token display, don't reset
@@ -7091,7 +7119,8 @@ async function loadGroups() {
     const q = query(
       collection(db, "groups"),
       where("members", "array-contains", myUID),
-      orderBy("lastMessageTime", "desc")
+      orderBy("lastMessageTime", "desc"),
+      limit(10)
     );
 
     const snapshot = await getDocs(q);
@@ -7260,7 +7289,53 @@ async function loadContacts() {
 
     // Get user's contact list
     const myUserDoc = await getDoc(doc(db, "users", myUID));
-    const myContacts = myUserDoc.data()?.contacts || [];
+    let rawContacts = myUserDoc.data()?.contacts || [];
+
+    // --- RECENT CONVERSATIONS OPTIMIZATION ---
+    // Instead of loading all contacts (which takes forever), we find the 10 most recent partners
+    let top10Contacts = [];
+    try {
+      const messagesRef = collection(db, "messages");
+      // Query recent incoming and outgoing messages
+      const qIn = query(messagesRef, where("to", "==", myUID), orderBy("timestamp", "desc"), limit(25));
+      const qOut = query(messagesRef, where("from", "==", myUID), orderBy("timestamp", "desc"), limit(25));
+
+      const [snapIn, snapOut] = await Promise.all([getDocs(qIn), getDocs(qOut)]);
+
+      const partnerMap = new Map();
+      snapIn.forEach(docSnap => {
+        const d = docSnap.data();
+        if (d.from && d.from !== myUID) {
+          const ts = d.timestamp?.toMillis ? d.timestamp.toMillis() : (d.timestamp instanceof Date ? d.timestamp.getTime() : 0);
+          if (!partnerMap.has(d.from) || ts > partnerMap.get(d.from)) partnerMap.set(d.from, ts);
+        }
+      });
+      snapOut.forEach(docSnap => {
+        const d = docSnap.data();
+        if (d.to && d.to !== myUID) {
+          const ts = d.timestamp?.toMillis ? d.timestamp.toMillis() : (d.timestamp instanceof Date ? d.timestamp.getTime() : 0);
+          if (!partnerMap.has(d.to) || ts > partnerMap.get(d.to)) partnerMap.set(d.to, ts);
+        }
+      });
+
+      // Sort partners by timestamp descending and filter out special IDs like chronex-ai
+      top10Contacts = Array.from(partnerMap.entries())
+        .sort((a, b) => b[1] - a[1])
+        .map(e => e[0])
+        .filter(uid => uid !== 'chronex-ai')
+        .slice(0, 10);
+
+      // If we still have room, add from rawContacts (most recently added first)
+      if (top10Contacts.length < 10) {
+        const otherContacts = [...rawContacts].reverse().filter(uid => !top10Contacts.includes(uid) && uid !== 'chronex-ai');
+        top10Contacts.push(...otherContacts.slice(0, 10 - top10Contacts.length));
+      }
+    } catch (err) {
+      console.warn("Recent conversations optimization failed, falling back to simplified list:", err);
+      top10Contacts = [...rawContacts].reverse().slice(0, 10);
+    }
+
+    const myContacts = top10Contacts;
 
     if (myContacts.length === 0) {
       contactList.innerHTML = "";
@@ -7269,12 +7344,12 @@ async function loadContacts() {
       return;
     }
 
-    // --- OPTIMIZED PARALLEL LOADING ---
-    // Fetch all contacts data in parallel batches to prevent browser stalling but maximize speed
-    const batchSize = 5;
+    // --- OPTIMIZED PARALLEL LOADING (Max 10) ---
+    // Fetch only the top 10 contacts data in parallel
+    const batchSize = 10;
     let contactDataList = [];
 
-    for (let i = 0; i < myContacts.length; i += batchSize) {
+    for (let i = 0; i < myContacts.length && i < 10; i += batchSize) {
       const batch = myContacts.slice(i, i + batchSize);
       const batchPromises = batch.map(async (uid) => {
         if (uid === myUID) return null;

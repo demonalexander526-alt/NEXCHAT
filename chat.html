@@ -109,8 +109,29 @@
         <h3>📢 Announcements</h3>
       </div>
       <div id="announcementsFeed" class="announcements-feed">
+        <!-- WELCOME ANNOUNCEMENT BLOCK -->
+        <div class="announcement-item pinned-announcement"
+          style="border: 2px solid #00ff66; background: rgba(0, 255, 102, 0.05);">
+          <div class="announcement-header">
+            <h4 class="announcement-title">WELCOME TO NEXCHAT</h4>
+            <span class="announcement-badge" style="background: #00ff66; color: #000;">📢 NEX-DEV</span>
+          </div>
+          <p class="announcement-content" style="font-weight: 600; color: #fff;">
+            WELCOME TO NEXCHAT THE FUTURE IS INIT I AM DEMON ALEX NEX DEVELOPER....
+          </p>
+          <p class="announcement-content">
+            NEW FEATURES ARE BRINGING YOU NEX_REELS SIMILAR TO TIKTOK/SNAPCHAT BUT IT WILL BE ON NEXCHAT BY NOVEMBER
+            23RD...
+            IF YOU HAVE ANY COMPLAINT KINDLY GO TO NEX SETTINGS AND FILE THEM
+          </p>
+          <div class="announcement-footer">
+            <span class="announcement-time">IMPORTANT Update</span>
+            <span class="announcement-admin">BEST REGARDS: DEMON ALEX {LINUX-DEVELOPER}</span>
+          </div>
+        </div>
+
         <div class="announcements-empty-state">
-          <p>No announcements yet</p>
+          <p>No other announcements yet</p>
           <p class="hint">Stay tuned for updates from NEXCHAT</p>
         </div>
       </div>
@@ -763,6 +784,19 @@
               <button id="removeChatBackgroundBtn" class="settings-action-btn"
                 style="background: #ff9900; color: #000; width: 100%; margin-top: 8px;">🗑️ Remove Chat
                 Background</button>
+            </div>
+
+            <div class="settings-section">
+              <h3>Support & Feedback</h3>
+              <div class="setting-item" style="flex-direction: column; align-items: flex-start;">
+                <p style="color: #888; font-size: 12px; margin-bottom: 10px;">If you have any complaints or feedback,
+                  kindly let us know.</p>
+                <button id="fileComplaintBtn" class="settings-action-btn"
+                  style="background: linear-gradient(135deg, #ff416c, #ff4b2b); color: #fff; width: 100%; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px;"
+                  onclick="const subject=encodeURIComponent('NEXCHAT Complaint - User ID: ' + (window.myUID || 'Unknown')); window.location.href='mailto:nexchat23@gmail.com?subject=' + subject;">
+                  📩 FILE A COMPLAINT TO NEX_DEV
+                </button>
+              </div>
             </div>
 
             <div class="settings-section">
