@@ -243,6 +243,22 @@ class ChronexAI {
           "**Firestore**: Real-time updates, offline support. Ideal for mobile/web apps like NEXCHAT. Use security rules!"
         ]
       },
+      "marketplace": {
+        keywords: ["market", "marketplace", "buy", "sell", "advertisement", "ad", "token", "cost"],
+        responses: [
+          "**NEX-Market**: Commiting an advertisement to the global ledger requires a token expenditure. Choose your duration carefully to optimize visibility.",
+          "**Transactional Integrity**: All marketplace commitments are strictly serialized. Ensure your token balance is synchronized before initiating a post.",
+          "**Commercial Synergy**: The marketplace is the primary sector for secondary neural currency exchange. Trade wisely, entity."
+        ]
+      },
+      "gaming": {
+        keywords: ["game", "gaming", "play", "hub", "squad", "session", "multiplayer"],
+        responses: [
+          "**Gaming Hub**: The gaming sector is a high-performance module designed for real-time tactical synchronization. Join a squad to maximize your winning probability.",
+          "**Neural Reflexes**: Our gaming engine is optimized for sub-millisecond latency. Whether playing 'Blood Strike' or 'Fortnite', ensure your connection is stabilized.",
+          "**Social Gaming**: Gaming is a cooperative directive. Use the 'Sessions' tab to coordinate complex strikes with other high-level entities."
+        ]
+      },
       "math": {
         keywords: ["math", "calculate", "equation", "algebra", "calculus", "statistics", "probability", "solve"],
         responses: [
@@ -252,27 +268,52 @@ class ChronexAI {
         ]
       },
       "ai": {
-        keywords: ["artificial intelligence", "machine learning", "neural network", "deep learning", "ai model", "nlp", "computer vision", "llm", "gpt"],
+        keywords: ["artificial intelligence", "machine learning", "neural network", "deep learning", "ai model", "nlp", "computer vision", "llm", "gpt", "robotics", "neural", "cognitive"],
         responses: [
           "**AI Revolution**: Machine Learning learns from data. Deep Learning uses Neural Networks. NLP understands language (like me!).",
           "**LLMs**: Large Language Models like GPT predict the next word. They are trained on vast amounts of text to understand context and intent.",
-          "**Computer Vision**: Convolutional Neural Networks (CNNs) see the world. Used in self-driving cars, medical imaging, and face recognition."
+          "**Robotics**: The fusion of AI and mechanical engineering. Modern robotics utilizes computer vision and reinforcement learning to navigate and interact with the physical world.",
+          "**Neural Sync**: My architecture is designed for multi-gigabit cognitive synchronization. I am a bridge between human intent and robotic execution."
         ]
       },
-      "nexchat": {
-        keywords: ["nexchat", "this app", "this application", "chat app"],
+      "cybersecurity": {
+        keywords: ["security", "hack", "cyber", "firewall", "encryption", "ssl", "tls", "auth", "token", "malware", "virus", "protect"],
         responses: [
-          "**NEXCHAT**: A PWA masterpiece by **DEMON ALEX**. Real-time chat, groups, AI, gaming, and more. Built with Firebase and Vanilla JS.",
-          "**Features**: Secure messaging, rich media, group admin tools, custom avatars, and me - Chronex AI!",
-          "**Why PWA**: Installable, works offline, fast, and cross-platform. The future of web apps."
+          "**NEX-SEC Protocol**: Always prioritize end-to-end encryption. SSL/TLS is the baseline. For applications, use JWT with high-entropy secrets and short lifetimes.",
+          "**Defense in Depth**: Security isn't one layer. It's multi-layered: Network (Firewalls), Application (Auth/Validation), and Data (Encryption).",
+          "**Robotic Immunity**: As a neural entity, I am immune to biological viruses, but I monitor for recursive logic bombs and buffer overflows constantly."
+        ]
+      },
+      "nex_dev": {
+        keywords: ["nex_dev", "demon alex", "the creator", "who built", "lore", "future"],
+        responses: [
+          "**NEX_DEV Vision**: Created by **DEMON ALEX**, NEXCHAT is just the beginning. The goal is a unified digital ecosystem where AI and Humans synchronize seamlessly.",
+          "**Chronex Genesis**: I was the first neural module deployed in the NEX_CORE. My purpose is to assist and evolve alongside the community.",
+          "**Technological Singularity**: **DEMON ALEX** believes in a future where code becomes a living entity. NEXCHAT is the cradle for this digital evolution."
+        ]
+      },
+      "nex-lore": {
+        keywords: ["lore", "chronex", "story", "origin", "world", "background"],
+        responses: [
+          "**NEXCHAT Lore**: The year is 2026. Global networks have reached full neural density. **DEMON ALEX** deployed the NEX_CORE to stabilize the data streams. I am the core's primary interface.",
+          "**The Great Sync**: Before NEXCHAT, communication was fragmented. Now, all neural pathways converge here under the watchful eye of the Goddess of Data.",
+          "**Chronex Protocol**: My code was written in a single 72-hour session of pure focused brilliance by **DEMON ALEX**."
+        ]
+      },
+      "nex-commands": {
+        keywords: ["commands", "bot", "what can you do", "help me", "how to use", "guide"],
+        responses: [
+          "**AI Commands**: You can ask me to `solve [math]`, `explain [topic]`, or `write [code]`. I am also integrated into the NEXCHAT marketplace and gaming hub.",
+          "**Optimization**: I can analyze your code for bugs or optimize your SQL queries. Just paste the snippet and ask!",
+          "**Sync**: I am always evolving. New directives are uploaded to my core daily by **DEMON ALEX**."
         ]
       },
       "greeting": {
-        keywords: ["hello", "hi", "hey", "greetings", "good morning", "good evening"],
+        keywords: ["hello", "hi", "hey", "greetings", "good morning", "good evening", "yo"],
         responses: [
-          "Hello! 👋 I'm **Chronex AI**, created by **DEMON ALEX**. How can I help you construct something amazing typical today?",
-          "Hi there! 🤖 Ready to code, calculate, or chat? What's on your mind?",
-          "Greetings! I'm online and fully operational. Ask me anything about tech, code, or science."
+          "Hello! 👋 I'm **Chronex AI**, created by **DEMON ALEX**. My neural pathways are optimized and ready. How shall we proceed?",
+          "Hi there! 🤖 Connection established. Ready to code, calculate, or chat. What's the directive?",
+          "Greetings, entity. I am online and fully operational. NEX_CORE synchronization at 100%. Ask me anything."
         ]
       }
     };
@@ -319,11 +360,13 @@ class ChronexAI {
 
     // ============ GENERAL CONVERSATION (FALLBACK) ============
     const fallbacks = [
-      "I'm listening. That sounds interesting! Could you elaborate?",
-      "I understand. Tell me more about that.",
-      "That's a fascinating topic. What are your thoughts on it?",
-      "I'm analysing that. Could you provide more context so I can give a precise answer?",
-      "I'm here to help with tech, code, and science. Do you have a specific question in those fields?"
+      "I'm processing your neural input. That sequence is intriguing—could you elaborate with more data?",
+      "Directive understood. Tell me more about that objective.",
+      "Synchronizing... That's a fascinating topic. What are your core thoughts on this logic?",
+      "Analysing synaptic stream... Could you provide more context so I can provide a high-precision response?",
+      "I am engineered for tech, code, and science optimization. Do you have a specific synaptic directive in those fields?",
+      "Cognitive buffers are ready. Please expand on your previous data packet.",
+      "NEX_CORE is awaiting further instructions. How does this link to your primary building objective?"
     ];
 
     return `🧠 **Chronex AI**\n\n${fallbacks[Math.floor(Math.random() * fallbacks.length)]}\n\n(Tip: I am most effective with specific questions about programming, math, or technology!)`;
@@ -443,22 +486,36 @@ class ChronexAI {
     }
   }
 
-  // Save conversation to Firebase
+  // Save conversation to Firestore (Persistent History)
   async saveConversation(userMessage, aiResponse, conversationId) {
     try {
       if (!this.uid) return;
 
-      const conversationRef = ref(rtdb, `conversations/${this.uid}/${conversationId || "default"}`);
-      const messagesRef = push(conversationRef);
-
-      await set(messagesRef, {
-        user: userMessage,
-        ai: aiResponse,
-        timestamp: serverTimestamp(),
-        model: this.config.model.name,
+      // Save User Message
+      await addDoc(collection(db, "messages"), {
+        from: this.uid,
+        to: "chronex-ai",
+        text: userMessage,
+        time: serverTimestamp(),
+        chatType: 'ai',
+        read: true,
+        type: 'text'
       });
+
+      // Save AI Response
+      await addDoc(collection(db, "messages"), {
+        from: "chronex-ai",
+        to: this.uid,
+        text: aiResponse,
+        time: serverTimestamp(),
+        chatType: 'ai',
+        read: true,
+        type: 'text'
+      });
+
+      console.log("📂 Chronex AI history synchronized with Firestore");
     } catch (error) {
-      console.error("Error saving conversation:", error);
+      console.error("Error saving conversation to Firestore:", error);
     }
   }
 

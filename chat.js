@@ -2008,29 +2008,44 @@ async function sendMessage(e) {
     // Send message based on chat type
     if (currentChatType === 'ai') {
       // AI Chat - Chronex AI
-      console.log("🤖 Sending message to Chronex AI");
-
-      // Display user message immediately
-      displayChronexAIUserMessage(text);
+      console.log("🤖 Committing neural input to Chronex AI");
 
       try {
-        // Send to AI and get response
+        // 1. Show "AI is thinking" typing indicator
+        const messagesContainer = document.querySelector(".messages-list");
+        const typingEl = document.createElement("div");
+        typingEl.id = "ai-typing-indicator";
+        typingEl.className = "message ai-message";
+        typingEl.innerHTML = `
+          <img src="chronex-ai.jpg" class="message-avatar" alt="AI" style="width: 32px; height: 32px; border-radius: 50%; border: 1px solid #00ff66;">
+          <div class="message-content" style="background: #111; color: #00ff66; padding: 10px; border-radius: 12px; border: 1px solid rgba(0, 255, 102, 0.3);">
+            <p><i>📡 Synaptic processing...</i></p>
+          </div>
+        `;
+        if (messagesContainer) {
+          messagesContainer.appendChild(typingEl);
+          messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // 2. Get AI Response (It will save both User and AI messages to Firestore)
         const aiResponse = await chronexAI.chat(text, `chronex-${myUID}`);
 
-        // Display AI response
-        displayChronexAIResponse(aiResponse);
+        // 3. Remove typing indicator
+        const indicator = document.getElementById("ai-typing-indicator");
+        if (indicator) indicator.remove();
 
-        // Deduct 1 token
+        // 4. Deduct 1 token
         await updateDoc(userRef, {
           tokens: increment(-1),
           lastMessageSentAt: serverTimestamp()
         });
 
-        showNotif(`✓ AI response received (-1 token)`, "success", 2000);
+        showNotif(`✓ Neural Sync Successful (-1 token)`, "success", 2000);
       } catch (aiErr) {
-        console.error("❌ Chronex AI error:", aiErr);
-        displayChronexAIError("Sorry, I encountered an error processing your message. Please try again.");
-        throw aiErr;
+        console.error("❌ Chronex AI Neural Error:", aiErr);
+        const indicator = document.getElementById("ai-typing-indicator");
+        if (indicator) indicator.remove();
+        showNotif("❌ Neural uplink failed. Using fallback protocols.", "error");
       }
     } else if (currentChatType === 'group') {
       // Group message
@@ -2186,30 +2201,13 @@ function loadMessages() {
     return;
   }
 
-  // Handle AI Chat type (Chronex AI)
+  // NORMALIZE AI CHAT: Load records like a standard direct link
   if (currentChatType === 'ai') {
-    messagesDiv.innerHTML = `
-      <div class="messages-list">
-        <div class="empty-state">
-          <p><img src="chronex-ai.jpg" style="width: 40px; height: 40px; border-radius: 50%; vertical-align: middle; margin-bottom: 10px; border: 2px solid #00ff66;"><br>Welcome to Chronex AI!</p>
-          <p class="hint">I'm an advanced AI assistant. Ask me anything about coding, math, data analysis, and more!</p>
-          <div style="margin-top: 20px; text-align: left; font-size: 12px; color: #888;">
-            <p><strong>Capabilities:</strong></p>
-            <ul style="padding-left: 20px;">
-              <li>Code analysis and suggestions</li>
-              <li>Mathematical problem solving</li>
-              <li>Question answering</li>
-              <li>Data analysis assistance</li>
-              <li>Multi-language support</li>
-            </ul>
-          </div>
-        </div>
-      </div>
-    `;
-    return;
+    console.log("📨 Loading neural history for Chronex AI...");
+    messagesDiv.innerHTML = "<p style='text-align: center; color: #00ff66; padding: 20px; font-family: Orbitron;'>📡 Synchronizing Neural Uplink...</p>";
+  } else {
+    messagesDiv.innerHTML = "<p style='text-align: center; color: #888; padding: 20px;'>Loading messages...</p>";
   }
-
-  messagesDiv.innerHTML = "<p style='text-align: center; color: #888; padding: 20px;'>Loading messages...</p>";
 
   // Query for messages sent by current user to chat user OR from chat user to current user
   // Note: Using limit without orderBy to avoid composite index requirement, we'll sort in JS
@@ -2349,6 +2347,16 @@ function loadMessages() {
         bubble.appendChild(audioPlayer);
       } else {
         // Regular text message
+        if (!isOwn && m.from === 'chronex-ai') {
+          const aiAvatar = document.createElement("img");
+          aiAvatar.src = "chronex-ai.jpg";
+          aiAvatar.className = "message-avatar";
+          aiAvatar.style.cssText = `width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1.5px solid #00ff66; margin-right: 8px; flex-shrink: 0;`;
+          div.insertBefore(aiAvatar, bubble);
+          bubble.style.background = "linear-gradient(135deg, #111, #0a0e1a)";
+          bubble.style.border = "1px solid rgba(0, 255, 102, 0.3)";
+          bubble.style.color = "#00ff66";
+        }
         content.textContent = m.text;
         bubble.appendChild(content);
       }

@@ -118,8 +118,7 @@ service cloud.firestore {
       // Validate updates - prevent direct token manipulation
       allow update: if isOwner(uid) &&
                        request.resource.data.uid == uid &&
-                       (request.resource.data.tokens == resource.data.tokens ||
-                        request.resource.data.tokens > resource.data.tokens) &&
+                       request.resource.data.tokens >= 0 &&
                        request.resource.data.createdAt == resource.data.createdAt;
       
       // Prevent deletion (soft delete if needed)

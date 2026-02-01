@@ -34,7 +34,7 @@ onAuthStateChanged(auth, async (user) => {
       if (userSnap.exists()) {
         const userData = userSnap.data();
         userUsername = userData.username || 'Unknown User';
-        userTokens = userData.tokens || 0;
+        userTokens = Number(userData.tokens || 0);
       } else {
         userUsername = user.displayName || 'Unknown User';
         userTokens = 0;
@@ -455,7 +455,16 @@ function loadCartFromLocalStorage() {
 }
 
 function getCategoryEmoji(cat) {
-  const m = { 'electronics': '🖥️', 'clothing': '👕', 'books': '📚', 'food': '🍔' };
+  const m = {
+    'electronics': '🖥️',
+    'clothing': '👕',
+    'books': '📚',
+    'sports': '⚽',
+    'furniture': '🪑',
+    'food': '🍔',
+    'services': '🛠️',
+    'other': '📦'
+  };
   return m[cat] || '📦';
 }
 
