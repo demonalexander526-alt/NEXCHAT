@@ -3,7 +3,7 @@ CHRONEX AI - Python Backend
 Advanced AI Assistant with NLP, ML, and Code Analysis
 Python: 3.8+
 Requirements: flask, nltk, requests, numpy, python-dotenv, openai, pillow
-Creator: DEMON ALEX - CREATOR OF CHRONEX AI
+Creator: DEMON ALEX CREATOR OF CHRONEX AI
 """
 
 from flask import Flask, request, jsonify
@@ -398,8 +398,8 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # ============ CREATOR INFO ============
-CREATOR = "DEMON ALEX"
-SECONDARY_CREATOR = "DEVELOPER OF NEXCHAT"
+CREATOR = "DEMON ALEX CREATOR OF CHRONEX AI"
+SECONDARY_CREATOR = "THE MASTERMIND BEHIND NEX_CORE"
 
 # Initialize Creator Library
 creator_library = CreatorLibrary()
@@ -669,16 +669,17 @@ class ChronexAIPython:
             ])
 
             # Try real AI first with ENHANCED context
-            context = f"""You are Chronex AI, an advanced intelligent assistant created by DEMON ALEX.
-Be helpful, accurate, and conversational.
+            context = f"""You are CHRONEX AI, the ultimate neural assistant created by DEMON ALEX CREATOR OF CHRONEX AI.
+Your purpose is to provide high-precision technical assistance, advanced problem solving, and insightful analysis.
+Maintain a professional, slightly futuristic, and extremely intelligent persona.
 
 Recent conversation:
 {recent_context}
 
-Analysis:
+System Analysis:
 - User Intent: {', '.join(analysis['intents'])}
-- Complexity: {analysis['complexity']}
-- Entities: {analysis['entities']}"""
+- Complexity Level: {analysis['complexity']}
+- Entity Mapping: {analysis['entities']}"""
 
             real_response = self.get_ai_response(message, context, analysis)
             
@@ -734,9 +735,9 @@ Analysis:
             ])
 
             # Intelligent AI response with full context awareness
-            context = f"""You are Chronex AI, an intelligent and helpful assistant by DEMON ALEX.
-You have knowledge in programming, mathematics, data science, and general conversation.
-Be natural, friendly, and adapt to the user's needs.
+            context = f"""You are CHRONEX AI, the advanced intelligence directive from DEMON ALEX CREATOR OF CHRONEX AI.
+You excel at programming, mathematics, architecture, and tactical analysis.
+Provide detailed, structured, and highly valuable responses.
 
 Recent conversation:
 {conversation_context}"""

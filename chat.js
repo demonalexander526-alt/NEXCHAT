@@ -57,6 +57,7 @@ let basicUIInitialized = false;
 let authListenersInitialized = false;
 let offlineDB = null;
 let settingsInitialized = false;
+let authRedirectTimer = null;
 
 const emojis = [
   '😊', '😂', '😍', '🤔', '😎', '😢', '❤️', '👍', '🔥', '✨',
@@ -4394,6 +4395,11 @@ async function setupInitialization() {
 
   // Setup auth listener for post-auth initialization
   onAuthStateChanged(auth, async (user) => {
+    // Clear any pending redirect timer immediately when the auth state changes
+    if (authRedirectTimer) {
+      clearTimeout(authRedirectTimer);
+      authRedirectTimer = null;
+    }
     if (user) {
       myUID = user.uid;
       console.log("✅ User authenticated:", myUID);
@@ -4655,6 +4661,10 @@ async function setupInitialization() {
         } catch (contactErr) {
           console.error("Error loading contacts:", contactErr);
         }
+
+        // Successfully authenticated, so we can clear the redirect block for future use
+        sessionStorage.removeItem('auth_redirect_block');
+
       } catch (err) {
         console.error("Error loading user data:", err);
         showNotif("Error loading user data: " + err.message, "error");
@@ -4690,20 +4700,20 @@ async function setupInitialization() {
       // Check if we've already tried redirecting
       if (!sessionStorage.getItem('auth_redirect_block')) {
         sessionStorage.setItem('auth_redirect_block', 'true');
-        setTimeout(() => {
-          sessionStorage.removeItem('auth_redirect_block'); // Clear for next time
+        authRedirectTimer = setTimeout(() => {
           window.location.href = "index.html";
         }, 3000); // Increased to 3 seconds
       } else {
-        // If we're stuck in a loop, show manual option
-        sessionStorage.removeItem('auth_redirect_block');
+        // If we're stuck in a loop, it means we redirected once and still have no user.
+        // Don't clear the block yet so we don't keep looping. 
+        // Just show the manual option.
         if (chatMain) {
           chatMain.innerHTML = `
             <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:80vh;text-align:center;padding:20px;">
               <div style="font-size:60px;margin-bottom:20px;">⚠️</div>
               <h2 style="color:#ff6666;margin-bottom:10px;">Authentication Issue</h2>
-              <p style="color:#888;margin-bottom:30px;">We couldn't verify your login details.</p>
-              <button onclick="window.location.href='index.html'" style="padding:15px 30px;background:#00ff66;color:#000;border:none;border-radius:8px;cursor:pointer;font-weight:bold;font-size:16px;box-shadow: 0 4px 12px rgba(0,255,102,0.3);">Go to Login Page</button>
+              <p style="color:#888;margin-bottom:30px;">We couldn't verify your login details automatically.</p>
+              <button onclick="sessionStorage.removeItem('auth_redirect_block'); window.location.href='index.html'" style="padding:15px 30px;background:#00ff66;color:#000;border:none;border-radius:8px;cursor:pointer;font-weight:bold;font-size:16px;box-shadow: 0 4px 12px rgba(0,255,102,0.3);">Go to Login Page</button>
             </div>
           `;
         }

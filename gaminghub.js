@@ -232,6 +232,21 @@ document.addEventListener("DOMContentLoaded", () => {
   initializeFirebaseConnection();
 
   console.log("🎮 Gaming Hub fully initialized!");
+
+  // Expose functions globally for onclick handlers
+  window.viewGameDetail = viewGameDetail;
+  window.playGame = playGame;
+  window.closeGameModal = closeGameModal;
+  window.closeGamePlayer = closeGamePlayer;
+  window.shareGame = shareGame;
+  window.viewGamerProfile = viewGamerProfile;
+  window.closeGamerProfile = closeGamerProfile;
+  window.addFriend = addFriend;
+  window.inviteToSquad = inviteToSquad;
+  window.startSession = startSession;
+  window.joinSession = joinSession;
+  window.viewSquad = viewSquad;
+  window.displayLoadingState = displayLoadingState;
 });
 
 // Setup all event listeners
@@ -372,20 +387,43 @@ function displayGames(games) {
 
 // View game detail modal
 function viewGameDetail(gameId) {
-  selectedGame = allGames.find((g) => g.id === gameId);
-  if (!selectedGame) return;
+  console.log("🔍 Viewing game detail for ID:", gameId);
+  selectedGame = allGames.find((g) => g.id === parseInt(gameId, 10)) || allGames.find((g) => g.id == gameId);
+
+  if (!selectedGame) {
+    console.error("❌ Game not found for ID:", gameId);
+    return;
+  }
 
   const modal = document.getElementById("game-detail-modal");
-  document.getElementById("game-detail-image").innerHTML = selectedGame.emoji;
-  document.getElementById("game-detail-name").textContent = selectedGame.name;
-  document.getElementById("game-detail-category").textContent =
-    selectedGame.category.charAt(0).toUpperCase() + selectedGame.category.slice(1);
-  document.getElementById("game-detail-players").textContent = formatNumber(selectedGame.playersNow);
-  document.getElementById("game-detail-rating").textContent = `${selectedGame.rating} ⭐`;
-  document.getElementById("game-detail-description").textContent = selectedGame.description;
-  document.getElementById("game-detail-playing").textContent = formatNumber(selectedGame.playersNow);
-  document.getElementById("game-detail-score").textContent = formatNumber(selectedGame.avgScore);
-  document.getElementById("game-detail-time").textContent = `${selectedGame.avgTime}min`;
+  if (!modal) {
+    console.error("❌ Modal element not found!");
+    return;
+  }
+
+  // Update modal content safely
+  const imgEl = document.getElementById("game-detail-image");
+  const nameEl = document.getElementById("game-detail-name");
+  const catEl = document.getElementById("game-detail-category");
+  const playEl = document.getElementById("game-detail-players");
+  const ratEl = document.getElementById("game-detail-rating");
+  const descEl = document.getElementById("game-detail-description");
+  const playingEl = document.getElementById("game-detail-playing");
+  const scoreEl = document.getElementById("game-detail-score");
+  const timeEl = document.getElementById("game-detail-time");
+
+  if (imgEl) imgEl.innerHTML = selectedGame.emoji || "🎮";
+  if (nameEl) nameEl.textContent = selectedGame.name || "Unknown Game";
+  if (catEl) {
+    const cat = selectedGame.category || "General";
+    catEl.textContent = cat.charAt(0).toUpperCase() + cat.slice(1);
+  }
+  if (playEl) playEl.textContent = formatNumber(selectedGame.playersNow || 0);
+  if (ratEl) ratEl.textContent = `${selectedGame.rating || 0} ⭐`;
+  if (descEl) descEl.textContent = selectedGame.description || "No description available.";
+  if (playingEl) playingEl.textContent = formatNumber(selectedGame.playersNow || 0);
+  if (scoreEl) scoreEl.textContent = formatNumber(selectedGame.avgScore || 0);
+  if (timeEl) timeEl.textContent = `${selectedGame.avgTime || 0}min`;
 
   modal.style.display = "flex";
   document.body.style.overflow = "hidden";
@@ -1107,15 +1145,7 @@ window.addEventListener("beforeunload", () => {
 
 console.log("🎮 Gaming Hub Firebase connection management loaded!");
 
-// Initialize expanded features on DOM ready
-document.addEventListener("DOMContentLoaded", () => {
-  setupMainNavigation();
-
-  // Create Squad Button Listener
-  document.getElementById("createSquadBtn")?.addEventListener("click", () => {
-    showCreateSquadModal();
-  });
-});
+// Initialized on line 225
 
 // Show Create Squad Modal
 function showCreateSquadModal() {

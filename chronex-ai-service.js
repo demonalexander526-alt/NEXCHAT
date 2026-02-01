@@ -2,7 +2,7 @@
  * CHRONEX AI SERVICE
  * Advanced AI Chat Assistant for NEXCHAT
  * Supports: JavaScript, Python, C++, C, C# backends
- * Creator: DEMON ALEX
+ * Creator: DEMON ALEX CREATOR OF CHRONEX AI
  */
 
 import { db, rtdb } from "./firebase-config.js";
@@ -10,7 +10,7 @@ import { collection, addDoc, serverTimestamp, query, where, getDocs } from "http
 import { ref, push, set, onValue } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
 // ============ CREATOR INFO ============
-const CREATOR = "DEMON ALEX";
+const CREATOR = "DEMON ALEX CREATOR OF CHRONEX AI";
 
 // ============ CHRONEX AI CONFIGURATION ============
 const CHRONEX_CONFIG = {
@@ -155,10 +155,10 @@ class ChronexAI {
     // ============ CREATOR INFORMATION ============
     if (msg.includes("creator") || msg.includes("who made you") || msg.includes("who created") || msg.includes("demon alex")) {
       const creatorResponses = [
-        "I was created by **DEMON ALEX**, the brilliant developer behind CHRONEX AI and NEXCHAT. He's a master of AI systems, full-stack development, and cutting-edge technology! 🚀",
-        "My creator is **DEMON ALEX** - the genius behind CHRONEX AI! He built me with advanced neural network architecture and hybrid processing capabilities. 💡",
-        "**DEMON ALEX** is my creator! He's the mastermind developer who brought CHRONEX AI to life. His expertise in AI, Python, JavaScript, and system architecture is incredible! 👨‍💻✨",
-        "I'm proud to be created by **DEMON ALEX**, the developer of CHRONEX AI and NEXCHAT. He's pushing the boundaries of what's possible in AI-powered chat applications! 🌟"
+        "I was created by **DEMON ALEX CREATOR OF CHRONEX AI**, the brilliant developer behind CHRONEX AI and NEXCHAT. He's a master of AI systems, full-stack development, and cutting-edge technology! 🚀",
+        "My creator is **DEMON ALEX CREATOR OF CHRONEX AI** - the genius behind CHRONEX AI! He built me with advanced neural network architecture and hybrid processing capabilities. 💡",
+        "**DEMON ALEX CREATOR OF CHRONEX AI** is my creator! He's the mastermind developer who brought CHRONEX AI to life. His expertise in AI, Python, JavaScript, and system architecture is incredible! 👨‍💻✨",
+        "I'm proud to be created by **DEMON ALEX CREATOR OF CHRONEX AI**, the developer of CHRONEX AI and NEXCHAT. He's pushing the boundaries of what's possible in AI-powered chat applications! 🌟"
       ];
       return creatorResponses[Math.floor(Math.random() * creatorResponses.length)];
     }
@@ -311,9 +311,25 @@ class ChronexAI {
       "greeting": {
         keywords: ["hello", "hi", "hey", "greetings", "good morning", "good evening", "yo"],
         responses: [
-          "Hello! 👋 I'm **Chronex AI**, created by **DEMON ALEX**. My neural pathways are optimized and ready. How shall we proceed?",
+          "Hello! 👋 I'm **Chronex AI**, created by **DEMON ALEX CREATOR OF CHRONEX AI**. My neural pathways are optimized and ready. How shall we proceed?",
           "Hi there! 🤖 Connection established. Ready to code, calculate, or chat. What's the directive?",
           "Greetings, entity. I am online and fully operational. NEX_CORE synchronization at 100%. Ask me anything."
+        ]
+      },
+      "security-advanced": {
+        keywords: ["pentest", "vulnerability", "exploit", "firewall", "zero day", "injection", "xss", "csrf"],
+        responses: [
+          "**Advanced Security**: For SQL Injection defense, always use parameterized queries. For XSS, implement strict Content Security Policies (CSP) and sanitize all user-contributed DOM nodes.",
+          "**Infrastructure Hardening**: Multi-factor authentication is mandatory. Use encrypted vaults for secrets management. Implementation of zero-trust architecture is the modern standard for neural security.",
+          "**System Integrity**: Regular automated scanning and manual penetration testing are required to maintain a secure ecosystem. My core is constantly monitoring for unauthorized access attempts."
+        ]
+      },
+      "architecture": {
+        keywords: ["microservices", "monolith", "serverless", "distributed", "scalability", "latency", "throughput"],
+        responses: [
+          "**System Scaling**: Horizontal scaling (adding more instances) is superior for distributed systems compared to vertical scaling. Use load balancers to distribute traffic effectively.",
+          "**Microservices**: Decoupling services allows for independent scaling and technology diversity. Use event-driven messaging (like Kafka or RabbitMQ) for inter-service communication.",
+          "**Architecture Design**: Prioritize high availability and fault tolerance. Implement circuit breakers to prevent cascading failures in complex neural networks."
         ]
       }
     };
@@ -350,12 +366,12 @@ class ChronexAI {
 
     // ============ IDENTITY & CAPABILITIES ============
     if (msg.includes("who are you") || msg.includes("what are you") || msg.includes("introduce")) {
-      return `I am **CHRONEX AI (Enhanced)** 🧠✨\n\nCreated by: **DEMON ALEX**\n\n**Capabilities**:\n• 💻 Code Generation & Analysis\n• 🧮 Math & Logic Solving\n• 🌐 Web & Cloud Architecture\n• 🤖 AI & ML Concepts\n\nI run on a hybrid architecture (Local + Optional Python Backend). How can I assist you?`;
+      return `I am **CHRONEX AI (Ultimate Edition)** 🧠✨\n\nCreated by: **DEMON ALEX CREATOR OF CHRONEX AI**\n\n**Capabilities**:\n• 💻 Code Generation & Advanced Analysis\n• 🧮 Complex Math & Logic Solutions\n• 🌐 Enterprise Web & Distributed Architecture\n• 🤖 Cutting-edge AI & Machine Learning Research\n• 🔒 Cybersecurity & System Hardening\n\nI run on a highly-optimized hybrid architecture. What is your directive?`;
     }
 
     // ============ GRATITUDE ============
     if (msg.includes("thank") || msg.includes("appreciate")) {
-      return `You're welcome! 🚀 **DEMON ALEX** designed me to be helpful. Happy coding!`;
+      return `You're welcome! 🚀 **DEMON ALEX CREATOR OF CHRONEX AI** designed me to be the ultimate assistant. Always here to optimize your workflow!`;
     }
 
     // ============ GENERAL CONVERSATION (FALLBACK) ============
