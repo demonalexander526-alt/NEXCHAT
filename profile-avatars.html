@@ -331,11 +331,18 @@
     <div class="main-area">
         <div class="sidebar">
             <div style="font-size:12px; color:#555; margin-bottom:10px;">SECTOR SELECT</div>
-            <button class="filter-btn active" onclick="setFilter('all', event)">All Units</button>
-            <button class="filter-btn" onclick="setFilter('human', event)">Synthetics</button>
-            <button class="filter-btn" onclick="setFilter('skull', event)">Reapers</button>
-            <button class="filter-btn" onclick="setFilter('hacker', event)">Netrunners</button>
-            <button class="filter-btn" onclick="setFilter('mech', event)">War Machines</button>
+            <button class="filter-btn active" onclick="setFilter('all', event)">ALL_CHROME_UNITS</button>
+            <button class="filter-btn" onclick="setFilter('nex', event)" style="color:#00ffaa; font-weight:bold;">★
+                Chrome-Elite</button>
+            <button class="filter-btn" onclick="setFilter('human', event)">Neo-Synth</button>
+            <button class="filter-btn" onclick="setFilter('skull', event)">Silver-Sentinel</button>
+            <button class="filter-btn" onclick="setFilter('hacker', event)">Hyper-Android</button>
+            <button class="filter-btn" onclick="setFilter('mech', event)">Core-Cyborg</button>
+
+            <div style="margin-top:auto; padding-top:20px; border-top:1px solid #222;">
+                <button class="filter-btn rescan-btn" onclick="rescanSector()"
+                    style="border-color:#00ffaa; color:#00ffaa;">RESCAN SYSTEM</button>
+            </div>
         </div>
 
         <div class="scroll-container" id="cardGrid">
@@ -372,69 +379,136 @@
     </div>
 
     <script>
-        // --- REALISM ENGINE V9 (MAXIMUM CAPACITY) ---
-        // RESTORED TO 100 AVATARS & REFINED PROMPTS
+        // --- REALISM ENGINE V10 (ROBUST & HIGH CAPACITY) ---
+        const avatars = [];
+        let currentFilter = 'all';
+        let selectedAvatar = null;
 
         function getAvatarUrl(type, seed) {
-            // dynamic additives based on seed to create variations
             const colors = ['neon blue', 'toxic green', 'cyber pink', 'bright red', 'golden', 'purple plasma', 'white glowing', 'electric indigo'];
             const materials = ['polished chrome', 'matte black metal', 'rusted iron', 'transparent glass', 'carbon fiber', 'brushed titanium', 'iridescent plastic'];
             const color = colors[seed % colors.length];
             const material = materials[seed % materials.length];
-
-            // Common high-fidelity keywords for consistency with "Subject 3633" style
             const qualityVibe = "hyper realistic, 8k, cinematic lighting, octane render, unreal engine 5, detailed texture";
 
-            if (type === 'human') {
-                // SYNTHETICS: The user LOVED this style (Subject 3633)
-                // Keeping the core "Cyborg Android" look but boosting quality
-                const prompt = `portrait of a futuristic cyborg android, ${material} skin, glowing ${color} eyes, intricate biomechanical face details, half human half machine, ${qualityVibe}, depth of field`;
-                return `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=600&height=600&seed=${seed}&nologo=true`;
-            }
-            else if (type === 'skull') {
-                // REAPERS: Robotic Demon Skulls - Matching the high-tech aesthetic
-                const prompt = `sinister robotic demon skull, terminator T-800 style, ${material} bone structure, burning ${color} eyes, exposed horror cabling, nightmare fuel, ${qualityVibe}`;
-                return `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=600&height=600&seed=${seed}&nologo=true`;
-            }
-            else if (type === 'hacker') {
-                // NETRUNNERS: Hacker scene - Matching the requested vibe
-                const prompt = `masked cyberpunk hacker sitting in dark server room, staring at multiple monitors, glowing ${color} matrix code reflection in visor, techwear hoodie, ${material} cybernetics, ${qualityVibe}`;
-                return `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=600&height=600&seed=${seed}&nologo=true`;
-            }
-            else if (type === 'mech') {
-                // WAR MACHINES: Heavy Battle Bots
-                const prompt = `portrait of a heavy war mech robot head, ${material} armor plating, battle damage, glowing ${color} lens, transformers style, aggressive design, weaponized, ${qualityVibe}`;
-                return `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=600&height=600&seed=${seed}&nologo=true`;
+            let prompt = "";
+            // NEX_CORE: CHROME_SURGE PROMPTS (MATCHING USER REFERENCE)
+            const style = "non-organic ultra-realistic highly polished liquid chrome robot head, 100% mechanical assembly, exposed gears, hydraulic wires, glowing blue optic sensors, industrial style, 8k, cinematic lighting, octane render, machine parts, zero human skin, no organic tissue";
+
+            if (type === 'nex') {
+                prompt = `extreme close-up of the ultimate elite ${style}, masterfully crafted mechanical features, intense glowing blue internal sensors, masterpiece engineering`;
+            } else if (type === 'human') {
+                prompt = `ultra-realistic portrait of a futuristic humanoid robot (synth), sleek white ceramic and silver chrome face structure, glowing cyan intricate circuitry visible through translucent synthetic panels, mechanical eyes with depth, ${style}, elegant but 100% robotic`;
+            } else if (type === 'skull') {
+                prompt = `futuristic silver-sentinel robotic head, sharp chrome armor, ${style}, aggressive high-tech design`;
+            } else if (type === 'hacker') {
+                prompt = `advanced surveillance robotic entity, chrome skull structure with exposed glowing blue light-wires, ${style}, digital infiltration machine`;
+            } else if (type === 'mech') {
+                prompt = `heavy core-cyborg head, reinforced chrome plating, ${style}, powerful industrial robotics`;
+            } else {
+                prompt = `chrome mechanical robot entity, glowing blue sensors, ${style}`;
             }
 
-            return `https://image.pollinations.ai/prompt/cyberpunk%20robot?width=600&height=600&seed=${seed}`;
+            return `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=512&height=512&seed=${seed}&nologo=true`;
         }
 
-        function getAvatarClass(type) {
-            // No filters needed now that we generate the actual imagery!
-            return 'img-standard';
-        }
+        window.handleAvatarError = function (img, type, seed) {
+            if (!img || img.dataset.failed === 'true') return;
+            img.dataset.failed = 'true';
 
-        // --- APP LOGIC ---
-        let currentFilter = 'all';
-        let selectedAvatar = null;
-        const avatars = [];
+            console.warn(`⚠️ NEX_CORE: Recalibrating Beam Output [${type}]`);
 
-        // Generate 100 Avatars (25 per category) - FULL CAPACITY
+            // FALLBACK TO A SIMPLIFIED HIGH-REALISM PROMPT INSTEAD OF CARTOONS
+            const fallbackPrompt = "hyper-realistic silver chrome robot head, glowing blue eyes, highly detailed metal, cinematic, 8k, machine parts";
+            img.src = `https://image.pollinations.ai/prompt/${encodeURIComponent(fallbackPrompt)}?width=512&height=512&seed=${seed + 999}&nologo=true`;
+
+            img.onload = () => { img.style.opacity = '1'; };
+            img.onerror = () => {
+                img.src = "logo.jpg";
+                img.style.opacity = '1';
+            };
+        };
+
         function init() {
-            // Enhanced randomness for seeds to ensure visual variety
             const baseSeed = Math.floor(Math.random() * 99999);
+            avatars.length = 0;
 
-            // Humans (25)
-            for (let i = 0; i < 25; i++) avatars.push({ type: 'human', name: `Subject ${1000 + i}`, seed: baseSeed + i });
-            // Skulls (25) 
-            for (let i = 0; i < 25; i++) avatars.push({ type: 'skull', name: `Reaper ${100 + i}`, seed: baseSeed + i + 100 });
-            // Hackers (25)
-            for (let i = 0; i < 25; i++) avatars.push({ type: 'hacker', name: `Ghost ${2000 + i}`, seed: baseSeed + i + 200 });
-            // Mechs (25)
-            for (let i = 0; i < 25; i++) avatars.push({ type: 'mech', name: `Unit X-${50 + i}`, seed: baseSeed + i + 300 });
+            // ELITE SECTOR: 15 Units
+            for (let i = 0; i < 15; i++) {
+                avatars.push({
+                    type: 'nex',
+                    name: `CHROME-ELITE-${700 + i}`,
+                    seed: baseSeed + i + 9000
+                });
+            }
 
+            const types = ['human', 'skull', 'hacker', 'mech'];
+            const labels = { 'human': 'Synth', 'skull': 'Sentinel', 'hacker': 'Hyper', 'mech': 'Cyborg' };
+            const startIds = { 'human': 100, 'skull': 200, 'hacker': 300, 'mech': 400 };
+
+            types.forEach(type => {
+                // Reduced to 15 for INSTANT LOADING
+                for (let i = 0; i < 15; i++) {
+                    avatars.push({
+                        type: type,
+                        name: `${labels[type]}-${startIds[type] + i}`,
+                        seed: baseSeed + i + (types.indexOf(type) * 1000)
+                    });
+                }
+            });
+
+            console.log(`🚀 NEX_CORE: ${avatars.length} Ultra-Fast Units Online`);
             render();
+        }
+
+        // Feature: Rescan for completely new droids
+        window.rescanSector = function () {
+            const btn = document.querySelector('.rescan-btn');
+            if (btn) btn.innerText = "SCANNING...";
+            setTimeout(() => {
+                init();
+                if (btn) btn.innerText = "RESCAN SYSTEM";
+            }, 500);
+        };
+
+        function render() {
+            const g = document.getElementById('cardGrid');
+            if (!g) return;
+            g.innerHTML = '';
+
+            const filtered = avatars.filter(av => currentFilter === 'all' || av.type === currentFilter);
+
+            if (filtered.length === 0) {
+                g.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: #ff6b6b; padding: 50px;">⚠️ NEX_CORE ERROR: SECTOR EMPTY [${currentFilter.toUpperCase()}]</div>`;
+                return;
+            }
+
+            filtered.forEach(av => {
+                const src = getAvatarUrl(av.type, av.seed);
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                  <div class="card-img-wrap" style="background: #050505;">
+                    <div class="loading-spinner" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); color:#00ffaa; font-size:9px; font-weight:bold; letter-spacing:2px; z-index:1; text-align:center;">
+                        <div style="margin-bottom:5px;">INITIATING_SCAN...</div>
+                        <div style="font-size:8px; color:#444;">DATAFETCH: ${av.seed % 100}%</div>
+                    </div>
+                    <img src="${src}" class="card-img" style="opacity:0; transition: opacity 0.8s ease-in-out; position:relative; z-index:2;"
+                         onload="this.style.opacity='1'; if(this.previousElementSibling) this.previousElementSibling.style.display='none';"
+                         onerror="handleAvatarError(this, '${av.type}', ${av.seed})">
+                  </div>
+                  <div class="card-info">
+                    <div class="card-name">${av.name}</div>
+                    <div class="card-type">CHROME_${av.type.toUpperCase()}_MODEL</div>
+                  </div>
+                `;
+
+                // REMOVED AUTO-TIMEOUT TO PREVENT CARTOONS
+                // We let the high-quality AI finish its work.
+
+                card.onclick = () => openModal(av, card.querySelector('img').src);
+                g.appendChild(card);
+            });
         }
 
         function setFilter(f, event) {
@@ -444,73 +518,52 @@
             render();
         }
 
-        function render() {
-            const g = document.getElementById('cardGrid');
-            g.innerHTML = '';
-
-            avatars.forEach(av => {
-                if (currentFilter !== 'all' && av.type !== currentFilter) return;
-
-                const src = getAvatarUrl(av.type, av.seed);
-                const imgClass = getAvatarClass(av.type);
-
-                const card = document.createElement('div');
-                card.className = 'card';
-                // Enhanced error handling: Try to reload with a different seed/fallback if it fails
-                // prevents empty boxes
-                card.innerHTML = `
-          <div class="card-img-wrap">
-            <img src="${src}" class="card-img ${imgClass}" loading="lazy" 
-                 onerror="this.onerror=null; this.src='https://image.pollinations.ai/prompt/cyberpunk%20glitch%20error?width=600&height=600&nologo=true&seed=${Math.random()}';">
-          </div>
-          <div class="card-info">
-            <div class="card-name">${av.name}</div>
-            <div class="card-type">${av.type.toUpperCase()} CLASS</div>
-          </div>
-        `;
-                card.onclick = () => openModal(av, src, imgClass);
-                g.appendChild(card);
-            });
-        }
-
-        function openModal(av, src, imgClass) {
-            selectedAvatar = { ...av, url: src }; // Use URL instead of svg data
+        function openModal(av, src) {
+            selectedAvatar = { ...av, url: src };
             const modalImg = document.getElementById('modalImg');
+            if (modalImg) {
+                modalImg.src = src;
+                modalImg.style.filter = "";
+            }
 
-            modalImg.src = src;
-            modalImg.className = imgClass; // Apply the same filter class
+            const titleEl = document.getElementById('modalTitle');
+            const typeEl = document.getElementById('modalType');
+            const descEl = document.getElementById('modalDesc');
 
-            document.getElementById('modalTitle').innerText = av.name;
-            document.getElementById('modalType').innerText = av.type.toUpperCase();
+            if (titleEl) titleEl.innerText = av.name;
+            if (typeEl) typeEl.innerText = av.type.toUpperCase() + " CLASS ROBOT";
 
-            // Dynamic Description
             let desc = "Standard Identity Unit.";
-            if (av.type === 'human') desc = "Verified organic resemblance. Neural-ready.";
-            if (av.type === 'skull') desc = "Reaper Class ID. Warning: High threat level.";
-            if (av.type === 'hacker') desc = "Netrunner signature. Decryption keys active.";
-            if (av.type === 'mech') desc = "War Machine chassis. Heavily armored interface.";
+            if (av.type === 'nex') desc = "Ultimate Chrome-Elite Unit. Peak robotic identity with maximum liquid-silver fidelity.";
+            if (av.type === 'human') desc = "Neo-Synth Humanoid. High-elegance robotic chassis with human-like facial architecture but 100% synthetic construction.";
+            if (av.type === 'skull') desc = "Silver-Sentinel unit. Reinforced chrome frame for high-intensity operations.";
+            if (av.type === 'hacker') desc = "Hyper-Android frame. Digital specialist with exposed glowing neural-wiring.";
+            if (av.type === 'mech') desc = "Core-Cyborg chassis. Industrial grade chrome plating for maximum durability.";
 
-            document.getElementById('modalDesc').innerText = desc;
-            document.getElementById('modal').classList.add('open');
+            if (descEl) descEl.innerText = desc;
+
+            const modal = document.getElementById('modal');
+            if (modal) modal.classList.add('open');
         }
 
         function closeModal() {
-            document.getElementById('modal').classList.remove('open');
+            const modal = document.getElementById('modal');
+            if (modal) modal.classList.remove('open');
         }
 
         function confirmIdentity(event) {
-            // Visual feedback
             const btn = event ? event.target : document.querySelector('.confirm-btn');
-            if (btn) btn.innerText = "PROCESSING...";
+            if (btn) btn.innerText = "NESTING IDENTITY...";
 
             if (window.opener) {
                 window.opener.postMessage({ type: 'avatarSelected', avatar: selectedAvatar }, '*');
-                setTimeout(() => window.close(), 100); // Small delay to show feedback
+                setTimeout(() => window.close(), 200);
             } else {
-                alert('Local Copy: Identity Saved');
+                alert('NEX_CORE: Robotic Identity Saved');
             }
         }
 
+        // START ENGINE
         init();
 
     </script>

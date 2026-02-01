@@ -6,7 +6,7 @@ REM Created by DEMON ALEX
 REM ========================================
 
 title CHRONEX AI - Auto Updater
-color 0E
+color 0E        
 
 echo.
 echo ========================================

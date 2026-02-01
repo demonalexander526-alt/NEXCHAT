@@ -1,0 +1,35 @@
+ ✅ PWA Service Worker registered successfully: ServiceWorkerRegistration {installing: null, waiting: null, active: ServiceWorker, navigationPreload: NavigationPreloadManager, scope: 'https://demonalexander526-alt.github.io/NEXCHAT/', …}
+ Scope: https://demonalexander526-alt.github.io/NEXCHAT/
+ State: activated
+ 🔗 Setting up button event listeners...
+chat.js:5853 Uncaught 
+ ✅ Messaging features initialized
+ ✅ All button functions loaded successfully
+ ✅ Attaching button listeners
+ ✅ Back button
+ ✅ Search button
+ ✅ Settings button
+ ✅ Fullscreen button
+ ✅ Back to chat list button
+ ✅ Create group button
+ ✅ Filter tabs (5 buttons)
+ ✅ Upload status image button
+ ✅ Post status button
+ ✅ Attach file button
+button-setup.js:181 ✅ Remove attachment button
+button-setup.js:201 ✅ Close emoji button
+button-setup.js:228 ✅ Poll button
+button-setup.js:241 ✅ Close search button
+button-setup.js:252 ✅ Browse users button
+button-setup.js:262 ✅ Close info button
+button-setup.js:271 ✅ Close info button 2
+button-setup.js:300 ✅ Bottom navigation buttons (7 buttons)
+button-setup.js:311 ✅ Poll modal close button
+button-setup.js:323 ✅ Create group modal close button
+button-setup.js:337 ✅ Settings modal close button
+button-setup.js:352 ✅ Settings logout button
+button-setup.js:367 ✅ File input change handler
+button-setup.js:383 ✅ Status image input handler
+button-setup.js:386 ✅✅✅ ALL BUTTON LISTENERS ATTACHED ✅✅✅
+chat.html:538  GET https://demonalexander526-alt.github.io/NEXCHAT/assets/default_group.png 404 (Not Found)
+messaging-features.js:130 ✅ Swipe-to-reply setup complete

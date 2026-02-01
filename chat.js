@@ -37,6 +37,7 @@ let currentChatType = 'direct'; // 'direct' or 'group'
 let myUID = null;
 let myUsername = null;
 let myProfilePic = null;
+let tokens = 0;
 let messageListener = null;
 let messageListener2 = null;
 let contactsListener = null;
@@ -724,6 +725,7 @@ window.addEventListener('DOMContentLoaded', () => {
   };
 });
 
+
 function escape(text) {
   const div = document.createElement("div");
   div.textContent = text || "";
@@ -773,6 +775,9 @@ function showChatListView() {
   }
   // Hide chat profile display when returning to list view
   hideChatProfileDisplay();
+
+  // Restore user background when returning to list view
+  if (window.loadUserBackground) window.loadUserBackground();
 }
 
 function showChatDetailView() {
@@ -1974,41 +1979,17 @@ async function sendMessage(e) {
     return;
   }
 
-  // Check internet connection
-  if (!navigator.onLine) {
-    console.log("📵 User is offline - queueing message");
-    await storeOfflineMessage(currentChatUser, text, currentChatType, selectedFile?.name || null);
-
-    // Show optimistic UI
-    messageText.value = "";
-    selectedFile = null;
-    document.getElementById("attachment-preview").style.display = "none";
-    showNotif("📵 You're offline - message will send when online", "info", 3000);
-    hapticFeedback('light');
-    return;
-  }
+  hapticFeedback('light');
 
   try {
-    // Get current user's tokens
     const userRef = doc(db, "users", myUID);
-    const userDoc = await getDoc(userRef);
 
-    if (!userDoc.exists()) {
-      showNotif("❌ User profile not found", "error");
-      return;
-    }
-
-    const currentTokens = userDoc.data()?.tokens ?? 0;
-
-    // Check if user has at least 1 token
-    if (currentTokens < 1) {
+    // Use global tokens variable for immediate check (offline-friendly)
+    if (tokens < 1) {
       showNotif("❌ Insufficient tokens! You need at least 1 token to send a message. 💳", "error");
       return;
     }
 
-    hapticFeedback('light');
-
-    let newTokens = currentTokens - 1;
     let attachment = null;
 
     // Upload file if selected
@@ -2041,11 +2022,11 @@ async function sendMessage(e) {
 
         // Deduct 1 token
         await updateDoc(userRef, {
-          tokens: newTokens,
+          tokens: increment(-1),
           lastMessageSentAt: serverTimestamp()
         });
 
-        showNotif(`✓ AI response received(-1 token, ${newTokens} remaining)`, "success", 2000);
+        showNotif(`✓ AI response received (-1 token)`, "success", 2000);
       } catch (aiErr) {
         console.error("❌ Chronex AI error:", aiErr);
         displayChronexAIError("Sorry, I encountered an error processing your message. Please try again.");
@@ -2086,7 +2067,7 @@ async function sendMessage(e) {
 
       // Deduct 1 token
       await updateDoc(userRef, {
-        tokens: newTokens,
+        tokens: increment(-1),
         lastMessageSentAt: serverTimestamp()
       });
 
@@ -2096,7 +2077,7 @@ async function sendMessage(e) {
           userId: myUID,
           recipientId: currentChatUser,
           sentAt: new Date(),
-          messageLength: text.length,
+          messageLength: (text || "").length,
           hasAttachment: !!attachment,
           tokensCost: 1
         });
@@ -2105,22 +2086,18 @@ async function sendMessage(e) {
       }
     }
 
-    // Update token display
-    const tokenDisplay = document.getElementById("tokenCount");
-    if (tokenDisplay) {
-      tokenDisplay.textContent = newTokens;
-    }
-
-    // Clear reply preview after sending
+    // Clear UI state
     if (window.messagingFeatures && window.messagingFeatures.hideReplyPreview) {
       window.messagingFeatures.hideReplyPreview();
     }
 
-    messageText.value = "";
-    removeAttachment();
+    if (messageText) messageText.value = "";
+    if (typeof removeAttachment === 'function') removeAttachment();
+
     hapticFeedback('success');
-    showNotif(`✓ Message sent(-1 token, ${newTokens} remaining)`, "success", 2000);
-    document.getElementById("emoji-picker").style.display = "none";
+    showNotif(`✓ Message sent`, "success", 2000);
+    const emojiPicker = document.getElementById("emoji-picker");
+    if (emojiPicker) emojiPicker.style.display = "none";
     console.log("✅ Message sent successfully");
   } catch (err) {
     hapticFeedback('heavy');
@@ -2155,7 +2132,7 @@ function displayChronexAIResponse(response) {
   const messageEl = document.createElement("div");
   messageEl.className = "message ai-message";
   messageEl.innerHTML = `
-    <div class="message-avatar">🤖</div>
+    <img src="chronex-ai.jpg" class="message-avatar" alt="AI" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1px solid #00ff66;">
     <div class="message-content">
       <p>${response.replace(/\n/g, '<br>')}</p>
     </div>
@@ -2173,7 +2150,7 @@ function displayChronexAIError(errorMessage) {
   const messageEl = document.createElement("div");
   messageEl.className = "message ai-message error-message";
   messageEl.innerHTML = `
-    <div class="message-avatar">⚠️</div>
+    <img src="chronex-ai.jpg" class="message-avatar" alt="AI" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1px solid #ff4d4d;">
     <div class="message-content">
       <p>${escape(errorMessage)}</p>
     </div>
@@ -2214,7 +2191,7 @@ function loadMessages() {
     messagesDiv.innerHTML = `
       <div class="messages-list">
         <div class="empty-state">
-          <p>🤖 Welcome to Chronex AI!</p>
+          <p><img src="chronex-ai.jpg" style="width: 40px; height: 40px; border-radius: 50%; vertical-align: middle; margin-bottom: 10px; border: 2px solid #00ff66;"><br>Welcome to Chronex AI!</p>
           <p class="hint">I'm an advanced AI assistant. Ask me anything about coding, math, data analysis, and more!</p>
           <div style="margin-top: 20px; text-align: left; font-size: 12px; color: #888;">
             <p><strong>Capabilities:</strong></p>
@@ -2459,7 +2436,13 @@ function updateChatProfileDisplay(username, profilePic, status = 'Online') {
     if (activeChatName) activeChatName.textContent = username;
     if (activeChatStatus) activeChatStatus.textContent = status;
     if (activeChatAvatar) {
-      activeChatAvatar.src = profilePic || "👤";
+      if (profilePic && (profilePic.startsWith('http') || profilePic.startsWith('data:') || profilePic.includes('.'))) {
+        activeChatAvatar.src = profilePic;
+        activeChatAvatar.style.display = 'block';
+      } else {
+        // Use placeholder or hide
+        activeChatAvatar.src = 'logo.jpg'; // Better than an emoji string
+      }
 
       // AVATAR CLICK → Show Profile Picture Modal
       activeChatAvatar.style.cursor = 'pointer';
@@ -2572,14 +2555,26 @@ async function openChat(uid, username, profilePic, chatType = 'direct') {
   if (chatNameEl) chatNameEl.textContent = username;
 
   const chatProfilePicEl = document.getElementById("chatProfilePic");
-  if (chatProfilePicEl) chatProfilePicEl.src = profilePic || "👤";
+  if (chatProfilePicEl) {
+    if (profilePic && (profilePic.startsWith('http') || profilePic.startsWith('data:') || profilePic.includes('.'))) {
+      chatProfilePicEl.src = profilePic;
+    } else {
+      chatProfilePicEl.src = 'logo.jpg';
+    }
+  }
 
   // Update info sidebar (with null checks)
   const infoNameEl = document.getElementById("infoName");
   if (infoNameEl) infoNameEl.textContent = username;
 
   const infoPicEl = document.getElementById("infoPic");
-  if (infoPicEl) infoPicEl.src = profilePic || "👤";
+  if (infoPicEl) {
+    if (profilePic && (profilePic.startsWith('http') || profilePic.startsWith('data:') || profilePic.includes('.'))) {
+      infoPicEl.src = profilePic;
+    } else {
+      infoPicEl.src = 'logo.jpg';
+    }
+  }
 
   try {
     if (chatType === 'group') {
@@ -2667,8 +2662,10 @@ async function openChat(uid, username, profilePic, chatType = 'direct') {
 
         showNotif("ℹ️ User profile not fully synced yet. Chat enabled via UID.", "info");
       }
+    }
 
-      // Automatically add to contacts if not already there
+    // If it's a direct chat (not group and not AI), auto-add to contacts if not already there
+    if (chatType === 'direct' && myUID && uid !== myUID) {
       try {
         const myUserRef = doc(db, "users", myUID);
         const myUserDoc = await getDoc(myUserRef);
@@ -2681,7 +2678,7 @@ async function openChat(uid, username, profilePic, chatType = 'direct') {
 
           // Reload the contacts list to show the new conversation
           setTimeout(() => {
-            loadContacts();
+            if (typeof loadContacts === 'function') loadContacts();
           }, 300);
         }
       } catch (contactErr) {
@@ -4231,9 +4228,104 @@ function renderPoll(pollId, poll) {
       Total votes: ${totalVotes}
     </div>
   `;
-
   return pollHTML;
 }
+
+// ============================================================
+// BACKGROUND MANAGEMENT FUNCTIONS
+// ============================================================
+
+function applyBackgroundImage(imageUrl) {
+  const app = document.querySelector(".app");
+  if (app) {
+    app.style.backgroundImage = `url('${imageUrl}')`;
+    app.style.backgroundSize = 'cover';
+    app.style.backgroundPosition = 'center';
+
+    // Android Optimization: 'fixed' attachment is buggy on mobile, use 'scroll'
+    // and ensure the container is tall enough
+    if (typeof isAndroid !== 'undefined' && isAndroid) {
+      app.style.backgroundAttachment = 'scroll';
+      app.style.minHeight = '100dvh'; // Use dynamic viewport height
+    } else {
+      app.style.backgroundAttachment = 'fixed';
+    }
+
+    app.style.backgroundRepeat = 'no-repeat';
+    app.style.backgroundColor = 'transparent';
+    console.log("✅ Background applied:", imageUrl, typeof isAndroid !== 'undefined' && isAndroid ? "(Android optimized)" : "");
+  }
+}
+
+function removeBackgroundImage() {
+  const app = document.querySelector(".app");
+  if (app) {
+    app.style.backgroundImage = "none";
+    app.style.backgroundColor = ""; // Reset to default CSS value
+    console.log("✅ Background removed");
+  }
+}
+
+function updateBackgroundPreview(imageUrl) {
+  const preview = document.getElementById("backgroundPreview");
+  if (preview) {
+    preview.style.backgroundImage = `url('${imageUrl}')`;
+  }
+}
+
+async function loadChatBackground(chatId, chatType) {
+  try {
+    if (chatType === 'ai') {
+      applyBackgroundImage('chronex-background.jpg');
+      return;
+    }
+
+    if (!myUID) return;
+
+    const bgDocPath = chatType === 'group'
+      ? `groupBackgrounds/${chatId}`
+      : `directMessageBackgrounds/${myUID}_${chatId}`;
+
+    const bgDoc = await getDoc(doc(db, bgDocPath.split('/')[0], bgDocPath.split('/')[1]));
+
+    if (bgDoc.exists() && bgDoc.data().backgroundUrl) {
+      applyBackgroundImage(bgDoc.data().backgroundUrl);
+    } else {
+      // Revert to user global background
+      loadUserBackground();
+    }
+  } catch (error) {
+    console.warn("Could not load chat background:", error);
+    loadUserBackground();
+  }
+}
+
+async function loadUserBackground() {
+  try {
+    const savedBg = localStorage.getItem("nexchat_background");
+    if (savedBg) {
+      applyBackgroundImage(savedBg);
+      updateBackgroundPreview(savedBg);
+      return;
+    }
+
+    if (!myUID) return;
+
+    const bgDoc = await getDoc(doc(db, "userBackgrounds", myUID));
+    if (bgDoc.exists() && bgDoc.data().backgroundUrl) {
+      const bgUrl = bgDoc.data().backgroundUrl;
+      applyBackgroundImage(bgUrl);
+      updateBackgroundPreview(bgUrl);
+      localStorage.setItem("nexchat_background", bgUrl);
+    }
+  } catch (error) {
+    console.warn("⚠️ Failed to load user background:", error);
+  }
+}
+
+window.loadChatBackground = loadChatBackground;
+window.loadUserBackground = loadUserBackground;
+window.loadUserBackgroundOnAuth = loadUserBackground;
 
 // Initialize app after DOM is ready
 if (document.readyState === "loading") {
@@ -4304,11 +4396,31 @@ async function setupInitialization() {
           const profilePicModal = document.getElementById('profilePicModal');
           if (profilePicModal) {
             profilePicModal.onclick = (e) => {
-              if (e.target === profilePicModal) profilePicModal.style.display = 'none';
+              if (e.target === profilePicModal) {
+                profilePicModal.style.display = 'none';
+              }
             };
           }
 
+          // Listener for avatar selection from other pages (profile-upload or profile-avatars)
+          window.addEventListener('message', (event) => {
+            if (event.data.type === 'avatarSelected') {
+              const avatar = event.data.avatar;
+              const newPic = avatar.url || avatar.svg;
+              if (newPic) {
+                myProfilePic = newPic;
+                const profileBtn = document.getElementById('profile-sticker');
+                if (profileBtn) {
+                  profileBtn.style.backgroundImage = `url('${newPic}')`;
+                  profileBtn.style.fontSize = '0';
+                }
+                const statusImg = document.getElementById('myStatusPic');
+                if (statusImg) statusImg.src = newPic;
+              }
+            }
+          });
           const tokenCount = userData.tokens ?? 0;
+          tokens = tokenCount; // Sync initial tokens to global variable
           console.log("💰 Token count from Firebase:", tokenCount);
           console.log("💰 User data:", userData);
 
@@ -4383,6 +4495,7 @@ async function setupInitialization() {
 
             // Only update if tokens field exists and has a valid value
             if (typeof currentTokens === 'number' && currentTokens >= 0) {
+              tokens = currentTokens; // Sync global tokens variable
               const tokenDisplay = document.getElementById("tokenCount");
               if (tokenDisplay) {
                 const oldValue = tokenDisplay.textContent;
@@ -4574,560 +4687,476 @@ async function setupInitialization() {
       }
     }
   });
+}
 
-  // ========== SETTINGS EVENT LISTENERS ==========
+// ========== SETTINGS EVENT LISTENERS ==========
 
-  // Fullscreen button click
-  document.getElementById("fullscreen-btn-header")?.addEventListener("click", (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    toggleFullscreen();
-  }, false);
+// Fullscreen button click
+document.getElementById("fullscreen-btn-header")?.addEventListener("click", (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  toggleFullscreen();
+}, false);
 
-  // Settings button click
-  document.getElementById("settings-btn-header")?.addEventListener("click", (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    openSettingsModal();
-  }, false);
+// Settings button click
+document.getElementById("settings-btn-header")?.addEventListener("click", (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  openSettingsModal();
+}, false);
 
-  // Close settings modal with improved touch handling
-  document.getElementById("closeSettingsBtn")?.addEventListener("click", () => {
+// Close settings modal with improved touch handling
+document.getElementById("closeSettingsBtn")?.addEventListener("click", () => {
+  saveSettingsPreferences();
+  closeSettingsModal();
+}, false);
+
+// Copy UID button
+document.getElementById("copyUIDBtn")?.addEventListener("click", () => {
+  const userUIDDisplay = document.getElementById("userUIDDisplay");
+  if (userUIDDisplay && myUID) {
+    navigator.clipboard.writeText(myUID).then(() => {
+      showNotif("✅ UID copied to clipboard!", "success", 2000);
+      const btn = document.getElementById("copyUIDBtn");
+      if (btn) {
+        const originalText = btn.textContent;
+        btn.textContent = "✓ Copied!";
+        setTimeout(() => {
+          btn.textContent = originalText;
+        }, 2000);
+      }
+    }).catch(() => {
+      showNotif("⚠️ Failed to copy UID", "error");
+    });
+  }
+}, false);
+
+const transferTokensBtnEl = document.getElementById("transferTokensBtn");
+if (transferTokensBtnEl) {
+  transferTokensBtnEl.addEventListener("click", transferTokens, false);
+  console.log("✅ Transfer Tokens button listener attached successfully");
+} else {
+  console.error("❌ Transfer Tokens button not found in DOM!");
+}
+
+
+document.getElementById("adminPanelBtn")?.addEventListener("click", () => {
+  window.location.href = "../NEXCHAT-ADMIN DASH BOARD/admin-dashboard.html";
+}, false);
+
+// Close modal when clicking outside the content area (on the overlay)
+document.getElementById("settingsModal")?.addEventListener("click", (e) => {
+  if (e.target.id === "settingsModal") {
     saveSettingsPreferences();
     closeSettingsModal();
-  }, false);
-
-  // Copy UID button
-  document.getElementById("copyUIDBtn")?.addEventListener("click", () => {
-    const userUIDDisplay = document.getElementById("userUIDDisplay");
-    if (userUIDDisplay && myUID) {
-      navigator.clipboard.writeText(myUID).then(() => {
-        showNotif("✅ UID copied to clipboard!", "success", 2000);
-        const btn = document.getElementById("copyUIDBtn");
-        if (btn) {
-          const originalText = btn.textContent;
-          btn.textContent = "✓ Copied!";
-          setTimeout(() => {
-            btn.textContent = originalText;
-          }, 2000);
-        }
-      }).catch(() => {
-        showNotif("⚠️ Failed to copy UID", "error");
-      });
-    }
-  }, false);
-
-  const transferTokensBtnEl = document.getElementById("transferTokensBtn");
-  if (transferTokensBtnEl) {
-    transferTokensBtnEl.addEventListener("click", transferTokens, false);
-    console.log("✅ Transfer Tokens button listener attached successfully");
-  } else {
-    console.error("❌ Transfer Tokens button not found in DOM!");
   }
+}, false);
 
+// Settings changes - auto save with better event handling
+const setupSettingsListeners = () => {
+  const toggles = ["notifToggle", "soundToggle", "onlineStatusToggle", "readReceiptsToggle"];
 
-  document.getElementById("adminPanelBtn")?.addEventListener("click", () => {
-    window.location.href = "../NEXCHAT-ADMIN DASH BOARD/admin-dashboard.html";
-  }, false);
-
-  // Close modal when clicking outside the content area (on the overlay)
-  document.getElementById("settingsModal")?.addEventListener("click", (e) => {
-    if (e.target.id === "settingsModal") {
-      saveSettingsPreferences();
-      closeSettingsModal();
-    }
-  }, false);
-
-  // Settings changes - auto save with better event handling
-  const setupSettingsListeners = () => {
-    const toggles = ["notifToggle", "soundToggle", "onlineStatusToggle", "readReceiptsToggle"];
-
-    toggles.forEach(id => {
-      const el = document.getElementById(id);
-      if (el) {
-        el.addEventListener("change", saveSettingsPreferences, false);
-        // Add touch feedback
-        el.addEventListener("touchstart", () => {
-          el.style.opacity = "0.7";
-        }, false);
-        el.addEventListener("touchend", () => {
-          el.style.opacity = "1";
-        }, false);
-      }
-    });
-
-    // Theme radio buttons
-    document.querySelectorAll('input[name="theme"]').forEach(radio => {
-      radio.addEventListener("change", saveSettingsPreferences, false);
-    });
-
-    // Chat size radio buttons
-    document.querySelectorAll('input[name="chatSize"]').forEach(radio => {
-      radio.addEventListener("change", saveSettingsPreferences, false);
-    });
-
-    // Text Element Adjustment - Font Family
-    const fontFamilySelect = document.getElementById("fontFamilySelect");
-    if (fontFamilySelect) {
-      fontFamilySelect.addEventListener("change", saveSettingsPreferences, false);
-    }
-
-    // Text Element Adjustment - Letter Spacing
-    const letterSpacingRange = document.getElementById("letterSpacingRange");
-    if (letterSpacingRange) {
-      letterSpacingRange.addEventListener("input", (e) => {
-        document.getElementById("letterSpacingValue").textContent = e.target.value;
-        saveSettingsPreferences();
+  toggles.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.addEventListener("change", saveSettingsPreferences, false);
+      // Add touch feedback
+      el.addEventListener("touchstart", () => {
+        el.style.opacity = "0.7";
+      }, false);
+      el.addEventListener("touchend", () => {
+        el.style.opacity = "1";
       }, false);
     }
-
-    // Text Element Adjustment - Line Height
-    const lineHeightRange = document.getElementById("lineHeightRange");
-    if (lineHeightRange) {
-      lineHeightRange.addEventListener("input", (e) => {
-        document.getElementById("lineHeightValue").textContent = e.target.value;
-        saveSettingsPreferences();
-      }, false);
-    }
-
-    // Text Element Adjustment - Text Alignment
-    const alignButtons = document.querySelectorAll(".text-align-btn");
-    alignButtons.forEach(btn => {
-      btn.addEventListener("click", (e) => {
-        alignButtons.forEach(b => {
-          b.style.background = "#444";
-          b.style.color = "#fff";
-        });
-        e.target.style.background = "#00ff66";
-        e.target.style.color = "#000";
-        saveSettingsPreferences();
-      }, false);
-    });
-  };
-
-  // Setup listeners when settings are visible
-  const observer = new MutationObserver((mutations) => {
-    mutations.forEach((mutation) => {
-      if (mutation.target.id === "settingsModal" && mutation.target.style.display === "flex") {
-        setupSettingsListeners();
-      }
-    });
   });
 
-  const modalEl = document.getElementById("settingsModal");
-  if (modalEl) {
-    observer.observe(modalEl, { attributes: true, attributeFilter: ["style"] });
+  // Theme radio buttons
+  document.querySelectorAll('input[name="theme"]').forEach(radio => {
+    radio.addEventListener("change", saveSettingsPreferences, false);
+  });
+
+  // Chat size radio buttons
+  document.querySelectorAll('input[name="chatSize"]').forEach(radio => {
+    radio.addEventListener("change", saveSettingsPreferences, false);
+  });
+
+  // Text Element Adjustment - Font Family
+  const fontFamilySelect = document.getElementById("fontFamilySelect");
+  if (fontFamilySelect) {
+    fontFamilySelect.addEventListener("change", saveSettingsPreferences, false);
   }
 
-  // Change password button
-  document.getElementById("changePasswordBtn")?.addEventListener("click", async () => {
+  // Text Element Adjustment - Letter Spacing
+  const letterSpacingRange = document.getElementById("letterSpacingRange");
+  if (letterSpacingRange) {
+    letterSpacingRange.addEventListener("input", (e) => {
+      document.getElementById("letterSpacingValue").textContent = e.target.value;
+      saveSettingsPreferences();
+    }, false);
+  }
+
+  // Text Element Adjustment - Line Height
+  const lineHeightRange = document.getElementById("lineHeightRange");
+  if (lineHeightRange) {
+    lineHeightRange.addEventListener("input", (e) => {
+      document.getElementById("lineHeightValue").textContent = e.target.value;
+      saveSettingsPreferences();
+    }, false);
+  }
+
+  // Text Element Adjustment - Text Alignment
+  const alignButtons = document.querySelectorAll(".text-align-btn");
+  alignButtons.forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      alignButtons.forEach(b => {
+        b.style.background = "#444";
+        b.style.color = "#fff";
+      });
+      e.target.style.background = "#00ff66";
+      e.target.style.color = "#000";
+      saveSettingsPreferences();
+    }, false);
+  });
+};
+
+// Setup listeners when settings are visible
+const observer = new MutationObserver((mutations) => {
+  mutations.forEach((mutation) => {
+    if (mutation.target.id === "settingsModal" && mutation.target.style.display === "flex") {
+      setupSettingsListeners();
+    }
+  });
+});
+
+const modalEl = document.getElementById("settingsModal");
+if (modalEl) {
+  observer.observe(modalEl, { attributes: true, attributeFilter: ["style"] });
+}
+
+// Change password button
+document.getElementById("changePasswordBtn")?.addEventListener("click", async () => {
+  if (isAndroid && navigator.vibrate) {
+    navigator.vibrate(50);
+  }
+
+  const currentPass = prompt("🔑 Enter your current password:");
+  if (!currentPass) return;
+
+  const newPass = prompt("🔐 Enter new password (min 6 characters):");
+  if (!newPass) return;
+
+  if (newPass.length < 6) {
+    showNotif("❌ Password must be at least 6 characters", "error");
+    return;
+  }
+
+  const confirmPass = prompt("🔐 Confirm new password:");
+  if (confirmPass !== newPass) {
+    showNotif("❌ Passwords do not match", "error");
+    return;
+  }
+
+  try {
+    showNotif("⏳ Changing password...", "info");
+
+    const user = auth.currentUser;
+    if (!user || !user.email) {
+      showNotif("❌ User not authenticated", "error");
+      return;
+    }
+
+    // Re-authenticate user with current password
+    const credential = EmailAuthProvider.credential(user.email, currentPass);
+    await reauthenticateWithCredential(user, credential);
+
+    // Update password
+    await updatePassword(user, newPass);
+    showNotif("✅ Password changed successfully!", "success");
+    console.log("✅ Password updated");
+  } catch (err) {
+    console.error("Password change error:", err);
+    if (err.code === "auth/wrong-password") {
+      showNotif("❌ Current password is incorrect", "error");
+    } else if (err.code === "auth/weak-password") {
+      showNotif("❌ New password is too weak", "error");
+    } else {
+      showNotif(`❌ Error: ${err.message}`, "error");
+    }
+  }
+});
+
+// Clear cache button
+document.getElementById("clearCacheBtn")?.addEventListener("click", () => {
+  if (isAndroid && navigator.vibrate) {
+    navigator.vibrate([30, 10, 30]);
+  }
+
+  if (confirm("⚠️ Are you sure? This will clear all cached data.")) {
     if (isAndroid && navigator.vibrate) {
-      navigator.vibrate(50);
-    }
-
-    const currentPass = prompt("🔑 Enter your current password:");
-    if (!currentPass) return;
-
-    const newPass = prompt("🔐 Enter new password (min 6 characters):");
-    if (!newPass) return;
-
-    if (newPass.length < 6) {
-      showNotif("❌ Password must be at least 6 characters", "error");
-      return;
-    }
-
-    const confirmPass = prompt("🔐 Confirm new password:");
-    if (confirmPass !== newPass) {
-      showNotif("❌ Passwords do not match", "error");
-      return;
+      navigator.vibrate([50, 20, 50]);
     }
 
     try {
-      showNotif("⏳ Changing password...", "info");
-
-      const user = auth.currentUser;
-      if (!user || !user.email) {
-        showNotif("❌ User not authenticated", "error");
-        return;
-      }
-
-      // Re-authenticate user with current password
-      const credential = EmailAuthProvider.credential(user.email, currentPass);
-      await reauthenticateWithCredential(user, credential);
-
-      // Update password
-      await updatePassword(user, newPass);
-      showNotif("✅ Password changed successfully!", "success");
-      console.log("✅ Password updated");
+      localStorage.clear();
+      sessionStorage.clear();
+      showNotif("✅ Cache cleared successfully!", "success", 2000);
+      setTimeout(() => {
+        window.location.href = "index.html";
+      }, 1500);
     } catch (err) {
-      console.error("Password change error:", err);
-      if (err.code === "auth/wrong-password") {
-        showNotif("❌ Current password is incorrect", "error");
-      } else if (err.code === "auth/weak-password") {
-        showNotif("❌ New password is too weak", "error");
-      } else {
-        showNotif(`❌ Error: ${err.message}`, "error");
-      }
+      console.error("Error clearing cache:", err);
+      showNotif("❌ Error clearing cache", "error");
     }
-  });
+  }
+});
 
-  // Clear cache button
-  document.getElementById("clearCacheBtn")?.addEventListener("click", () => {
+
+
+// Upload background for current chat
+document.getElementById("uploadChatBackgroundBtn")?.addEventListener("click", async () => {
+  if (!currentChatUser) {
+    showNotif("❌ No chat selected", "error");
+    return;
+  }
+
+  const fileInput = document.getElementById("chatBackgroundImageInput");
+  const file = fileInput.files[0];
+
+  if (!file) {
+    showNotif("❌ Please select an image first", "error");
+    return;
+  }
+
+  try {
+    showNotif("📸 Uploading chat background...", "info");
+
+    const bgPath = currentChatType === 'group'
+      ? `chatBackgrounds/groups/${currentChatUser}/${Date.now()}`
+      : `chatBackgrounds/direct/${myUID}_${currentChatUser}/${Date.now()}`;
+
+    const bgRef = storageRef(storage, bgPath);
+    const snapshot = await uploadBytes(bgRef, file);
+    const bgUrl = await getDownloadURL(snapshot.ref);
+
+    const collection_name = currentChatType === 'group' ? 'groupBackgrounds' : 'directMessageBackgrounds';
+    const doc_id = currentChatType === 'group' ? currentChatUser : `${myUID}_${currentChatUser}`;
+
+    await setDoc(doc(db, collection_name, doc_id), {
+      backgroundUrl: bgUrl,
+      uploadedAt: serverTimestamp(),
+      fileName: file.name,
+      chatId: currentChatUser,
+      chatType: currentChatType
+    }, { merge: true });
+
+    applyBackgroundImage(bgUrl);
+    localStorage.setItem(`chat_bg_${currentChatUser}`, bgUrl);
+
+    showNotif("✅ Chat background updated!", "success");
+    fileInput.value = "";
+  } catch (error) {
+    console.error("❌ Failed to upload chat background:", error);
+    showNotif("❌ Failed to upload chat background", "error");
+  }
+});
+
+// Remove background for current chat
+document.getElementById("removeChatBackgroundBtn")?.addEventListener("click", async () => {
+  if (!currentChatUser) {
+    showNotif("❌ No chat selected", "error");
+    return;
+  }
+
+  if (!confirm("🗑️ Remove this chat's background?")) return;
+
+  try {
+    showNotif("🗑️ Removing chat background...", "info");
+
+    const collection_name = currentChatType === 'group' ? 'groupBackgrounds' : 'directMessageBackgrounds';
+    const doc_id = currentChatType === 'group' ? currentChatUser : `${myUID}_${currentChatUser}`;
+
+    await updateDoc(doc(db, collection_name, doc_id), {
+      backgroundUrl: null,
+      removedAt: serverTimestamp()
+    });
+
+    removeBackgroundImage();
+    localStorage.removeItem(`chat_bg_${currentChatUser}`);
+
+    showNotif("✅ Chat background removed!", "success");
+  } catch (error) {
+    console.error("❌ Failed to remove chat background:", error);
+    showNotif("❌ Failed to remove chat background", "error");
+  }
+});
+
+// ============================================================
+// BACKGROUND IMAGE FEATURE (KEPT FOR COMPATIBILITY)
+// ============================================================
+
+// Upload background button
+document.getElementById("uploadBackgroundBtn")?.addEventListener("click", async () => {
+  const fileInput = document.getElementById("backgroundImageInput");
+  const file = fileInput.files[0];
+
+  if (!file) {
+    showNotif("❌ Please select an image first", "error");
+    return;
+  }
+
+  try {
+    showNotif("📸 Uploading background image...", "info");
+
+    const bgRef = storageRef(storage, `backgrounds/${myUID}/${Date.now()}`);
+    const snapshot = await uploadBytes(bgRef, file);
+    const bgUrl = await getDownloadURL(snapshot.ref);
+
+    // Save to Firestore
+    await setDoc(doc(db, "userBackgrounds", myUID), {
+      backgroundUrl: bgUrl,
+      uploadedAt: serverTimestamp(),
+      fileName: file.name
+    }, { merge: true });
+
+    // Apply background immediately
+    applyBackgroundImage(bgUrl);
+
+    // Save to localStorage for persistence
+    localStorage.setItem("nexchat_background", bgUrl);
+
+    showNotif("✅ Background updated!", "success");
+    fileInput.value = "";
+  } catch (error) {
+    console.error("❌ Failed to upload background:", error);
+    showNotif("❌ Failed to upload background", "error");
+  }
+});
+
+// Remove background button
+document.getElementById("removeBackgroundBtn")?.addEventListener("click", async () => {
+  if (!confirm("🗑️ Remove background image?")) return;
+
+  try {
+    showNotif("🗑️ Removing background...", "info");
+
+    // Remove from Firestore
+    await updateDoc(doc(db, "userBackgrounds", myUID), {
+      backgroundUrl: null,
+      removedAt: serverTimestamp()
+    });
+
+    // Remove background
+    removeBackgroundImage();
+
+    // Clear localStorage
+    localStorage.removeItem("nexchat_background");
+
+    showNotif("✅ Background removed!", "success");
+  } catch (error) {
+    console.error("❌ Failed to remove background:", error);
+    showNotif("❌ Failed to remove background", "error");
+  }
+});
+
+
+
+// Logout from settings
+document.getElementById("logoutSettingsBtn")?.addEventListener("click", () => {
+  if (isAndroid && navigator.vibrate) {
+    navigator.vibrate([40, 20, 40]);
+  }
+
+  if (confirm("🚪 Are you sure you want to logout?")) {
     if (isAndroid && navigator.vibrate) {
-      navigator.vibrate([30, 10, 30]);
+      navigator.vibrate([50, 30, 50, 30, 50]);
     }
 
-    if (confirm("⚠️ Are you sure? This will clear all cached data.")) {
-      if (isAndroid && navigator.vibrate) {
-        navigator.vibrate([50, 20, 50]);
-      }
+    signOut(auth)
+      .then(() => {
+        try {
+          localStorage.clear();
+          sessionStorage.clear();
+        } catch (e) {
+          console.warn("Could not clear storage:", e);
+        }
 
-      try {
-        localStorage.clear();
-        sessionStorage.clear();
-        showNotif("✅ Cache cleared successfully!", "success", 2000);
+        showNotif("👋 Logged out successfully!", "success", 2000);
         setTimeout(() => {
           window.location.href = "index.html";
         }, 1500);
-      } catch (err) {
-        console.error("Error clearing cache:", err);
-        showNotif("❌ Error clearing cache", "error");
-      }
-    }
-  });
-
-  // ============================================================
-  // PER-CHAT BACKGROUND IMAGE FEATURE
-  // ============================================================
-
-  const loadChatBackground = async (chatId, chatType) => {
-    try {
-      const bgDocPath = chatType === 'group'
-        ? `groupBackgrounds/${chatId}`
-        : `directMessageBackgrounds/${myUID}_${chatId}`;
-
-      const bgDoc = await getDoc(doc(db, bgDocPath.split('/')[0], bgDocPath.split('/')[1]));
-
-      if (bgDoc.exists() && bgDoc.data().backgroundUrl) {
-        applyBackgroundImage(bgDoc.data().backgroundUrl);
-        localStorage.setItem(`chat_bg_${chatId}`, bgDoc.data().backgroundUrl);
-      } else {
-        removeBackgroundImage();
-        localStorage.removeItem(`chat_bg_${chatId}`);
-      }
-    } catch (error) {
-      console.warn("Could not load chat background:", error);
-      removeBackgroundImage();
-    }
-  };
-
-  window.loadChatBackground = loadChatBackground;
-
-  // Upload background for current chat
-  document.getElementById("uploadChatBackgroundBtn")?.addEventListener("click", async () => {
-    if (!currentChatUser) {
-      showNotif("❌ No chat selected", "error");
-      return;
-    }
-
-    const fileInput = document.getElementById("chatBackgroundImageInput");
-    const file = fileInput.files[0];
-
-    if (!file) {
-      showNotif("❌ Please select an image first", "error");
-      return;
-    }
-
-    try {
-      showNotif("📸 Uploading chat background...", "info");
-
-      const bgPath = currentChatType === 'group'
-        ? `chatBackgrounds/groups/${currentChatUser}/${Date.now()}`
-        : `chatBackgrounds/direct/${myUID}_${currentChatUser}/${Date.now()}`;
-
-      const bgRef = storageRef(storage, bgPath);
-      const snapshot = await uploadBytes(bgRef, file);
-      const bgUrl = await getDownloadURL(snapshot.ref);
-
-      const collection_name = currentChatType === 'group' ? 'groupBackgrounds' : 'directMessageBackgrounds';
-      const doc_id = currentChatType === 'group' ? currentChatUser : `${myUID}_${currentChatUser}`;
-
-      await setDoc(doc(db, collection_name, doc_id), {
-        backgroundUrl: bgUrl,
-        uploadedAt: serverTimestamp(),
-        fileName: file.name,
-        chatId: currentChatUser,
-        chatType: currentChatType
-      }, { merge: true });
-
-      applyBackgroundImage(bgUrl);
-      localStorage.setItem(`chat_bg_${currentChatUser}`, bgUrl);
-
-      showNotif("✅ Chat background updated!", "success");
-      fileInput.value = "";
-    } catch (error) {
-      console.error("❌ Failed to upload chat background:", error);
-      showNotif("❌ Failed to upload chat background", "error");
-    }
-  });
-
-  // Remove background for current chat
-  document.getElementById("removeChatBackgroundBtn")?.addEventListener("click", async () => {
-    if (!currentChatUser) {
-      showNotif("❌ No chat selected", "error");
-      return;
-    }
-
-    if (!confirm("🗑️ Remove this chat's background?")) return;
-
-    try {
-      showNotif("🗑️ Removing chat background...", "info");
-
-      const collection_name = currentChatType === 'group' ? 'groupBackgrounds' : 'directMessageBackgrounds';
-      const doc_id = currentChatType === 'group' ? currentChatUser : `${myUID}_${currentChatUser}`;
-
-      await updateDoc(doc(db, collection_name, doc_id), {
-        backgroundUrl: null,
-        removedAt: serverTimestamp()
+      })
+      .catch((err) => {
+        console.error("Logout error:", err);
+        showNotif("❌ Logout error: " + err.message, "error", 3000);
       });
-
-      removeBackgroundImage();
-      localStorage.removeItem(`chat_bg_${currentChatUser}`);
-
-      showNotif("✅ Chat background removed!", "success");
-    } catch (error) {
-      console.error("❌ Failed to remove chat background:", error);
-      showNotif("❌ Failed to remove chat background", "error");
-    }
-  });
-
-  // ============================================================
-  // BACKGROUND IMAGE FEATURE (KEPT FOR COMPATIBILITY)
-  // ============================================================
-
-  // Upload background button
-  document.getElementById("uploadBackgroundBtn")?.addEventListener("click", async () => {
-    const fileInput = document.getElementById("backgroundImageInput");
-    const file = fileInput.files[0];
-
-    if (!file) {
-      showNotif("❌ Please select an image first", "error");
-      return;
-    }
-
-    try {
-      showNotif("📸 Uploading background image...", "info");
-
-      const bgRef = storageRef(storage, `backgrounds/${myUID}/${Date.now()}`);
-      const snapshot = await uploadBytes(bgRef, file);
-      const bgUrl = await getDownloadURL(snapshot.ref);
-
-      // Save to Firestore
-      await setDoc(doc(db, "userBackgrounds", myUID), {
-        backgroundUrl: bgUrl,
-        uploadedAt: serverTimestamp(),
-        fileName: file.name
-      }, { merge: true });
-
-      // Apply background immediately
-      applyBackgroundImage(bgUrl);
-
-      // Save to localStorage for persistence
-      localStorage.setItem("nexchat_background", bgUrl);
-
-      showNotif("✅ Background updated!", "success");
-      fileInput.value = "";
-    } catch (error) {
-      console.error("❌ Failed to upload background:", error);
-      showNotif("❌ Failed to upload background", "error");
-    }
-  });
-
-  // Remove background button
-  document.getElementById("removeBackgroundBtn")?.addEventListener("click", async () => {
-    if (!confirm("🗑️ Remove background image?")) return;
-
-    try {
-      showNotif("🗑️ Removing background...", "info");
-
-      // Remove from Firestore
-      await updateDoc(doc(db, "userBackgrounds", myUID), {
-        backgroundUrl: null,
-        removedAt: serverTimestamp()
-      });
-
-      // Remove background
-      removeBackgroundImage();
-
-      // Clear localStorage
-      localStorage.removeItem("nexchat_background");
-
-      showNotif("✅ Background removed!", "success");
-    } catch (error) {
-      console.error("❌ Failed to remove background:", error);
-      showNotif("❌ Failed to remove background", "error");
-    }
-  });
-
-  // Load saved background on init
-  const loadUserBackground = async () => {
-    try {
-      // Check localStorage first
-      const savedBg = localStorage.getItem("nexchat_background");
-      if (savedBg) {
-        applyBackgroundImage(savedBg);
-        updateBackgroundPreview(savedBg);
-        return;
-      }
-
-      // Otherwise load from Firestore
-      if (!myUID) return;
-
-      const bgDoc = await getDoc(doc(db, "userBackgrounds", myUID));
-      if (bgDoc.exists() && bgDoc.data().backgroundUrl) {
-        const bgUrl = bgDoc.data().backgroundUrl;
-        applyBackgroundImage(bgUrl);
-        updateBackgroundPreview(bgUrl);
-        localStorage.setItem("nexchat_background", bgUrl);
-      }
-    } catch (error) {
-      console.warn("⚠️ Failed to load user background:", error);
-    }
-  };
-
-  // Functions to apply/remove backgrounds
-  function applyBackgroundImage(imageUrl) {
-    const app = document.querySelector(".app");
-    if (app) {
-      app.style.backgroundImage = `url('${imageUrl}')`;
-      app.style.backgroundSize = 'cover';
-      app.style.backgroundPosition = 'center';
-      app.style.backgroundAttachment = 'fixed';
-      app.style.backgroundRepeat = 'no-repeat';
-      console.log("✅ Background applied");
-    }
   }
+});
 
-  function removeBackgroundImage() {
-    const app = document.querySelector(".app");
-    if (app) {
-      app.style.backgroundImage = "none";
-      app.style.backgroundSize = '';
-      app.style.backgroundPosition = '';
-      app.style.backgroundAttachment = '';
-      app.style.backgroundRepeat = '';
-      console.log("✅ Background removed");
-    }
-  }
+// ============================================================
+// NEX-STATUS FEATURE LISTENERS
+// ============================================================
 
-  function updateBackgroundPreview(imageUrl) {
-    const preview = document.getElementById("backgroundPreview");
-    if (preview) {
-      preview.style.backgroundImage = `url('${imageUrl}')`;
-    }
-  }
+// Upload status image button
+document.getElementById("uploadStatusImageBtn")?.addEventListener("click", () => {
+  document.getElementById("statusImageInput").click();
+});
 
-  // Load background when authenticated
-  window.loadUserBackgroundOnAuth = loadUserBackground;
+// Handle status image selection
+document.getElementById("statusImageInput")?.addEventListener("change", async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
 
-  // Logout from settings
-  document.getElementById("logoutSettingsBtn")?.addEventListener("click", () => {
-    if (isAndroid && navigator.vibrate) {
-      navigator.vibrate([40, 20, 40]);
-    }
-
-    if (confirm("🚪 Are you sure you want to logout?")) {
-      if (isAndroid && navigator.vibrate) {
-        navigator.vibrate([50, 30, 50, 30, 50]);
-      }
-
-      signOut(auth)
-        .then(() => {
-          try {
-            localStorage.clear();
-            sessionStorage.clear();
-          } catch (e) {
-            console.warn("Could not clear storage:", e);
-          }
-
-          showNotif("👋 Logged out successfully!", "success", 2000);
-          setTimeout(() => {
-            window.location.href = "index.html";
-          }, 1500);
-        })
-        .catch((err) => {
-          console.error("Logout error:", err);
-          showNotif("❌ Logout error: " + err.message, "error", 3000);
-        });
-    }
-  });
-
-  // ============================================================
-  // NEX-STATUS FEATURE LISTENERS
-  // ============================================================
-
-  // Upload status image button
-  document.getElementById("uploadStatusImageBtn")?.addEventListener("click", () => {
-    document.getElementById("statusImageInput").click();
-  });
-
-  // Handle status image selection
-  document.getElementById("statusImageInput")?.addEventListener("change", async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    try {
-      showNotif("📸 Uploading status image...", "info");
-      const fileRef = storageRef(storage, `statuses/${myUID}/${Date.now()}`);
-      await uploadBytes(fileRef, file);
-      const imageUrl = await getDownloadURL(fileRef);
-
-      const textContent = document.getElementById("statusInput").value.trim();
-      await postStatus(textContent, imageUrl);
-      showNotif("✨ Status with image posted!", "success");
-    } catch (error) {
-      console.error("❌ Failed to upload status image:", error);
-      showNotif("❌ Failed to upload image", "error");
-    }
-  });
-
-  // Post text status
-  document.getElementById("postStatusBtn")?.addEventListener("click", async () => {
-    const textContent = document.getElementById("statusInput").value.trim();
-    if (textContent) {
-      await postStatus(textContent, null);
-    } else {
-      showNotif("❌ Please type something or upload an image", "error");
-    }
-  });
-
-  // Close status viewer modal
-  document.getElementById("closeStatusViewerBtn")?.addEventListener("click", () => {
-    const modal = document.getElementById("statusViewerModal");
-    if (modal) {
-      modal.style.display = "none";
-    }
-  });
-
-  // Close status viewer when clicking outside
-  document.getElementById("statusViewerModal")?.addEventListener("click", (e) => {
-    if (e.target.id === "statusViewerModal") {
-      e.target.style.display = "none";
-    }
-  });
-
-  // ============================================================
-  // OFFLINE MESSAGE QUEUE LISTENERS
-  // ============================================================
-
-  // Initialize offline database and connectivity monitoring
   try {
-    initOfflineDB();
-    monitorConnectivity();
-    console.log("✅ Offline queue system initialized");
+    showNotif("📸 Uploading status image...", "info");
+    const fileRef = storageRef(storage, `statuses/${myUID}/${Date.now()}`);
+    await uploadBytes(fileRef, file);
+    const imageUrl = await getDownloadURL(fileRef);
+
+    const textContent = document.getElementById("statusInput").value.trim();
+    await postStatus(textContent, imageUrl);
+    showNotif("✨ Status with image posted!", "success");
   } catch (error) {
-    console.warn("⚠️ Failed to initialize offline queue:", error);
+    console.error("❌ Failed to upload status image:", error);
+    showNotif("❌ Failed to upload image", "error");
   }
+});
+
+// Post text status
+document.getElementById("postStatusBtn")?.addEventListener("click", async () => {
+  const textContent = document.getElementById("statusInput").value.trim();
+  if (textContent) {
+    await postStatus(textContent, null);
+  } else {
+    showNotif("❌ Please type something or upload an image", "error");
+  }
+});
+
+// Close status viewer modal
+document.getElementById("closeStatusViewerBtn")?.addEventListener("click", () => {
+  const modal = document.getElementById("statusViewerModal");
+  if (modal) {
+    modal.style.display = "none";
+  }
+});
+
+// Close status viewer when clicking outside
+document.getElementById("statusViewerModal")?.addEventListener("click", (e) => {
+  if (e.target.id === "statusViewerModal") {
+    e.target.style.display = "none";
+  }
+});
+
+// ============================================================
+// OFFLINE MESSAGE QUEUE LISTENERS
+// ============================================================
+
+// Initialize offline database and connectivity monitoring
+try {
+  initOfflineDB();
+  monitorConnectivity();
+  console.log("✅ Offline queue system initialized");
+} catch (error) {
+  console.warn("⚠️ Failed to initialize offline queue:", error);
 }
 
 // Start app when DOM is ready 
@@ -5839,7 +5868,7 @@ async function createGroup(e) {
 
     // Reset preview
     if (iconPreview) {
-      iconPreview.src = "assets/default_group.png";
+      iconPreview.src = "logo.jpg";
       iconPreview.removeAttribute('data-generated');
     }
 
@@ -6544,6 +6573,28 @@ function viewStatus(status) {
 async function loadAnnouncements() {
   try {
     const announcementsFeed = document.getElementById('announcementsFeed');
+    if (!announcementsFeed) return;
+
+    // Define the pinned welcome announcement HTML
+    const pinnedAnnouncementHTML = `
+      <div class="announcement-item pinned-announcement" style="border: 2px solid #00ff66; background: rgba(0, 255, 102, 0.05); margin-bottom: 15px;">
+        <div class="announcement-header">
+          <h4 class="announcement-title">WELCOME TO NEXCHAT</h4>
+          <span class="announcement-badge" style="background: #00ff66; color: #000;">📢 NEX-DEV</span>
+        </div>
+        <p class="announcement-content" style="font-weight: 600; color: #fff;">
+          WELCOME TO NEXCHAT THE FUTURE IS INIT I AM DEMON ALEX NEX DEVELOPER....
+        </p>
+        <p class="announcement-content">
+          NEW FEATURES ARE BRINGING YOU NEX_REELS SIMILAR TO TIKTOK/SNAPCHAT BUT IT WILL BE ON NEXCHAT BY NOVEMBER 23RD... 
+          IF YOU HAVE ANY COMPLAINT KINDLY GO TO NEX SETTINGS AND FILE THEM
+        </p>
+        <div class="announcement-footer">
+          <span class="announcement-time">IMPORTANT Update</span>
+          <span class="announcement-admin">BEST REGARDS: DEMON ALEX {LINUX-DEVELOPER}</span>
+        </div>
+      </div>
+    `;
 
     const q = query(
       collection(db, 'announcements'),
@@ -6553,24 +6604,25 @@ async function loadAnnouncements() {
 
     const snapshot = await getDocs(q);
 
+    // Always start with the pinned announcement
+    announcementsFeed.innerHTML = pinnedAnnouncementHTML;
+
     if (snapshot.empty) {
-      announcementsFeed.innerHTML = `
+      announcementsFeed.innerHTML += `
         <div class="announcements-empty-state">
-          <p>📢 No announcements yet</p>
-          <p class="hint">Stay tuned for updates from NEXCHAT</p>
+          <p>📢 No other announcements yet</p>
+          <p class="hint">Stay tuned for more updates from NEXCHAT</p>
         </div>
       `;
       return;
     }
-
-    announcementsFeed.innerHTML = '';
 
     snapshot.forEach(doc => {
       const announcement = doc.data();
       const announceDiv = document.createElement('div');
       announceDiv.className = 'announcement-item';
 
-      const createdTime = announcement.createdAt?.toDate ? announcement.createdAt.toDate() : new Date(announcement.createdAt);
+      const createdTime = announcement.createdAt?.toDate ? announcement.createdAt.toDate() : (announcement.createdAt ? new Date(announcement.createdAt) : new Date());
       const timeDiff = Math.floor((Date.now() - createdTime.getTime()) / 1000);
 
       let timeText = 'Just now';
@@ -6599,7 +6651,7 @@ async function loadAnnouncements() {
       announcementsFeed.appendChild(announceDiv);
     });
 
-    showNotif('📢 Announcements loaded', 'success', 2000);
+    showNotif('📢 Announcements updated', 'success', 2000);
   } catch (error) {
     console.error('❌ Error loading announcements:', error);
     showNotif('Error loading announcements: ' + error.message, 'error');
@@ -7187,7 +7239,7 @@ async function loadGroups() {
       // Use group profile pic if available
       let avatarHtml;
       if (group.profilePic) {
-        avatarHtml = `<img src="${group.profilePic}" class="chat-avatar group-avatar" style="object-fit:cover;" onerror="this.src='assets/default_group.png';this.parentElement.innerHTML='👥';">`;
+        avatarHtml = `<img src="${group.profilePic}" class="chat-avatar group-avatar" style="object-fit:cover;" onerror="this.style.display='none';this.parentElement.innerHTML='👥';">`;
       } else {
         avatarHtml = `<div class="chat-avatar group-avatar">👥</div>`;
       }
@@ -7266,7 +7318,7 @@ async function loadContacts() {
     chronexLi.setAttribute('data-chat-id', 'chronex-ai');
     chronexLi.innerHTML = `
       <div class="chat-avatar-container">
-        <div class="chat-avatar" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); font-size: 20px;">🤖</div>
+        <img src="chronex-ai.jpg" class="chat-avatar" onerror="this.src='logo.jpg';this.parentElement.innerHTML='🤖';" style="width: 56px; height: 56px; border-radius: 50%; object-fit: cover; border: 2px solid #00ff66;">
       </div>
       <div class="chat-item-content">
         <div class="chat-item-header">
@@ -7283,7 +7335,7 @@ async function loadContacts() {
     chronexLi.addEventListener("click", async (e) => {
       e.stopPropagation();
       if (myUID) chronexAI.setUserId(myUID);
-      await openChat("chronex-ai", "Chronex AI", null, "ai");
+      await openChat("chronex-ai", "Chronex AI", "chronex-ai.jpg", "ai");
       if (typeof showChatDetailView === 'function') showChatDetailView();
     });
 
@@ -7431,7 +7483,9 @@ async function loadContacts() {
       li.className = "chat-list-item";
       li.setAttribute('data-chat-id', uid);
 
-      let avatar = pic ? `<img src="${pic}" class="chat-avatar" onerror="this.src='logo.jpg'">` : `<div class="chat-avatar">${name.charAt(0)}</div>`;
+      let avatar = (pic && (pic.startsWith('http') || pic.startsWith('data:') || pic.includes('.')))
+        ? `<img src="${pic}" class="chat-avatar" onerror="this.style.display='none';this.parentElement.querySelector('.avatar-placeholder').style.display='flex';">` + `<div class="chat-avatar avatar-placeholder" style="display:none; background:#333; color:#fff; align-items:center; justify-content:center; font-weight:bold;">${name.charAt(0).toUpperCase()}</div>`
+        : `<div class="chat-avatar" style="background:#333; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:bold;">${name.charAt(0).toUpperCase()}</div>`;
 
       // Format preview
       let lastMessage = "No messages yet";

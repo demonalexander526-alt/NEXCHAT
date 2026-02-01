@@ -84,6 +84,23 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('continueShopping')?.addEventListener('click', () => showView('browse'));
   document.getElementById('backFromDetailBtn')?.addEventListener('click', () => showView('browse'));
 
+  // Checkout button handling
+  document.getElementById('checkoutBtn')?.addEventListener('click', () => {
+    if (cartItems.length > 0) {
+      // For checkout, we'll start a chat with the seller of the first item
+      const item = cartItems[0];
+      sessionStorage.setItem('targetUserUID', item.sellerUID);
+      sessionStorage.setItem('targetUsername', item.sellerUsername);
+      sessionStorage.setItem('productName', item.productName);
+      sessionStorage.setItem('fromAdvertisement', 'true');
+
+      showNotification('Redirecting to checkout chat...', 'success');
+      setTimeout(() => {
+        window.location.href = 'chat.html';
+      }, 1000);
+    }
+  });
+
   // Image Upload
   document.getElementById('imageUploadArea')?.addEventListener('click', () => document.getElementById('productImage')?.click());
   document.getElementById('productImage')?.addEventListener('change', (e) => {
@@ -411,10 +428,11 @@ async function deleteAd(e, id) {
 
 function contactSeller(e, id) {
   if (e) e.stopPropagation();
-  const ad = allAds.find(a => a.id === id) || currentDetailAd;
+  const ad = id ? (allAds.find(a => a.id === id) || currentDetailAd) : currentDetailAd;
   if (ad) {
     sessionStorage.setItem('targetUserUID', ad.sellerUID);
     sessionStorage.setItem('targetUsername', ad.sellerUsername);
+    sessionStorage.setItem('productName', ad.productName);
     sessionStorage.setItem('fromAdvertisement', 'true');
     window.location.href = 'chat.html';
   }
