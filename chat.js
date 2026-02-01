@@ -2436,48 +2436,60 @@ function updateChatProfileDisplay(username, profilePic, status = 'Online') {
     if (activeChatName) activeChatName.textContent = username;
     if (activeChatStatus) activeChatStatus.textContent = status;
     if (activeChatAvatar) {
-      if (profilePic && (profilePic.startsWith('http') || profilePic.startsWith('data:') || profilePic.includes('.'))) {
+      if (profilePic) {
         activeChatAvatar.src = profilePic;
         activeChatAvatar.style.display = 'block';
       } else {
-        // Use placeholder or hide
-        activeChatAvatar.src = 'logo.jpg'; // Better than an emoji string
+        activeChatAvatar.src = 'logo.jpg';
       }
 
-      // AVATAR CLICK → Show Profile Picture Modal
+      // AVATAR CLICK → Show Profile Picture Modal (Like Nex Avatars)
       activeChatAvatar.style.cursor = 'pointer';
       activeChatAvatar.onclick = (e) => {
         e.stopPropagation();
-        if (profilePic && (profilePic.startsWith('http') || profilePic.startsWith('data:'))) {
-          const modal = document.getElementById('profilePicModal');
-          const modalImg = document.getElementById('profileModalImg');
-          const modalName = document.getElementById('profileModalName');
+        const modal = document.getElementById('profilePicModal');
+        const modalImg = document.getElementById('profileModalImg');
+        const modalName = document.getElementById('profileModalName');
+        const modalDesc = document.getElementById('profileModalDesc');
+        const modalWordmark = document.getElementById('profileModalBrandWordmark');
 
-          if (modal && modalImg && modalName) {
-            modalImg.src = profilePic;
-            modalName.textContent = username;
-            modal.style.display = 'flex';
+        if (modal && modalImg && modalName) {
+          modalImg.src = profilePic || 'logo.jpg';
+          modalName.textContent = username;
 
-            // Hide edit button (not their profile)
-            const editBtn = document.getElementById('editProfileBtnModal');
-            if (editBtn) editBtn.style.display = 'none';
+          if (modalWordmark) modalWordmark.style.display = (username === "Chronex AI") ? 'block' : 'none';
+
+          if (modalDesc) {
+            if (username === "Chronex AI") {
+              modalDesc.textContent = "Official NEX_DEV Neural Assistant. Primary interface for the NEXCHAT ecosystem. Advanced robotic intelligence designed for cross-sector synchronization.";
+            } else if (status.includes("Group")) {
+              modalDesc.textContent = "Secure NEX_CORE Communication Node. Restricted access unit for multi-user data stream processing.";
+            } else {
+              modalDesc.textContent = "Registered NEXCHAT Neural Entity. Secure direct-link established.";
+            }
           }
-        }
-      };
-    }
 
-    // USERNAME CLICK → Open User Info Panel
-    if (activeChatName) {
-      activeChatName.style.cursor = 'pointer';
-      activeChatName.onclick = (e) => {
-        e.stopPropagation();
-        if (currentChatUser && currentChatType === 'direct') {
-          showUserInfoPanel(currentChatUser);
-        } else if (currentChatUser && currentChatType === 'group') {
-          showGroupInfoPanel(currentChatUser);
+          modal.style.display = 'flex';
+
+          // Hide edit button (not their profile)
+          const editBtn = document.getElementById('editProfileBtnModal');
+          if (editBtn) editBtn.style.display = 'none';
         }
       };
     }
+  }
+
+  // USERNAME CLICK → Open User Info Panel
+  if (activeChatName) {
+    activeChatName.style.cursor = 'pointer';
+    activeChatName.onclick = (e) => {
+      e.stopPropagation();
+      if (currentChatUser && currentChatType === 'direct') {
+        showUserInfoPanel(currentChatUser);
+      } else if (currentChatUser && currentChatType === 'group') {
+        showGroupInfoPanel(currentChatUser);
+      }
+    };
   }
 
   // Update message input area profile display
@@ -2498,14 +2510,29 @@ function updateChatProfileDisplay(username, profilePic, status = 'Online') {
       chatUserAvatar.style.cursor = 'pointer';
       chatUserAvatar.onclick = (e) => {
         e.stopPropagation();
-        if (profilePic && (profilePic.startsWith('http') || profilePic.startsWith('data:'))) {
+        if (profilePic) {
           const modal = document.getElementById('profilePicModal');
           const modalImg = document.getElementById('profileModalImg');
           const modalName = document.getElementById('profileModalName');
+          const modalDesc = document.getElementById('profileModalDesc');
+          const modalWordmark = document.getElementById('profileModalBrandWordmark');
 
           if (modal && modalImg && modalName) {
-            modalImg.src = profilePic;
+            modalImg.src = profilePic || 'logo.jpg';
             modalName.textContent = username;
+
+            if (modalWordmark) modalWordmark.style.display = (username === "Chronex AI") ? 'block' : 'none';
+
+            if (modalDesc) {
+              if (username === "Chronex AI") {
+                modalDesc.textContent = "Official NEX_DEV Neural Assistant. Primary interface for the NEXCHAT ecosystem. Advanced robotic intelligence designed for cross-sector synchronization.";
+              } else if (status.includes("Group")) {
+                modalDesc.textContent = "Secure NEX_CORE Communication Node. Restricted access unit for multi-user data stream processing.";
+              } else {
+                modalDesc.textContent = "Registered NEXCHAT Neural Entity. Secure direct-link established.";
+              }
+            }
+
             modal.style.display = 'flex';
 
             // Hide edit button
@@ -2625,6 +2652,12 @@ async function openChat(uid, username, profilePic, chatType = 'direct') {
       // Update profile display with AI status
       updateChatProfileDisplay(username, profilePic, "🤖 AI Ready");
 
+      // Update info sidebar with AI profile and logo
+      const infoDescEl = document.getElementById("infoDesc");
+      const infoBrandLogo = document.getElementById("infoBrandLogo");
+      if (infoDescEl) infoDescEl.textContent = "Official NEX_DEV Neural Assistant. Primary interface for the NEXCHAT ecosystem. Advanced robotic intelligence designed for cross-sector synchronization.";
+      if (infoBrandLogo) infoBrandLogo.style.display = 'block';
+
       showNotif("💬 Welcome to Chronex AI! Ask me anything!", "info");
     } else {
       // Load individual user info
@@ -2662,6 +2695,17 @@ async function openChat(uid, username, profilePic, chatType = 'direct') {
 
         showNotif("ℹ️ User profile not fully synced yet. Chat enabled via UID.", "info");
       }
+    }
+
+    // NEX_CORE: Reset info brand logo and desc for non-AI chats
+    const infoDescEl = document.getElementById("infoDesc");
+    const infoBrandLogo = document.getElementById("infoBrandLogo");
+    if (chatType === 'ai') {
+      if (infoDescEl) infoDescEl.textContent = "Official NEX_DEV Neural Assistant. Primary interface for the NEXCHAT ecosystem. Advanced robotic intelligence designed for cross-sector synchronization.";
+      if (infoBrandLogo) infoBrandLogo.style.display = 'block';
+    } else {
+      if (infoDescEl) infoDescEl.textContent = "";
+      if (infoBrandLogo) infoBrandLogo.style.display = 'none';
     }
 
     // If it's a direct chat (not group and not AI), auto-add to contacts if not already there
@@ -4253,6 +4297,7 @@ function applyBackgroundImage(imageUrl) {
 
     app.style.backgroundRepeat = 'no-repeat';
     app.style.backgroundColor = 'transparent';
+    app.setAttribute('data-custom-bg', 'true');
     console.log("✅ Background applied:", imageUrl, typeof isAndroid !== 'undefined' && isAndroid ? "(Android optimized)" : "");
   }
 }
@@ -4262,6 +4307,7 @@ function removeBackgroundImage() {
   if (app) {
     app.style.backgroundImage = "none";
     app.style.backgroundColor = ""; // Reset to default CSS value
+    app.setAttribute('data-custom-bg', 'false');
     console.log("✅ Background removed");
   }
 }
@@ -6686,6 +6732,27 @@ function initializeBasicUI() {
 
   // Load and apply saved settings (chat size, theme, etc.)
   try {
+    // NEX_CORE: Add click listener to main logo for branding modal
+    const mainLogo = document.getElementById('headerLogoContainer');
+    if (mainLogo) {
+      mainLogo.style.cursor = 'pointer';
+      mainLogo.addEventListener('click', () => {
+        const modal = document.getElementById('profilePicModal');
+        const modalImg = document.getElementById('profileModalImg');
+        const modalName = document.getElementById('profileModalName');
+        const modalDesc = document.getElementById('profileModalDesc');
+
+        if (modal && modalImg && modalName) {
+          modalImg.src = 'logo.jpg';
+          modalName.textContent = "NEXCHAT SYSTEM";
+          if (modalDesc) modalDesc.textContent = "Elite Robotic Communication Protocol v2.0. Powered by NEX_DEV Neural Engines. The standard in autonomous data exchange.";
+          modal.style.display = 'flex';
+          const editBtn = document.getElementById('editProfileBtnModal');
+          if (editBtn) editBtn.style.display = 'none';
+        }
+      });
+    }
+
     const savedSettings = JSON.parse(localStorage.getItem("nexchat_settings")) || {};
     applySettings(savedSettings);
   } catch (err) {
@@ -7337,6 +7404,23 @@ async function loadContacts() {
       if (myUID) chronexAI.setUserId(myUID);
       await openChat("chronex-ai", "Chronex AI", "chronex-ai.jpg", "ai");
       if (typeof showChatDetailView === 'function') showChatDetailView();
+
+      // Trigger Profile Modal for Chronex AI immediately
+      const modal = document.getElementById('profilePicModal');
+      const modalImg = document.getElementById('profileModalImg');
+      const modalName = document.getElementById('profileModalName');
+      const modalDesc = document.getElementById('profileModalDesc');
+      const modalWordmark = document.getElementById('profileModalBrandWordmark');
+
+      if (modal && modalImg && modalName) {
+        modalImg.src = "chronex-ai.jpg";
+        modalName.textContent = "Chronex AI";
+        if (modalWordmark) modalWordmark.style.display = 'block';
+        if (modalDesc) modalDesc.textContent = "Official NEX_DEV Neural Assistant. Primary interface for the NEXCHAT ecosystem. Advanced robotic intelligence designed for cross-sector synchronization.";
+        modal.style.display = 'flex';
+        const editBtn = document.getElementById('editProfileBtnModal');
+        if (editBtn) editBtn.style.display = 'none';
+      }
     });
 
     // Get user's contact list
