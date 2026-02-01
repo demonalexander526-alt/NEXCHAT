@@ -2035,7 +2035,11 @@ async function sendMessage(e) {
         const indicator = document.getElementById("ai-typing-indicator");
         if (indicator) indicator.remove();
 
-        // 4. Deduct 1 token
+        // 4. Clear input
+        if (messageText) messageText.value = "";
+        if (typeof removeAttachment === 'function') removeAttachment();
+
+        // 5. Deduct 1 token
         await updateDoc(userRef, {
           tokens: increment(-1),
           lastMessageSentAt: serverTimestamp()
@@ -4403,6 +4407,11 @@ async function setupInitialization() {
     if (user) {
       myUID = user.uid;
       console.log("✅ User authenticated:", myUID);
+
+      // Initialize Chronex AI with user ID
+      if (typeof chronexAI !== 'undefined' && chronexAI.setUserId) {
+        chronexAI.setUserId(myUID);
+      }
 
       try {
         const userDoc = await getDoc(doc(db, "users", myUID));

@@ -40,9 +40,9 @@ const CHRONEX_CONFIG = {
   // Backend Options
   backends: {
     python: {
-      enabled: true,  // Enabled by default to try connecting to "Brain"
+      enabled: false,  // Disabled by default for stability
       endpoint: "http://localhost:5000/ai/chat",
-      timeout: 10000, // Reduced timeout for faster fallback
+      timeout: 3000, // Fast timeout
     },
     cloud: {
       enabled: false,
@@ -127,7 +127,10 @@ class ChronexAI {
   }
 
   setUserId(uid) {
-    this.uid = uid;
+    if (uid) {
+      this.uid = uid;
+      console.log("👤 Chronex AI: User identity synchronized:", uid);
+    }
   }
 
   // Enhanced message analysis
@@ -385,6 +388,9 @@ class ChronexAI {
       "NEX_CORE is awaiting further instructions. How does this link to your primary building objective?"
     ];
 
+    // Track assistant response
+    this.conversationHistory.push({ role: 'assistant', content: `🧠 **Chronex AI**\n\n${fallbacks[0]}` }); // Use first fallback as reference
+
     return `🧠 **Chronex AI**\n\n${fallbacks[Math.floor(Math.random() * fallbacks.length)]}\n\n(Tip: I am most effective with specific questions about programming, math, or technology!)`;
   }
 
@@ -465,6 +471,10 @@ class ChronexAI {
   // Main chat method - Entry point from chat.js
   async chat(message, conversationId = "default") {
     try {
+      if (!message || message.trim() === "") {
+        console.warn("⚠️ Chronex AI: Received empty message directive");
+        return "I'm ready when you are. Please provide a data packet or directive to process.";
+      }
       console.log("🧠 Chronex AI processing message:", message);
 
       // Check cache first
@@ -488,17 +498,23 @@ class ChronexAI {
       // Cache the response
       this.cacheResponse(cacheKey, aiResponse);
 
-      // Save to Firebase
-      await this.saveConversation(message, aiResponse, conversationId);
+      // Save to Firebase (NON-BLOCKING background task)
+      this.saveConversation(message, aiResponse, conversationId).catch(err => {
+        console.warn("⚠️ Chronex AI History sync failed:", err.message);
+      });
 
       console.log("✅ Chronex AI response generated successfully");
       return aiResponse;
 
     } catch (error) {
       console.error("❌ Chronex AI chat error:", error);
-      // Always fallback to JavaScript on error
-      const fallbackResponse = await this.getJavaScriptResponse(message);
-      return fallbackResponse;
+      try {
+        // Absolute fallback to local JavaScript engine
+        return await this.getJavaScriptResponse(message);
+      } catch (fallbackErr) {
+        console.error("❌ Critical Neural Failure:", fallbackErr);
+        return "⚠️ **CRITICAL NEURAL ERROR**: My synaptic pathways are currently unstable. Please try synchronized reconnection.";
+      }
     }
   }
 
