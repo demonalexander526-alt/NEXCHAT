@@ -121,12 +121,85 @@ body {
   z-index: 50;
 }
 
-.header-logo {
-  font-size: 24px;
+/* ============================================================
+   NEXCHAT PREMIUM LOGO
+   ============================================================ */
+.nex-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  user-select: none;
+}
+
+.nex-logo:hover {
+  transform: scale(1.05);
+  filter: brightness(1.1);
+}
+
+.nex-icon {
+  width: 34px;
+  height: 34px;
+  background: linear-gradient(135deg, #00ff66 0%, #00d4ff 100%);
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #000;
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 900;
+  font-size: 22px;
+  box-shadow: 0 0 20px rgba(0, 255, 102, 0.4), inset 0 0 5px rgba(255, 255, 255, 0.5);
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.nex-icon::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -150%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+  transform: rotate(45deg);
+  animation: logoGlint 4s infinite ease-in-out;
+}
+
+@keyframes logoGlint {
+  0% {
+    left: -150%;
+  }
+
+  30% {
+    left: 150%;
+  }
+
+  100% {
+    left: 150%;
+  }
+}
+
+.nex-text {
+  font-family: 'Orbitron', sans-serif;
   font-weight: 800;
-  color: #00ff66;
-  letter-spacing: -1px;
-  text-shadow: 0 0 10px rgba(0, 255, 102, 0.5);
+  font-size: 24px;
+  letter-spacing: 1.5px;
+  background: linear-gradient(to bottom, #00ff66 0%, #00cc52 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 12px rgba(0, 255, 102, 0.6));
+}
+
+.chat-suffix {
+  display: none;
+}
+
+.header-logo {
+  display: none;
 }
 
 /* ============================================================
