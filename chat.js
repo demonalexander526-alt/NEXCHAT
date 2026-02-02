@@ -2008,49 +2008,62 @@ async function sendMessage(e) {
 
     // Send message based on chat type
     if (currentChatType === 'ai') {
-      // AI Chat - Chronex AI
-      console.log("🤖 Committing neural input to Chronex AI");
-
       try {
-        // 1. Show "AI is thinking" typing indicator
-        const messagesContainer = document.querySelector(".messages-list");
-        const typingEl = document.createElement("div");
-        typingEl.id = "ai-typing-indicator";
-        typingEl.className = "message ai-message";
-        typingEl.innerHTML = `
-          <img src="chronex-ai.jpg" class="message-avatar" alt="AI" style="width: 32px; height: 32px; border-radius: 50%; border: 1px solid #00ff66;">
-          <div class="message-content" style="background: #111; color: #00ff66; padding: 10px; border-radius: 12px; border: 1px solid rgba(0, 255, 102, 0.3);">
-            <p><i>📡 Synaptic processing...</i></p>
-          </div>
-        `;
-        if (messagesContainer) {
-          messagesContainer.appendChild(typingEl);
-          messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        // 1. Display User Message immediately
+        if (typeof displayChronexAIUserMessage === 'function') {
+          displayChronexAIUserMessage(text);
         }
 
-        // 2. Get AI Response (It will save both User and AI messages to Firestore)
+        // 2. Show "AI is thinking" typing indicator
+        const messagesDiv = document.getElementById("messages-area");
+        const typingEl = document.createElement("div");
+        typingEl.id = "ai-typing-indicator";
+        typingEl.className = "message-wrapper received";
+        typingEl.style.cssText = "display: flex; justify-content: flex-start; margin: 8px 0; padding: 0 12px;";
+        typingEl.innerHTML = `
+          <img src="chronex-ai.jpg" class="message-avatar" alt="AI" style="width: 32px; height: 32px; border-radius: 50%; border: 1.5px solid #00ff66; margin-right: 8px;">
+          <div class="message-bubble" style="background: linear-gradient(135deg, #111, #0a0e1a); color: #00ff66; padding: 10px 14px; border-radius: 12px; border: 1px solid rgba(0, 255, 102, 0.3);">
+            <p style="margin: 0;"><i>📡 Synaptic processing...</i></p>
+          </div>
+        `;
+        if (messagesDiv) {
+          messagesDiv.appendChild(typingEl);
+          messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        // 3. Get AI Response
+        console.log("🧠 Querying Chronex AI core...");
         const aiResponse = await chronexAI.chat(text, `chronex-${myUID}`);
 
-        // 3. Remove typing indicator
+        // 4. Remove typing indicator
         const indicator = document.getElementById("ai-typing-indicator");
         if (indicator) indicator.remove();
 
-        // 4. Clear input
+        // 5. Display AI Response
+        if (typeof displayChronexAIResponse === 'function') {
+          displayChronexAIResponse(aiResponse);
+        }
+
+        // 6. Clear input
         if (messageText) messageText.value = "";
         if (typeof removeAttachment === 'function') removeAttachment();
 
-        // 5. Deduct 1 token
+        // 7. Deduct 1 token
         await updateDoc(userRef, {
           tokens: increment(-1),
           lastMessageSentAt: serverTimestamp()
         });
 
-        showNotif(`✓ Neural Sync Successful (-1 token)`, "success", 2000);
+        showNotif(`✓ Chronex AI: Response received`, "success", 1500);
       } catch (aiErr) {
-        console.error("❌ Chronex AI Neural Error:", aiErr);
+        console.error("❌ Chronex AI Fatal Error:", aiErr);
         const indicator = document.getElementById("ai-typing-indicator");
         if (indicator) indicator.remove();
-        showNotif("❌ Neural uplink failed. Using fallback protocols.", "error");
+        if (typeof displayChronexAIError === 'function') {
+          displayChronexAIError(aiErr.message);
+        } else {
+          showNotif("❌ Neural uplink failed: " + aiErr.message, "error");
+        }
       }
     } else if (currentChatType === 'group') {
       // Group message
@@ -2077,12 +2090,7 @@ async function sendMessage(e) {
           }
         } : {})
       };
-
-      // Add attachment if present
-      if (attachment) {
-        messageData.attachment = attachment;
-      }
-
+      if (attachment) messageData.attachment = attachment;
       await addDoc(collection(db, "messages"), messageData);
 
       // Deduct 1 token
@@ -2106,11 +2114,10 @@ async function sendMessage(e) {
       }
     }
 
-    // Clear UI state
+    // Common post-send logic (Clear UI)
     if (window.messagingFeatures && window.messagingFeatures.hideReplyPreview) {
       window.messagingFeatures.hideReplyPreview();
     }
-
     if (messageText) messageText.value = "";
     if (typeof removeAttachment === 'function') removeAttachment();
 
@@ -2118,10 +2125,10 @@ async function sendMessage(e) {
     showNotif(`✓ Message sent`, "success", 2000);
     const emojiPicker = document.getElementById("emoji-picker");
     if (emojiPicker) emojiPicker.style.display = "none";
-    console.log("✅ Message sent successfully");
+    console.log("✅ Message lifecycle synchronized successfully");
   } catch (err) {
     hapticFeedback('heavy');
-    console.error("❌ Error sending message:", err);
+    console.error("❌ Critical Send Error:", err);
     showNotif("Error sending message: " + err.message, "error");
   }
 }
@@ -2129,55 +2136,62 @@ async function sendMessage(e) {
 // ============ CHRONEX AI DISPLAY FUNCTIONS ============
 
 function displayChronexAIUserMessage(message) {
-  const messagesContainer = document.querySelector(".messages-list");
+  const messagesContainer = document.getElementById("messages-area");
   if (!messagesContainer) return;
 
-  const messageEl = document.createElement("div");
-  messageEl.className = "message user-message";
-  messageEl.innerHTML = `
-    <div class="message-content">
-      <p>${escape(message)}</p>
+  const div = document.createElement("div");
+  div.className = "message-wrapper sent";
+  div.style.cssText = "display: flex; justify-content: flex-end; margin: 8px 0; padding: 0 12px;";
+
+  div.innerHTML = `
+    <div class="message-bubble" style="background: #00ff66; color: #000; padding: 10px 14px; border-radius: 12px; max-width: 70%; word-wrap: break-word;">
+      <p style="margin: 0;">${escape(message)}</p>
+      <div style="font-size: 11px; margin-top: 4px; opacity: 0.7;">✓ ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
     </div>
-    <div class="message-time">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
   `;
 
-  messagesContainer.appendChild(messageEl);
+  messagesContainer.appendChild(div);
   messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
 
 function displayChronexAIResponse(response) {
-  const messagesContainer = document.querySelector(".messages-list");
+  const messagesContainer = document.getElementById("messages-area");
   if (!messagesContainer) return;
 
-  const messageEl = document.createElement("div");
-  messageEl.className = "message ai-message";
-  messageEl.innerHTML = `
-    <img src="chronex-ai.jpg" class="message-avatar" alt="AI" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1px solid #00ff66;">
-    <div class="message-content">
-      <p>${response.replace(/\n/g, '<br>')}</p>
+  const div = document.createElement("div");
+  div.className = "message-wrapper received";
+  div.style.cssText = "display: flex; justify-content: flex-start; margin: 8px 0; padding: 0 12px;";
+
+  div.innerHTML = `
+    <img src="chronex-ai.jpg" class="message-avatar" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1.5px solid #00ff66; margin-right: 8px; flex-shrink: 0;">
+    <div class="message-bubble" style="background: linear-gradient(135deg, #111, #0a0e1a); color: #00ff66; padding: 10px 14px; border-radius: 12px; max-width: 70%; word-wrap: break-word; border: 1px solid rgba(0, 255, 102, 0.3);">
+      <p style="margin: 0; white-space: pre-wrap;">${response}</p>
+      <div style="font-size: 11px; margin-top: 4px; opacity: 0.7;">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
     </div>
-    <div class="message-time">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
   `;
 
-  messagesContainer.appendChild(messageEl);
+  messagesContainer.appendChild(div);
   messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
 
 function displayChronexAIError(errorMessage) {
-  const messagesContainer = document.querySelector(".messages-list");
+  const messagesContainer = document.getElementById("messages-area");
   if (!messagesContainer) return;
 
-  const messageEl = document.createElement("div");
-  messageEl.className = "message ai-message error-message";
-  messageEl.innerHTML = `
-    <img src="chronex-ai.jpg" class="message-avatar" alt="AI" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1px solid #ff4d4d;">
-    <div class="message-content">
-      <p>${escape(errorMessage)}</p>
+  const div = document.createElement("div");
+  div.className = "message-wrapper received error";
+  div.style.cssText = "display: flex; justify-content: flex-start; margin: 8px 0; padding: 0 12px;";
+
+  div.innerHTML = `
+    <img src="chronex-ai.jpg" class="message-avatar" style="width: 32px; height: 32px; border-radius: 50%; border: 1.5px solid #ff4d4d; margin-right: 8px; flex-shrink: 0;">
+    <div class="message-bubble" style="background: rgba(255, 77, 77, 0.1); color: #ff4d4d; padding: 10px 14px; border-radius: 12px; max-width: 70%; word-wrap: break-word; border: 1px solid rgba(255, 77, 77, 0.3);">
+      <p style="margin: 0;">⚠️ **NEURAL LINK ERROR**</p>
+      <p style="margin: 4px 0 0 0; font-size: 13px;">${escape(errorMessage)}</p>
+      <div style="font-size: 11px; margin-top: 4px; opacity: 0.7;">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
     </div>
-    <div class="message-time">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
   `;
 
-  messagesContainer.appendChild(messageEl);
+  messagesContainer.appendChild(div);
   messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
 
@@ -7618,11 +7632,15 @@ async function loadContacts() {
           const diffHours = Math.floor(diffMs / 3600000);
           const diffDays = Math.floor(diffMs / 86400000);
 
-          if (diffMins < 1) lastMessageTime = "Now";
-          else if (diffMins < 60) lastMessageTime = `${diffMins}m`;
-          else if (diffHours < 24) lastMessageTime = `${diffHours}h`;
-          else if (diffDays < 7) lastMessageTime = `${diffDays}d`;
-          else lastMessageTime = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+          if (date && !isNaN(date.getTime())) {
+            if (diffMins < 1) lastMessageTime = "Now";
+            else if (diffMins < 60) lastMessageTime = `${diffMins}m`;
+            else if (diffHours < 24) lastMessageTime = `${diffHours}h`;
+            else if (diffDays < 7) lastMessageTime = `${diffDays}d`;
+            else lastMessageTime = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+          } else {
+            lastMessageTime = "";
+          }
         }
       }
 
