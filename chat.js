@@ -46,6 +46,7 @@ let callStartTime = null;
 let callTimer = null;
 let mentionPopupOpen = false;
 let groupMembers = [];
+let localAiMessages = []; // Local-only AI messages that haven't synced to Firestore
 
 const notificationSounds = {
   success: 'assets/notification.mp3', // Using standard notification sound
@@ -175,19 +176,8 @@ function playNotificationSound(type = "info") {
   try {
     const soundPath = notificationSounds[type] || notificationSounds.info;
     const audio = new Audio(soundPath);
-
-    // Attempt to play the sound file
-    const playPromise = audio.play();
-
-    if (playPromise !== undefined) {
-      playPromise.catch(error => {
-        console.warn("Audio play failed, falling back to beep:", error);
-        // Fallback to oscillator if file fails
-        playBeep(type);
-      });
-    }
+    audio.play().catch(() => playBeep(type));
   } catch (err) {
-    console.warn("Could not play notification sound:", err);
     playBeep(type);
   }
 }
@@ -2064,6 +2054,17 @@ async function sendMessage(e) {
           displayChronexAIResponse(aiResponse);
         }
 
+        // 8. Add to local cache so updateMessages doesn't wipe it
+        localAiMessages.push({
+          from: 'chronex-ai',
+          to: myUID,
+          text: aiResponse,
+          time: { toDate: () => new Date() },
+          read: true,
+          type: 'text',
+          localOnly: true
+        });
+
         hapticFeedback('success');
         showNotif(`✓ Neural Sync Successful`, "success", 1500);
 
@@ -2083,6 +2084,16 @@ async function sendMessage(e) {
           if (typeof displayChronexAIResponse === 'function') {
             displayChronexAIResponse(fallback);
           }
+          localAiMessages.push({
+            from: 'chronex-ai',
+            to: myUID,
+            text: fallback,
+            time: { toDate: () => new Date() },
+            read: true,
+            type: 'text',
+            localOnly: true,
+            isAiResponse: true
+          });
         } catch (fErr) {
           console.error("Critical Fallback Failed:", fErr);
         }
@@ -2279,7 +2290,7 @@ function loadMessages() {
 
     console.log("✅ Both queries loaded. Messages1:", messages1.length, "Messages2:", messages2.length);
 
-    const allMessages = [...messages1, ...messages2].sort((a, b) => {
+    const allMessages = [...messages1, ...messages2, ...localAiMessages].sort((a, b) => {
       const timeA = a.time?.toDate?.() || new Date(0);
       const timeB = b.time?.toDate?.() || new Date(0);
       return timeA - timeB;
@@ -2318,7 +2329,11 @@ function loadMessages() {
     }, 500);
 
     allMessages.forEach((m) => {
-      const isOwn = m.from === myUID;
+      let isOwn = m.from === myUID;
+      const isAI = m.from === 'chronex-ai' || m.isAiResponse;
+
+      // If it's an AI response, it should always be treated as "received" (not own)
+      if (isAI) isOwn = false;
 
       const div = document.createElement("div");
       div.className = `message-wrapper ${isOwn ? "sent" : "received"}`;
@@ -2388,12 +2403,13 @@ function loadMessages() {
         bubble.appendChild(audioPlayer);
       } else {
         // Regular text message
-        if (!isOwn && m.from === 'chronex-ai') {
+        if (isAI || (currentChatType === 'ai' && !isOwn)) {
           const aiAvatar = document.createElement("img");
           aiAvatar.src = "chronex-ai.jpg";
           aiAvatar.className = "message-avatar";
           aiAvatar.style.cssText = `width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1.5px solid #00ff66; margin-right: 8px; flex-shrink: 0;`;
-          div.insertBefore(aiAvatar, bubble);
+
+          div.appendChild(aiAvatar); // Append avatar FIRST
           bubble.style.background = "linear-gradient(135deg, #111, #0a0e1a)";
           bubble.style.border = "1px solid rgba(0, 255, 102, 0.3)";
           bubble.style.color = "#00ff66";
@@ -2620,7 +2636,14 @@ function hideChatProfileDisplay() {
 
 async function openChat(uid, username, profilePic, chatType = 'direct') {
   currentChatUser = uid;
-  currentChatType = chatType; // Store chat type (direct or group)
+  currentChatType = chatType;
+
+  // Clear or load local AI history for this session
+  if (uid === 'chronex-ai' || chatType === 'ai') {
+    // We keep localAiMessages for the active session
+  } else {
+    localAiMessages = [];
+  }
 
   // Update the profile display immediately
   updateChatProfileDisplay(username, profilePic, "Loading...");
