@@ -2009,12 +2009,28 @@ async function sendMessage(e) {
     // Send message based on chat type
     if (currentChatType === 'ai') {
       try {
-        // 1. Display User Message immediately
+        console.log("🤖 Initiating Chronex AI synchronization...");
+
+        // 1. Clear input immediately for responsiveness
+        if (messageText) messageText.value = "";
+        if (typeof removeAttachment === 'function') removeAttachment();
+
+        // 2. Immediate Token Deduction (Synchronous Feedback)
+        tokens--;
+        const tokenDisplay = document.getElementById("currentTokenBalance");
+        if (tokenDisplay) tokenDisplay.textContent = tokens;
+
+        await updateDoc(userRef, {
+          tokens: increment(-1),
+          lastMessageSentAt: serverTimestamp()
+        });
+
+        // 3. Display User Message locally
         if (typeof displayChronexAIUserMessage === 'function') {
           displayChronexAIUserMessage(text);
         }
 
-        // 2. Show "AI is thinking" typing indicator
+        // 4. Show "AI is thinking" indicator
         const messagesDiv = document.getElementById("messages-area");
         const typingEl = document.createElement("div");
         typingEl.id = "ai-typing-indicator";
@@ -2023,7 +2039,7 @@ async function sendMessage(e) {
         typingEl.innerHTML = `
           <img src="chronex-ai.jpg" class="message-avatar" alt="AI" style="width: 32px; height: 32px; border-radius: 50%; border: 1.5px solid #00ff66; margin-right: 8px;">
           <div class="message-bubble" style="background: linear-gradient(135deg, #111, #0a0e1a); color: #00ff66; padding: 10px 14px; border-radius: 12px; border: 1px solid rgba(0, 255, 102, 0.3);">
-            <p style="margin: 0;"><i>📡 Synaptic processing...</i></p>
+            <p style="margin: 0;"><i class="fas fa-microchip pulse"></i> 📡 Synaptic processing...</p>
           </div>
         `;
         if (messagesDiv) {
@@ -2031,38 +2047,44 @@ async function sendMessage(e) {
           messagesDiv.scrollTop = messagesDiv.scrollHeight;
         }
 
-        // 3. Get AI Response
-        console.log("🧠 Querying Chronex AI core...");
-        const aiResponse = await chronexAI.chat(text, `chronex-${myUID}`);
+        // 5. Query AI with Safety Timeout
+        const aiPromise = chronexAI.chat(text, `chronex-${myUID}`);
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("AI_TIMEOUT")), 5000)
+        );
 
-        // 4. Remove typing indicator
+        const aiResponse = await Promise.race([aiPromise, timeoutPromise]);
+
+        // 6. Remove indicator
         const indicator = document.getElementById("ai-typing-indicator");
         if (indicator) indicator.remove();
 
-        // 5. Display AI Response
+        // 7. Display AI Response
         if (typeof displayChronexAIResponse === 'function') {
           displayChronexAIResponse(aiResponse);
         }
 
-        // 6. Clear input
-        if (messageText) messageText.value = "";
-        if (typeof removeAttachment === 'function') removeAttachment();
+        hapticFeedback('success');
+        showNotif(`✓ Neural Sync Successful`, "success", 1500);
 
-        // 7. Deduct 1 token
-        await updateDoc(userRef, {
-          tokens: increment(-1),
-          lastMessageSentAt: serverTimestamp()
-        });
-
-        showNotif(`✓ Chronex AI: Response received`, "success", 1500);
       } catch (aiErr) {
-        console.error("❌ Chronex AI Fatal Error:", aiErr);
+        console.error("❌ Chronex AI Error:", aiErr);
         const indicator = document.getElementById("ai-typing-indicator");
         if (indicator) indicator.remove();
-        if (typeof displayChronexAIError === 'function') {
-          displayChronexAIError(aiErr.message);
-        } else {
-          showNotif("❌ Neural uplink failed: " + aiErr.message, "error");
+
+        let errorMsg = "Neural uplink failed. Using fallback protocols.";
+        if (aiErr.message === "AI_TIMEOUT") errorMsg = "Neural link timed out. Local cache engaged.";
+
+        showNotif("❌ " + errorMsg, "error");
+
+        // Final Fallback: Direct Local Response
+        try {
+          const fallback = await chronexAI.getJavaScriptResponse(text);
+          if (typeof displayChronexAIResponse === 'function') {
+            displayChronexAIResponse(fallback);
+          }
+        } catch (fErr) {
+          console.error("Critical Fallback Failed:", fErr);
         }
       }
     } else if (currentChatType === 'group') {
@@ -4347,13 +4369,24 @@ function updateBackgroundPreview(imageUrl) {
 }
 
 async function loadChatBackground(chatId, chatType) {
+  // Normalize parameters
+  const uid = chatId || currentChatUser;
+  const type = chatType || currentChatType;
+
   try {
-    if (chatType === 'ai') {
-      applyBackgroundImage('chronex-background.jpg');
+    // Check Local Cache First for instant loading
+    const cachedBg = localStorage.getItem(`chat_bg_${uid}`);
+    if (cachedBg) {
+      applyBackgroundImage(cachedBg);
       return;
     }
 
-    if (!myUID) return;
+    if (type === 'ai') {
+      // Default AI background if no custom one exists
+      applyBackgroundImage('chronex-background.jpg');
+    }
+
+    if (!myUID || !uid) return;
 
     const bgDocPath = chatType === 'group'
       ? `groupBackgrounds/${chatId}`
@@ -5000,14 +5033,22 @@ document.getElementById("clearCacheBtn")?.addEventListener("click", () => {
 
 
 // Upload background for current chat
-document.getElementById("uploadChatBackgroundBtn")?.addEventListener("click", async () => {
+document.getElementById("uploadChatBackgroundBtn")?.addEventListener("click", async (e) => {
+  if (e) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+  if (!myUID) {
+    showNotif("❌ You must be logged in", "error");
+    return;
+  }
   if (!currentChatUser) {
-    showNotif("❌ No chat selected", "error");
+    showNotif("❌ No active chat detected. Open a chat first.", "error");
     return;
   }
 
   const fileInput = document.getElementById("chatBackgroundImageInput");
-  const file = fileInput.files[0];
+  const file = fileInput?.files[0];
 
   if (!file) {
     showNotif("❌ Please select an image first", "error");
@@ -5015,11 +5056,12 @@ document.getElementById("uploadChatBackgroundBtn")?.addEventListener("click", as
   }
 
   try {
-    showNotif("📸 Uploading chat background...", "info");
+    showNotif("📸 Synchronizing Background Ledger...", "info");
 
+    const timestamp = Date.now();
     const bgPath = currentChatType === 'group'
-      ? `chatBackgrounds/groups/${currentChatUser}/${Date.now()}`
-      : `chatBackgrounds/direct/${myUID}_${currentChatUser}/${Date.now()}`;
+      ? `chatBackgrounds/groups/${currentChatUser}/${timestamp}_${file.name}`
+      : `chatBackgrounds/direct/${myUID}_${currentChatUser}/${timestamp}_${file.name}`;
 
     const bgRef = storageRef(storage, bgPath);
     const snapshot = await uploadBytes(bgRef, file);
@@ -5033,17 +5075,19 @@ document.getElementById("uploadChatBackgroundBtn")?.addEventListener("click", as
       uploadedAt: serverTimestamp(),
       fileName: file.name,
       chatId: currentChatUser,
-      chatType: currentChatType
+      chatType: currentChatType,
+      owner: myUID
     }, { merge: true });
 
+    // Update UI and Cache
     applyBackgroundImage(bgUrl);
     localStorage.setItem(`chat_bg_${currentChatUser}`, bgUrl);
 
-    showNotif("✅ Chat background updated!", "success");
-    fileInput.value = "";
+    showNotif("✅ Neural Atmosphere Calibrated!", "success");
+    if (fileInput) fileInput.value = "";
   } catch (error) {
-    console.error("❌ Failed to upload chat background:", error);
-    showNotif("❌ Failed to upload chat background", "error");
+    console.error("❌ Background Upload Failure:", error);
+    showNotif("❌ Upload Failed: " + error.message, "error");
   }
 });
 
@@ -5082,7 +5126,11 @@ document.getElementById("removeChatBackgroundBtn")?.addEventListener("click", as
 // ============================================================
 
 // Upload background button
-document.getElementById("uploadBackgroundBtn")?.addEventListener("click", async () => {
+document.getElementById("uploadBackgroundBtn")?.addEventListener("click", async (e) => {
+  if (e) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
   const fileInput = document.getElementById("backgroundImageInput");
   const file = fileInput.files[0];
 

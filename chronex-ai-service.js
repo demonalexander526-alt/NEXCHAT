@@ -169,15 +169,16 @@ class ChronexAI {
     // ============ MATH SOLVER ============
     if (analysis.intents.includes('math') || /[\d+\-*/^=]{3,}/.test(message)) {
       try {
-        // Safe evaluation of math expression
-        const expression = message.match(/[\d+\-*/.() ]+/)[0];
-        // eslint-disable-next-line no-new-func
-        const result = new Function('return ' + expression)();
-        if (isFinite(result)) {
-          return `🔢 **Math Result**\n\nExpression: \`${expression.trim()}\`\nResult: **${result}**\n\nI can calculate basic arithmetic. For complex calculus or algebra, run my Python backend!`;
+        const mathMatches = message.match(/[\d+\-*/.() ]+/);
+        if (mathMatches && mathMatches[0].trim().length >= 3) {
+          const expression = mathMatches[0].trim();
+          const result = new Function('return ' + expression)();
+          if (isFinite(result)) {
+            return `🔢 **Math Result**\n\nExpression: \`${expression}\`\nResult: **${result}**\n\nI can calculate basic arithmetic. For complex calculus or algebra, run my Python backend!`;
+          }
         }
       } catch (e) {
-        // Ignore if not a valid math expression
+        console.warn("Math evaluation skipped:", e.message);
       }
     }
 
