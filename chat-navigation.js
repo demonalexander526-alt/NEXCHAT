@@ -12,7 +12,8 @@ window.handleNavigation = function (navSection) {
         'statusContainer',
         'groupsContainer',
         'announcementsContainer',
-        'chatDetailView'
+        'chatDetailView',
+        'callHistoryContainer'
     ];
 
     sections.forEach(id => {
@@ -27,6 +28,19 @@ window.handleNavigation = function (navSection) {
             if (chatList) {
                 chatList.classList.remove('hidden');
                 chatList.style.display = 'flex';
+            }
+            break;
+
+        case 'calls':
+            const callHist = document.getElementById('callHistoryContainer');
+            if (callHist) {
+                callHist.style.display = 'flex';
+                // Load call history if function exists
+                if (typeof window.loadCallHistory === 'function') {
+                    window.loadCallHistory();
+                } else if (typeof loadCallHistory === 'function') {
+                    loadCallHistory();
+                }
             }
             break;
 
@@ -69,6 +83,7 @@ window.handleNavigation = function (navSection) {
         if (navSection === 'updates') headerLogo.textContent = 'Status';
         else if (navSection === 'communities') headerLogo.textContent = 'Groups';
         else if (navSection === 'announcements') headerLogo.textContent = 'Announcements';
+        else if (navSection === 'calls') headerLogo.textContent = 'Calls';
         else headerLogo.textContent = 'NEXCHAT';
     }
 };

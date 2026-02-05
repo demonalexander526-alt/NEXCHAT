@@ -1,10 +1,7 @@
-pwa-install.js:155 ✅ PWA Service Worker registered successfully: ServiceWorkerRegistration {installing: null, waiting: null, active: ServiceWorker, navigationPreload: NavigationPreloadManager, scope: 'https://alex-dot-dot.github.io/NEXCHAT/', …}
-pwa-install.js:156 Scope: https://alex-dot-dot.github.io/NEXCHAT/
+pwa-install.js:155 ✅ PWA Service Worker registered successfully: ServiceWorkerRegistration {installing: null, waiting: null, active: ServiceWorker, navigationPreload: NavigationPreloadManager, scope: 'https://demonalexander526-alt.github.io/NEXCHAT/', …}
+pwa-install.js:156 Scope: https://demonalexander526-alt.github.io/NEXCHAT/
 pwa-install.js:157 State: activated
 button-setup.js:46 🔗 Setting up button event listeners...
-chat.js:7633 Uncaught SyntaxError: Unexpected token '}' (at chat.js:7633:1)
-messaging-features.js:575 ✅ Messaging features initialized
-chat.html:560  GET https://alex-dot-dot.github.io/NEXCHAT/assets/default_group.png 404 (Not Found)
 button-setup.js:35 ✅ All button functions loaded successfully
 button-setup.js:49 ✅ Attaching button listeners
 button-setup.js:61 ✅ Back button
@@ -32,19 +29,694 @@ button-setup.js:352 ✅ Settings logout button
 button-setup.js:367 ✅ File input change handler
 button-setup.js:383 ✅ Status image input handler
 button-setup.js:386 ✅✅✅ ALL BUTTON LISTENERS ATTACHED ✅✅✅
+chronex-ai-service.js:126 🧠 Chronex AI Service Initialized (Enhanced)
+chat.js:6900 ✅ Message form listener attached
+chat.js:7010 ✅ All header button listeners attached
+chat.js:4857 ✅ Transfer Tokens button listener attached successfully
+chat.js:6493 🌐 Connection status: ONLINE
+chat.js:6519 🔄 Attempting to sync offline messages...
+chat.js:5292 ✅ Offline queue system initialized
+chat.js:6817 ℹ️ Basic UI already initialized, skipping...
+chat.js:7315 ✅ Functions exposed to global window
+chat.js:6523 ✅ No messages to sync
+messaging-features.js:575 ✅ Messaging features initialized
+chat.js:6396 ✅ Offline DB initialized
 messaging-features.js:130 ✅ Swipe-to-reply setup complete
-button-setup.js:5 openSearch not yet loaded from chat.js
-(anonymous) @ button-setup.js:5
-(anonymous) @ button-setup.js:68
-button-setup.js:8 openSettingsModal not yet loaded from chat.js
-window.openSettingsModal @ button-setup.js:8
-(anonymous) @ button-setup.js:80
-button-setup.js:11 toggleFullscreen not yet loaded from chat.js
-window.toggleFullscreen @ button-setup.js:11
-(anonymous) @ button-setup.js:92
-button-setup.js:134 applyFilter not yet available
-(anonymous) @ button-setup.js:134
-button-setup.js:134 applyFilter not yet available
-(anonymous) @ button-setup.js:134
-button-setup.js:134 applyFilter not yet available
-(anonymous) @ button-setup.js:134
+chat.js:4456 ✅ User authenticated: An5HEuYJMCapAFkYWqzNN2q4ldc2
+chronex-ai-service.js:132 👤 Chronex AI: User identity synchronized: An5HEuYJMCapAFkYWqzNN2q4ldc2
+firebase-config.js:31 ✅ Firestore network enabled
+chat.js:4540 💰 Token count from Firebase: 1986
+chat.js:4541 💰 User data: {email: 'googlegravity@gmai.com', tokens: 1986, username: 'Gravity', uid: 'An5HEuYJMCapAFkYWqzNN2q4ldc2', lastMessageSentAt: Es, …}
+chat.js:4544 💰 Token display element: <span id=​"tokenCount">​1986​</span>​
+chat.js:4548 ✅ Token display updated to: 1986
+chat.js:4553 ✅ User data loaded. Username: Gravity Tokens: 1986
+chat.js:4703 🟢 Marked user as online
+chat.js:4710 📋 Loading chat list after authentication...
+chat.js:7559 Recent conversations optimization failed, falling back to simplified list: FirebaseError: The query requires an index. You can create it here: https://console.firebase.google.com/v1/r/project/nexchat-47326/firestore/indexes?create_composite=Ck5wcm9qZWN0cy9uZXhjaGF0LTQ3MzI2L2RhdGFiYXNlcy8oZGVmYXVsdCkvY29sbGVjdGlvbkdyb3Vwcy9tZXNzYWdlcy9pbmRleGVzL18QARoICgRmcm9tEAEaDQoJdGltZXN0YW1wEAIaDAoIX19uYW1lX18QAg
+loadContacts @ chat.js:7559
+await in loadContacts
+(anonymous) @ chat.js:4711
+await in (anonymous)
+(anonymous) @ auth_impl.ts:603
+Promise.then
+registerStateListener @ auth_impl.ts:602
+onAuthStateChanged @ auth_impl.ts:443
+An @ index.ts:179
+setupInitialization @ chat.js:4448
+(anonymous) @ chat.js:4440
+chronex-ai-service.js:132 👤 Chronex AI: User identity synchronized: An5HEuYJMCapAFkYWqzNN2q4ldc2
+chat.js:4350 ✅ Background applied: chronex-background.jpg 
+chat.js:2226 📨 Loading messages for chat with: chronex-ai
+chat.js:2227 📨 Current user UID: An5HEuYJMCapAFkYWqzNN2q4ldc2
+chat.js:2247 📨 Loading neural history for Chronex AI...
+assets/pop.mp3:1  GET https://demonalexander526-alt.github.io/NEXCHAT/assets/pop.mp3 net::ERR_ABORTED 404 (Not Found)
+chat.js:184 Audio play failed, falling back to beep: NotSupportedError: Failed to load because no supported source was found.
+(anonymous) @ chat.js:184
+Promise.catch
+playNotificationSound @ chat.js:183
+showNotif @ chat.js:165
+openChat @ chat.js:2710
+(anonymous) @ chat.js:7494
+chat.js:2437 ✅ Query 1 snapshot received: 0 messages
+chat.js:2276 📊 Progress - loaded1: true loaded2: false
+chat.js:2449 ✅ Query 2 snapshot received: 0 messages
+chat.js:2280 ✅ Both queries loaded. Messages1: 0 Messages2: 0
+chat.js:2291 📭 No messages found between users
+chat.js:7016 📤 Send button clicked
+chat.js:1960 📤 Send message triggered
+chat.js:2012 🤖 Initiating Chronex AI synchronization...
+chat.js:4622 💰 Token update: 1986 → 1985
+chronex-ai-service.js:479 🧠 Chronex AI processing message: hey
+chronex-ai-service.js:495 💻 Using JavaScript backend...
+chronex-ai-service.js:156 📊 Analysis: {intents: Array(1), entities: {…}, complexity: 'simple'}
+chronex-ai-service.js:507 ✅ Chronex AI response generated successfully
+chat.js:2150 ✅ Message lifecycle synchronized successfully
+chat.js:2437 ✅ Query 1 snapshot received: 1 messages
+chat.js:2280 ✅ Both queries loaded. Messages1: 1 Messages2: 0
+chat.js:2449 ✅ Query 2 snapshot received: 1 messages
+chat.js:2280 ✅ Both queries loaded. Messages1: 1 Messages2: 1
+chat.js:2396 Uncaught NotFoundError: Failed to execute 'insertBefore' on 'Node': The node before which the new node is to be inserted is not a child of this node.
+    at chat.js:2396:15
+    at Array.forEach (<anonymous>)
+    at updateMessages (chat.js:2320:17)
+    at Array.<anonymous> (chat.js:2452:5)
+    at next (index.esm2017.js:20680:25)
+    at index.esm2017.js:16769:14
+(anonymous) @ chat.js:2396
+updateMessages @ chat.js:2320
+(anonymous) @ chat.js:2452
+next @ index.esm2017.js:20680
+(anonymous) @ index.esm2017.js:16769
+setTimeout
+Sc @ index.esm2017.js:16765
+next @ index.esm2017.js:16732
+$u @ index.esm2017.js:15181
+Pd @ index.esm2017.js:15137
+ff @ index.esm2017.js:16120
+await in ff
+(anonymous) @ index.esm2017.js:15869
+await in (anonymous)
+(anonymous) @ index.esm2017.js:20710
+await in (anonymous)
+(anonymous) @ index.esm2017.js:18066
+(anonymous) @ index.esm2017.js:18106
+Promise.then
+ta @ index.esm2017.js:18099
+enqueue @ index.esm2017.js:18065
+enqueueAndForget @ index.esm2017.js:18045
+(anonymous) @ index.esm2017.js:15815
+wp @ index.esm2017.js:20711
+mp @ index.esm2017.js:20646
+saveConversation @ chronex-ai-service.js:539
+await in saveConversation
+chat @ chronex-ai-service.js:503
+await in chat
+sendMessage @ chat.js:2051
+await in sendMessage
+(anonymous) @ chat.js:7018
+chat.js:2437 ✅ Query 1 snapshot received: 1 messages
+chat.js:2280 ✅ Both queries loaded. Messages1: 1 Messages2: 1
+chat.js:2396 Uncaught NotFoundError: Failed to execute 'insertBefore' on 'Node': The node before which the new node is to be inserted is not a child of this node.
+    at chat.js:2396:15
+    at Array.forEach (<anonymous>)
+    at updateMessages (chat.js:2320:17)
+    at Array.<anonymous> (chat.js:2440:5)
+    at next (index.esm2017.js:20680:25)
+    at index.esm2017.js:16769:14
+(anonymous) @ chat.js:2396
+updateMessages @ chat.js:2320
+(anonymous) @ chat.js:2440
+next @ index.esm2017.js:20680
+(anonymous) @ index.esm2017.js:16769
+setTimeout
+Sc @ index.esm2017.js:16765
+next @ index.esm2017.js:16732
+$u @ index.esm2017.js:15181
+Pd @ index.esm2017.js:15137
+ff @ index.esm2017.js:16120
+await in ff
+tf @ index.esm2017.js:15903
+await in tf
+(anonymous) @ index.esm2017.js:14584
+dd @ index.esm2017.js:14584
+await in dd
+onMessage @ index.esm2017.js:14058
+(anonymous) @ index.esm2017.js:13999
+(anonymous) @ index.esm2017.js:14018
+(anonymous) @ index.esm2017.js:18066
+(anonymous) @ index.esm2017.js:18106
+Promise.then
+ta @ index.esm2017.js:18099
+enqueue @ index.esm2017.js:18065
+enqueueAndForget @ index.esm2017.js:18045
+(anonymous) @ index.esm2017.js:14018
+(anonymous) @ index.esm2017.js:13999
+_o @ index.esm2017.js:13408
+(anonymous) @ index.esm2017.js:13619
+(anonymous) @ index.esm2017.js:13571
+Bt @ eventtarget.js:91
+Vt @ eventtarget.js:490
+mr.Aa @ webchannelbasetransport.js:429
+je @ structs.js:194
+Oe @ channelrequest.js:920
+D.Pa @ channelrequest.js:626
+D.nb @ channelrequest.js:656
+Bt @ eventtarget.js:91
+Vt @ eventtarget.js:490
+Pn @ xhrio.js:923
+D.kb @ xhrio.js:1053
+D.La @ xhrio.js:1051
+An @ fetchxmlhttpfactory.js:237
+D.Xa @ fetchxmlhttpfactory.js:419
+Promise.then
+Cn @ fetchxmlhttpfactory.js:468
+D.$a @ fetchxmlhttpfactory.js:358
+Promise.then
+D.send @ fetchxmlhttpfactory.js:272
+D.ha @ xhrio.js:740
+Me @ webchanneldebug.js:83
+nr @ webchannelbase.js:2072
+D.Ma @ webchannelbase.js:1711
+Xt @ workqueue.js:84
+Promise.then
+$t @ run.js:115
+Zn @ webchannelbase.js:1671
+sr @ webchannelbase.js:632
+D.Pa @ xhrio.js:1359
+D.nb @ channelrequest.js:656
+Bt @ eventtarget.js:91
+Vt @ eventtarget.js:490
+Pn @ xhrio.js:923
+D.kb @ xhrio.js:1053
+D.La @ xhrio.js:1051
+An @ fetchxmlhttpfactory.js:237
+Dn @ fetchxmlhttpfactory.js:559
+D.Xa @ fetchxmlhttpfactory.js:410
+Promise.then
+Cn @ fetchxmlhttpfactory.js:468
+D.Xa @ fetchxmlhttpfactory.js:425
+Promise.then
+Cn @ fetchxmlhttpfactory.js:468
+D.Xa @ fetchxmlhttpfactory.js:425
+Promise.then
+Cn @ fetchxmlhttpfactory.js:468
+D.Xa @ fetchxmlhttpfactory.js:425
+Promise.then
+Cn @ fetchxmlhttpfactory.js:468
+D.Xa @ fetchxmlhttpfactory.js:425
+Promise.then
+Cn @ fetchxmlhttpfactory.js:468
+D.Xa @ fetchxmlhttpfactory.js:425
+Promise.then
+Cn @ fetchxmlhttpfactory.js:468
+D.Xa @ fetchxmlhttpfactory.js:425
+Promise.then
+Cn @ fetchxmlhttpfactory.js:468
+D.Xa @ fetchxmlhttpfactory.js:425
+Promise.then
+Cn @ fetchxmlhttpfactory.js:468
+D.Xa @ fetchxmlhttpfactory.js:425
+Promise.then
+Cn @ fetchxmlhttpfactory.js:468
+D.Xa @ fetchxmlhttpfactory.js:425
+Promise.then
+Cn @ fetchxmlhttpfactory.js:468
+D.Xa @ fetchxmlhttpfactory.js:425
+Promise.then
+Cn @ fetchxmlhttpfactory.js:468
+D.Xa @ fetchxmlhttpfactory.js:425
+Promise.then
+Cn @ fetchxmlhttpfactory.js:468
+D.Xa @ fetchxmlhttpfactory.js:425
+Promise.then
+Cn @ fetchxmlhttpfactory.js:468
+D.Xa @ fetchxmlhttpfactory.js:425
+Promise.then
+Cn @ fetchxmlhttpfactory.js:468
+D.Xa @ fetchxmlhttpfactory.js:425
+Promise.then
+Cn @ fetchxmlhttpfactory.js:468
+D.Xa @ fetchxmlhttpfactory.js:425
+Promise.then
+Cn @ fetchxmlhttpfactory.js:468
+D.Xa @ fetchxmlhttpfactory.js:425
+Promise.then
+Cn @ fetchxmlhttpfactory.js:468
+D.Xa @ fetchxmlhttpfactory.js:425
+Promise.then
+Cn @ fetchxmlhttpfactory.js:468
+D.Xa @ fetchxmlhttpfactory.js:425
+Promise.then
+Cn @ fetchxmlhttpfactory.js:468
+D.Xa @ fetchxmlhttpfactory.js:425
+Promise.then
+Cn @ fetchxmlhttpfactory.js:468
+D.Xa @ fetchxmlhttpfactory.js:425
+Promise.then
+Cn @ fetchxmlhttpfactory.js:468
+D.Xa @ fetchxmlhttpfactory.js:425
+Promise.then
+Cn @ fetchxmlhttpfactory.js:468
+D.Xa @ fetchxmlhttpfactory.js:425
+Promise.then
+Cn @ fetchxmlhttpfactory.js:468
+D.Xa @ fetchxmlhttpfactory.js:425
+Promise.then
+Cn @ fetchxmlhttpfactory.js:468
+D.Xa @ fetchxmlhttpfactory.js:425
+assets/pop.mp3:1  GET https://demonalexander526-alt.github.io/NEXCHAT/assets/pop.mp3 net::ERR_ABORTED 404 (Not Found)
+chat.js:184 Audio play failed, falling back to beep: NotSupportedError: Failed to load because no supported source was found.
+(anonymous) @ chat.js:184
+Promise.catch
+playNotificationSound @ chat.js:183
+showNotif @ chat.js:165
+removeAttachment @ chat.js:3532
+sendMessage @ chat.js:2016
+(anonymous) @ chat.js:7018
+chat.js:7559 Recent conversations optimization failed, falling back to simplified list: FirebaseError: The query requires an index. You can create it here: https://console.firebase.google.com/v1/r/project/nexchat-47326/firestore/indexes?create_composite=Ck5wcm9qZWN0cy9uZXhjaGF0LTQ3MzI2L2RhdGFiYXNlcy8oZGVmYXVsdCkvY29sbGVjdGlvbkdyb3Vwcy9tZXNzYWdlcy9pbmRleGVzL18QARoICgRmcm9tEAEaDQoJdGltZXN0YW1wEAIaDAoIX19uYW1lX18QAg
+loadContacts @ chat.js:7559
+await in loadContacts
+(anonymous) @ chat.js:2316
+setTimeout
+updateMessages @ chat.js:2314
+(anonymous) @ chat.js:2440
+next @ index.esm2017.js:20680
+(anonymous) @ index.esm2017.js:16769
+setTimeout
+Sc @ index.esm2017.js:16765
+next @ index.esm2017.js:16732
+$u @ index.esm2017.js:15181
+Pd @ index.esm2017.js:15137
+ff @ index.esm2017.js:16120
+await in ff
+(anonymous) @ index.esm2017.js:15869
+await in (anonymous)
+(anonymous) @ index.esm2017.js:20710
+await in (anonymous)
+(anonymous) @ index.esm2017.js:18066
+(anonymous) @ index.esm2017.js:18106
+Promise.then
+ta @ index.esm2017.js:18099
+enqueue @ index.esm2017.js:18065
+enqueueAndForget @ index.esm2017.js:18045
+(anonymous) @ index.esm2017.js:15815
+wp @ index.esm2017.js:20711
+mp @ index.esm2017.js:20646
+saveConversation @ chronex-ai-service.js:528
+chat @ chronex-ai-service.js:503
+await in chat
+sendMessage @ chat.js:2051
+await in sendMessage
+(anonymous) @ chat.js:7018
+chronex-ai-service.js:551 Error saving conversation to Firestore: FirebaseError: Missing or insufficient permissions.
+saveConversation @ chronex-ai-service.js:551
+await in saveConversation
+chat @ chronex-ai-service.js:503
+await in chat
+sendMessage @ chat.js:2051
+await in sendMessage
+(anonymous) @ chat.js:7018
+chat.js:2449 ✅ Query 2 snapshot received: 0 messages
+chat.js:2280 ✅ Both queries loaded. Messages1: 1 Messages2: 0
+chat.js:7559 Recent conversations optimization failed, falling back to simplified list: FirebaseError: The query requires an index. You can create it here: https://console.firebase.google.com/v1/r/project/nexchat-47326/firestore/indexes?create_composite=Ck5wcm9qZWN0cy9uZXhjaGF0LTQ3MzI2L2RhdGFiYXNlcy8oZGVmYXVsdCkvY29sbGVjdGlvbkdyb3Vwcy9tZXNzYWdlcy9pbmRleGVzL18QARoICgRmcm9tEAEaDQoJdGltZXN0YW1wEAIaDAoIX19uYW1lX18QAg
+loadContacts @ chat.js:7559
+await in loadContacts
+(anonymous) @ chat.js:2316
+setTimeout
+updateMessages @ chat.js:2314
+(anonymous) @ chat.js:2452
+next @ index.esm2017.js:20680
+(anonymous) @ index.esm2017.js:16769
+setTimeout
+Sc @ index.esm2017.js:16765
+next @ index.esm2017.js:16732
+$u @ index.esm2017.js:15181
+Pd @ index.esm2017.js:15137
+ff @ index.esm2017.js:16120
+await in ff
+(anonymous) @ index.esm2017.js:15869
+await in (anonymous)
+(anonymous) @ index.esm2017.js:20710
+await in (anonymous)
+(anonymous) @ index.esm2017.js:18066
+(anonymous) @ index.esm2017.js:18106
+Promise.then
+ta @ index.esm2017.js:18099
+enqueue @ index.esm2017.js:18065
+enqueueAndForget @ index.esm2017.js:18045
+(anonymous) @ index.esm2017.js:15815
+wp @ index.esm2017.js:20711
+mp @ index.esm2017.js:20646
+saveConversation @ chronex-ai-service.js:539
+await in saveConversation
+chat @ chronex-ai-service.js:503
+await in chat
+sendMessage @ chat.js:2051
+await in sendMessage
+(anonymous) @ chat.js:7018
+chat.js:7559 Recent conversations optimization failed, falling back to simplified list: FirebaseError: The query requires an index. You can create it here: https://console.firebase.google.com/v1/r/project/nexchat-47326/firestore/indexes?create_composite=Ck5wcm9qZWN0cy9uZXhjaGF0LTQ3MzI2L2RhdGFiYXNlcy8oZGVmYXVsdCkvY29sbGVjdGlvbkdyb3Vwcy9tZXNzYWdlcy9pbmRleGVzL18QARoICgRmcm9tEAEaDQoJdGltZXN0YW1wEAIaDAoIX19uYW1lX18QAg
+loadContacts @ chat.js:7559
+await in loadContacts
+(anonymous) @ chat.js:2316
+setTimeout
+updateMessages @ chat.js:2314
+(anonymous) @ chat.js:2440
+next @ index.esm2017.js:20680
+(anonymous) @ index.esm2017.js:16769
+setTimeout
+Sc @ index.esm2017.js:16765
+next @ index.esm2017.js:16732
+$u @ index.esm2017.js:15181
+Pd @ index.esm2017.js:15137
+ff @ index.esm2017.js:16120
+await in ff
+tf @ index.esm2017.js:15903
+await in tf
+(anonymous) @ index.esm2017.js:14584
+dd @ index.esm2017.js:14584
+await in dd
+onMessage @ index.esm2017.js:14058
+(anonymous) @ index.esm2017.js:13999
+(anonymous) @ index.esm2017.js:14018
+(anonymous) @ index.esm2017.js:18066
+(anonymous) @ index.esm2017.js:18106
+Promise.then
+ta @ index.esm2017.js:18099
+enqueue @ index.esm2017.js:18065
+enqueueAndForget @ index.esm2017.js:18045
+(anonymous) @ index.esm2017.js:14018
+(anonymous) @ index.esm2017.js:13999
+_o @ index.esm2017.js:13408
+(anonymous) @ index.esm2017.js:13619
+(anonymous) @ index.esm2017.js:13571
+Bt @ eventtarget.js:91
+Vt @ eventtarget.js:490
+mr.Aa @ webchannelbasetransport.js:429
+je @ structs.js:194
+Oe @ channelrequest.js:920
+D.Pa @ channelrequest.js:626
+D.nb @ channelrequest.js:656
+Bt @ eventtarget.js:91
+Vt @ eventtarget.js:490
+Pn @ xhrio.js:923
+D.kb @ xhrio.js:1053
+D.La @ xhrio.js:1051
+An @ fetchxmlhttpfactory.js:237
+D.Xa @ fetchxmlhttpfactory.js:419
+Promise.then
+Cn @ fetchxmlhttpfactory.js:468
+D.$a @ fetchxmlhttpfactory.js:358
+Promise.then
+D.send @ fetchxmlhttpfactory.js:272
+D.ha @ xhrio.js:740
+Me @ webchanneldebug.js:83
+nr @ webchannelbase.js:2072
+D.Ma @ webchannelbase.js:1711
+Xt @ workqueue.js:84
+Promise.then
+$t @ run.js:115
+Zn @ webchannelbase.js:1671
+sr @ webchannelbase.js:632
+D.Pa @ xhrio.js:1359
+D.nb @ channelrequest.js:656
+Bt @ eventtarget.js:91
+Vt @ eventtarget.js:490
+Pn @ xhrio.js:923
+D.kb @ xhrio.js:1053
+D.La @ xhrio.js:1051
+An @ fetchxmlhttpfactory.js:237
+Dn @ fetchxmlhttpfactory.js:559
+D.Xa @ fetchxmlhttpfactory.js:410
+Promise.then
+Cn @ fetchxmlhttpfactory.js:468
+D.Xa @ fetchxmlhttpfactory.js:425
+Promise.then
+Cn @ fetchxmlhttpfactory.js:468
+D.Xa @ fetchxmlhttpfactory.js:425
+Promise.then
+Cn @ fetchxmlhttpfactory.js:468
+D.Xa @ fetchxmlhttpfactory.js:425
+Promise.then
+Cn @ fetchxmlhttpfactory.js:468
+D.Xa @ fetchxmlhttpfactory.js:425
+Promise.then
+Cn @ fetchxmlhttpfactory.js:468
+D.Xa @ fetchxmlhttpfactory.js:425
+Promise.then
+Cn @ fetchxmlhttpfactory.js:468
+D.Xa @ fetchxmlhttpfactory.js:425
+Promise.then
+Cn @ fetchxmlhttpfactory.js:468
+D.Xa @ fetchxmlhttpfactory.js:425
+Promise.then
+Cn @ fetchxmlhttpfactory.js:468
+D.Xa @ fetchxmlhttpfactory.js:425
+Promise.then
+Cn @ fetchxmlhttpfactory.js:468
+D.Xa @ fetchxmlhttpfactory.js:425
+Promise.then
+Cn @ fetchxmlhttpfactory.js:468
+D.Xa @ fetchxmlhttpfactory.js:425
+Promise.then
+Cn @ fetchxmlhttpfactory.js:468
+D.Xa @ fetchxmlhttpfactory.js:425
+Promise.then
+Cn @ fetchxmlhttpfactory.js:468
+D.Xa @ fetchxmlhttpfactory.js:425
+Promise.then
+Cn @ fetchxmlhttpfactory.js:468
+D.Xa @ fetchxmlhttpfactory.js:425
+Promise.then
+Cn @ fetchxmlhttpfactory.js:468
+D.Xa @ fetchxmlhttpfactory.js:425
+Promise.then
+Cn @ fetchxmlhttpfactory.js:468
+D.Xa @ fetchxmlhttpfactory.js:425
+Promise.then
+Cn @ fetchxmlhttpfactory.js:468
+D.Xa @ fetchxmlhttpfactory.js:425
+Promise.then
+Cn @ fetchxmlhttpfactory.js:468
+D.Xa @ fetchxmlhttpfactory.js:425
+Promise.then
+Cn @ fetchxmlhttpfactory.js:468
+D.Xa @ fetchxmlhttpfactory.js:425
+Promise.then
+Cn @ fetchxmlhttpfactory.js:468
+D.Xa @ fetchxmlhttpfactory.js:425
+Promise.then
+Cn @ fetchxmlhttpfactory.js:468
+D.Xa @ fetchxmlhttpfactory.js:425
+Promise.then
+Cn @ fetchxmlhttpfactory.js:468
+D.Xa @ fetchxmlhttpfactory.js:425
+Promise.then
+Cn @ fetchxmlhttpfactory.js:468
+D.Xa @ fetchxmlhttpfactory.js:425
+chat.js:7559 Recent conversations optimization failed, falling back to simplified list: FirebaseError: The query requires an index. You can create it here: https://console.firebase.google.com/v1/r/project/nexchat-47326/firestore/indexes?create_composite=Ck5wcm9qZWN0cy9uZXhjaGF0LTQ3MzI2L2RhdGFiYXNlcy8oZGVmYXVsdCkvY29sbGVjdGlvbkdyb3Vwcy9tZXNzYWdlcy9pbmRleGVzL18QARoICgRmcm9tEAEaDQoJdGltZXN0YW1wEAIaDAoIX19uYW1lX18QAg
+loadContacts @ chat.js:7559
+await in loadContacts
+(anonymous) @ chat.js:2316
+setTimeout
+updateMessages @ chat.js:2314
+(anonymous) @ chat.js:2452
+next @ index.esm2017.js:20680
+(anonymous) @ index.esm2017.js:16769
+setTimeout
+Sc @ index.esm2017.js:16765
+next @ index.esm2017.js:16732
+$u @ index.esm2017.js:15181
+Pd @ index.esm2017.js:15137
+ff @ index.esm2017.js:16120
+await in ff
+sf @ index.esm2017.js:16036
+await in sf
+(anonymous) @ index.esm2017.js:14695
+gd @ index.esm2017.js:14619
+(anonymous) @ index.esm2017.js:14692
+Td @ index.esm2017.js:14705
+close @ index.esm2017.js:13968
+tu @ index.esm2017.js:14018
+(anonymous) @ index.esm2017.js:13995
+(anonymous) @ index.esm2017.js:14018
+(anonymous) @ index.esm2017.js:18066
+(anonymous) @ index.esm2017.js:18106
+Promise.then
+ta @ index.esm2017.js:18099
+enqueue @ index.esm2017.js:18065
+enqueueAndForget @ index.esm2017.js:18045
+(anonymous) @ index.esm2017.js:14018
+(anonymous) @ index.esm2017.js:13994
+wo @ index.esm2017.js:13406
+(anonymous) @ index.esm2017.js:13616
+(anonymous) @ index.esm2017.js:13571
+Bt @ eventtarget.js:91
+Vt @ eventtarget.js:490
+mr.Aa @ webchannelbasetransport.js:429
+je @ structs.js:194
+Oe @ channelrequest.js:920
+D.Pa @ channelrequest.js:626
+D.nb @ channelrequest.js:656
+Bt @ eventtarget.js:91
+Vt @ eventtarget.js:490
+Pn @ xhrio.js:923
+D.kb @ xhrio.js:1053
+D.La @ xhrio.js:1051
+An @ fetchxmlhttpfactory.js:237
+D.Xa @ fetchxmlhttpfactory.js:419
+Promise.then
+Cn @ fetchxmlhttpfactory.js:468
+D.Xa @ fetchxmlhttpfactory.js:425
+Promise.then
+Cn @ fetchxmlhttpfactory.js:468
+D.$a @ fetchxmlhttpfactory.js:358
+Promise.then
+D.send @ fetchxmlhttpfactory.js:272
+D.ha @ xhrio.js:740
+Me @ webchanneldebug.js:83
+nr @ webchannelbase.js:2072
+D.Ma @ webchannelbase.js:1711
+Xt @ workqueue.js:84
+Promise.then
+$t @ run.js:115
+Zn @ webchannelbase.js:1671
+sr @ webchannelbase.js:632
+D.Pa @ xhrio.js:1359
+D.nb @ channelrequest.js:656
+Bt @ eventtarget.js:91
+Vt @ eventtarget.js:490
+Pn @ xhrio.js:923
+D.kb @ xhrio.js:1053
+D.La @ xhrio.js:1051
+An @ fetchxmlhttpfactory.js:237
+Dn @ fetchxmlhttpfactory.js:559
+D.Xa @ fetchxmlhttpfactory.js:410
+Promise.then
+Cn @ fetchxmlhttpfactory.js:468
+D.Xa @ fetchxmlhttpfactory.js:425
+Promise.then
+Cn @ fetchxmlhttpfactory.js:468
+D.Xa @ fetchxmlhttpfactory.js:425
+Promise.then
+Cn @ fetchxmlhttpfactory.js:468
+D.Xa @ fetchxmlhttpfactory.js:425
+Promise.then
+Cn @ fetchxmlhttpfactory.js:468
+D.Xa @ fetchxmlhttpfactory.js:425
+Promise.then
+Cn @ fetchxmlhttpfactory.js:468
+D.$a @ fetchxmlhttpfactory.js:358
+Promise.then
+D.send @ fetchxmlhttpfactory.js:272
+D.ha @ xhrio.js:740
+Me @ webchanneldebug.js:83
+nr @ webchannelbase.js:2072
+D.Ma @ webchannelbase.js:1711
+Xt @ workqueue.js:84
+Promise.then
+$t @ run.js:115
+Zn @ webchannelbase.js:1671
+je @ webchannelbase.js:2321
+Oe @ channelrequest.js:920
+D.Pa @ channelrequest.js:626
+D.nb @ channelrequest.js:656
+Bt @ eventtarget.js:91
+Vt @ eventtarget.js:490
+Pn @ xhrio.js:923
+D.kb @ xhrio.js:1053
+D.La @ xhrio.js:1051
+An @ fetchxmlhttpfactory.js:237
+D.Xa @ fetchxmlhttpfactory.js:419
+Promise.then
+Cn @ fetchxmlhttpfactory.js:468
+D.$a @ fetchxmlhttpfactory.js:358
+Promise.then
+D.send @ fetchxmlhttpfactory.js:272
+D.ha @ xhrio.js:740
+Me @ channelrequest.js:585
+Re @ channelrequest.js:547
+D.Na @ webchannelbase.js:1359
+Xt @ workqueue.js:84
+Promise.then
+$t @ run.js:115
+Wn @ webchannelbase.js:1528
+dr.m @ webchannelbasetransport.js:216
+ro @ index.esm2017.js:13559
+send @ index.esm2017.js:13387
+Wo @ index.esm2017.js:13916
+hu @ index.esm2017.js:14154
+bd @ index.esm2017.js:14666
+(anonymous) @ index.esm2017.js:13993
+(anonymous) @ index.esm2017.js:14018
+(anonymous) @ index.esm2017.js:18066
+(anonymous) @ index.esm2017.js:18106
+Promise.then
+ta @ index.esm2017.js:18099
+enqueue @ index.esm2017.js:18065
+enqueueAndForget @ index.esm2017.js:18045
+(anonymous) @ index.esm2017.js:14018
+(anonymous) @ index.esm2017.js:13990
+fo @ index.esm2017.js:13406
+(anonymous) @ index.esm2017.js:13667
+setTimeout
+Ro @ index.esm2017.js:13664
+eu @ index.esm2017.js:14131
+Zo @ index.esm2017.js:13990
+(anonymous) @ index.esm2017.js:13982
+Promise.then
+auth @ index.esm2017.js:13979
+start @ index.esm2017.js:13883
+start @ index.esm2017.js:14126
+vd @ index.esm2017.js:14663
+md @ index.esm2017.js:14639
+await in md
+(anonymous) @ index.esm2017.js:15872
+await in (anonymous)
+(anonymous) @ index.esm2017.js:20710
+await in (anonymous)
+(anonymous) @ index.esm2017.js:18066
+(anonymous) @ index.esm2017.js:18106
+Promise.then
+ta @ index.esm2017.js:18099
+enqueue @ index.esm2017.js:18065
+enqueueAndForget @ index.esm2017.js:18045
+(anonymous) @ index.esm2017.js:15815
+wp @ index.esm2017.js:20711
+fp @ index.esm2017.js:20631
+(anonymous) @ chat.js:4699
+await in (anonymous)
+(anonymous) @ auth_impl.ts:603
+Promise.then
+registerStateListener @ auth_impl.ts:602
+onAuthStateChanged @ auth_impl.ts:443
+An @ index.ts:179
+setupInitialization @ chat.js:4448
+(anonymous) @ chat.js:4440
+assets/pop.mp3:1  GET https://demonalexander526-alt.github.io/NEXCHAT/assets/pop.mp3 net::ERR_ABORTED 404 (Not Found)
+chat.js:184 Audio play failed, falling back to beep: NotSupportedError: Failed to load because no supported source was found.
+(anonymous) @ chat.js:184
+Promise.catch
+playNotificationSound @ chat.js:183
+showNotif @ chat.js:165
+removeAttachment @ chat.js:3532
+sendMessage @ chat.js:2144
+await in sendMessage
+(anonymous) @ chat.js:7018
+assets/notification.mp3:1  GET https://demonalexander526-alt.github.io/NEXCHAT/assets/notification.mp3 net::ERR_ABORTED 404 (Not Found)
+chat.js:184 Audio play failed, falling back to beep: NotSupportedError: Failed to load because no supported source was found.
+(anonymous) @ chat.js:184
+Promise.catch
+playNotificationSound @ chat.js:183
+showNotif @ chat.js:165
+sendMessage @ chat.js:2068
+await in sendMessage
+(anonymous) @ chat.js:7018
+assets/notification.mp3:1  GET https://demonalexander526-alt.github.io/NEXCHAT/assets/notification.mp3 net::ERR_ABORTED 404 (Not Found)
+chat.js:184 Audio play failed, falling back to beep: NotSupportedError: Failed to load because no supported source was found.
+(anonymous) @ chat.js:184
+Promise.catch
+playNotificationSound @ chat.js:183
+showNotif @ chat.js:165
+sendMessage @ chat.js:2147
+await in sendMessage
+(anonymous) @ chat.js:7018

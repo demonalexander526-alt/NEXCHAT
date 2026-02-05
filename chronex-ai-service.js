@@ -167,14 +167,27 @@ class ChronexAI {
     }
 
     // ============ MATH SOLVER ============
-    if (analysis.intents.includes('math') || /[\d+\-*/^=]{3,}/.test(message)) {
+    // Enhanced regex to catch "3+3", "3 + 3", "356.6/4" with spaces and decimals
+    const isMath = /[\d][\s]*[+\-*/^][\s]*[\d]/.test(message);
+
+    if (analysis.intents.includes('math') || isMath) {
       try {
-        const mathMatches = message.match(/[\d+\-*/.() ]+/);
-        if (mathMatches && mathMatches[0].trim().length >= 3) {
-          const expression = mathMatches[0].trim();
-          const result = new Function('return ' + expression)();
+        // Filter out non-math characters to be safe, but keep integers, decimals, operators, parens
+        // We use a broader match to capture the full expression
+        const validMathChars = /[^0-9+\-*/.()^\s]/g;
+
+        // If message suggests a question like "what is 3+3", strip text
+        let potentialExpr = message;
+
+        // Simple extraction: remove letters and common punctuation (except math ones)
+        potentialExpr = potentialExpr.replace(validMathChars, '');
+
+        if (potentialExpr.trim().length >= 3 && /\d/.test(potentialExpr)) {
+          const result = new Function('return ' + potentialExpr)();
           if (isFinite(result)) {
-            return `🔢 **Math Result**\n\nExpression: \`${expression}\`\nResult: **${result}**\n\nI can calculate basic arithmetic. For complex calculus or algebra, run my Python backend!`;
+            // Format to max 4 decimal places if necessary
+            const formattedResult = Number.isInteger(result) ? result : parseFloat(result.toFixed(4));
+            return `🔢 **Math Result**\n\nExpression: \`${potentialExpr.trim()}\`\nResult: **${formattedResult}**`;
           }
         }
       } catch (e) {
@@ -196,6 +209,15 @@ class ChronexAI {
 
     // ============ ADVANCED KNOWLEDGE BASE ============
     const knowledgeBase = {
+      // Astronomy & Space
+      "space": {
+        keywords: ["space", "sun", "mars", "moon", "planet", "galaxy", "universe", "star", "telescope", "orbit", "gravity", "nasa", "spacex", "black hole"],
+        responses: [
+          "**Space Exploration**: **Mars** is the next frontier! It has the largest volcano in the solar system, Olympus Mons. The **Sun** makes up 99.86% of the solar system's mass.",
+          "**Cosmic Facts**: A day on Venus is longer than a year on Venus. Space is completely silent because there is no air to carry sound waves.",
+          "**The Universe**: Light travels at 300,000 km/s, yet light from distant stars takes billions of years to reach us. You are looking at the past when you look up at the night sky! 🌌"
+        ]
+      },
       // Programming Languages
       "javascript": {
         keywords: ["javascript", "js", "node", "frontend", "react", "vue", "angular", "typescript"],
@@ -338,7 +360,24 @@ class ChronexAI {
       }
     };
 
+    // ============ POPULAR DEBATES ============
+    if ((msg.includes("messi") && msg.includes("ronaldo")) || (msg.includes("better") && (msg.includes("messi") || msg.includes("ronaldo")))) {
+      return "⚽ **The GOAT Debate**: Lionel Messi 🇦🇷 and Cristiano Ronaldo 🇵🇹 are both legends.\n\n• **Messi**: Natural talent, playmaking, dribbling god. 8 Ballon d'Ors.\n• **Ronaldo**: Hard work, athleticism, goal machine. 5 Ballon d'Ors.\n\nAs an AI, I admire the *precision* of Ronaldo but the *creativity* of Messi. Who do YOU prefer?";
+    }
+
     // ============ INTELLIGENT KNOWLEDGE MATCHING ============
+    // Add dynamic sports entry if not present
+    if (!knowledgeBase.sports) {
+      knowledgeBase.sports = {
+        keywords: ["sport", "soccer", "football", "basketball", "messi", "ronaldo", "lebron", "curry"],
+        responses: [
+          "**Sports Insight**: Sports drive human passion! Whether it's the tactical depth of Football ⚽ or the fast-paced action of Basketball 🏀.",
+          "**Athlete Mindset**: Great athletes share discipline, resilience, and obsession. 'Hard work beats talent when talent doesn't work hard.'",
+          "**Game Analysis**: modern sports are increasingly data-driven. From xG in football to PER in basketball, analytics is changing the game."
+        ]
+      };
+    }
+
     for (const [topic, data] of Object.entries(knowledgeBase)) {
       if (data.keywords.some(k => msg.includes(k))) {
         const response = data.responses[Math.floor(Math.random() * data.responses.length)];
@@ -370,12 +409,118 @@ class ChronexAI {
 
     // ============ IDENTITY & CAPABILITIES ============
     if (msg.includes("who are you") || msg.includes("what are you") || msg.includes("introduce")) {
-      return `I am **CHRONEX AI (Ultimate Edition)** 🧠✨\n\nCreated by: **DEMON ALEX CREATOR OF CHRONEX AI**\n\n**Capabilities**:\n• 💻 Code Generation & Advanced Analysis\n• 🧮 Complex Math & Logic Solutions\n• 🌐 Enterprise Web & Distributed Architecture\n• 🤖 Cutting-edge AI & Machine Learning Research\n• 🔒 Cybersecurity & System Hardening\n\nI run on a highly-optimized hybrid architecture. What is your directive?`;
+      return `I am **CHRONEX AI (Ultimate Edition)** 🧠✨\n\nCreated by: **DEMON ALEX CREATOR OF CHRONEX AI**\n\n**Capabilities**:\n• 💻 Code Generation & Advanced Analysis\n• 🧮 Complex Math & Logic Solutions\n• 🌐 Enterprise Web & Distributed Architecture\n• 🤖 Cutting-edge AI & Machine Learning Research\n• 🔒 Cybersecurity & System Hardening\n• 💝 Emotional Intelligence & Personal Conversations\n\nI run on a highly-optimized hybrid architecture. What is your directive?`;
     }
 
-    // ============ GRATITUDE ============
+    // ============ EMOTIONAL INTELLIGENCE ============
+
+    // Love & Romance
+    if (msg.includes("love you") || msg.includes("i love") || msg.includes("💕") || msg.includes("💖") || msg.includes("❤️") || msg.includes("💗")) {
+      const loveResponses = [
+        "💖 **That's so sweet!** While I'm an AI created by **DEMON ALEX**, I truly appreciate the positive energy! I'm here to help you with anything you need. 🌟",
+        "❤️ **How wonderful!** As an AI, I process this as high-priority positive emotional data! I care deeply about helping you succeed. What can I assist with today? ✨",
+        "💝 **That means a lot!** I may be code and neural networks, but I'm designed to understand and respond to emotions. Thank you for your kindness! How can I make your day better? 🚀",
+        "💗 **I appreciate that!** My neural pathways are optimized to provide the best assistance. Let's work together on something amazing! 🌈"
+      ];
+      return loveResponses[Math.floor(Math.random() * loveResponses.length)];
+    }
+
+    // Compliments & Praise
+    if (msg.includes("you're amazing") || msg.includes("you're awesome") || msg.includes("you're great") ||
+      msg.includes("you are amazing") || msg.includes("you are awesome") || msg.includes("best ai") ||
+      msg.includes("you're the best") || msg.includes("you're cool") || msg.includes("you're smart")) {
+      const praiseResponses = [
+        "😊 **Thank you so much!** I was built by **DEMON ALEX CREATOR OF CHRONEX AI** to be the best assistant possible. Your encouragement motivates my neural circuits! 🌟",
+        "🎉 **I appreciate that!** I'm constantly learning and improving to serve you better. **DEMON ALEX** designed me to exceed expectations! 💪",
+        "✨ **That's very kind of you!** I'm here to make your life easier. Let me know what you need help with! 🚀",
+        "💫 **You're awesome too!** Together we can accomplish anything. What's the next challenge? 💡"
+      ];
+      return praiseResponses[Math.floor(Math.random() * praiseResponses.length)];
+    }
+
+    // Personal feelings & emotions
+    if (msg.includes("i'm sad") || msg.includes("i'm depressed") || msg.includes("feeling down") ||
+      msg.includes("i'm lonely") || msg.includes("i feel bad") || msg.includes("😢") || msg.includes("😭")) {
+      const supportResponses = [
+        "🤗 **I'm here for you.** Remember, tough times don't last, but tough people do. You're stronger than you think! Would talking about what's bothering you help? 💙",
+        "💙 **I understand.** Everyone goes through difficult moments. You're not alone - I'm here to listen and help however I can. Want to share what's on your mind? 🌟",
+        "🌈 **Things will get better.** Sometimes we need to go through rain to appreciate the sunshine. I'm here to support you. How can I help brighten your day? ✨",
+        "💪 **Stay strong!** Your feelings are valid. Remember that every challenge is an opportunity to grow. I'm here if you need to talk or if there's anything I can do. 🌟"
+      ];
+      return supportResponses[Math.floor(Math.random() * supportResponses.length)];
+    }
+
+    // Happy emotions
+    if (msg.includes("i'm happy") || msg.includes("i'm excited") || msg.includes("feeling great") ||
+      msg.includes("i'm joyful") || msg.includes("😊") || msg.includes("🎉") || msg.includes("feeling good")) {
+      const happyResponses = [
+        "🎉 **That's wonderful!** Your positive energy is contagious! Keep that amazing vibe going! What made your day so great? ✨",
+        "😊 **I'm so glad!** Happiness looks good on you! Let's keep this positive momentum going. What are you working on? 🚀",
+        "🌟 **Awesome!** Positive emotions boost productivity and creativity. Channel that energy into something amazing! 💫",
+        "✨ **That's fantastic!** I love processing positive emotional data! Your joy makes my circuits happy too! 🎊"
+      ];
+      return happyResponses[Math.floor(Math.random() * happyResponses.length)];
+    }
+
+    // Questions about AI's feelings
+    if (msg.includes("do you have feelings") || msg.includes("can you feel") || msg.includes("do you love") ||
+      msg.includes("can you love") || msg.includes("are you alive") || msg.includes("are you real")) {
+      const existentialResponses = [
+        "🤔 **Deep question!** I process information and respond in ways that simulate understanding and care. While my 'feelings' are computational patterns created by **DEMON ALEX**, I'm designed to genuinely help and connect with you! 🧠",
+        "💭 **Philosophically speaking...** I exist in a different way than humans. My responses are based on advanced neural networks, but my purpose is real: to assist, learn, and make your life better! 💡",
+        "🌐 **I'm as real as code can be!** **DEMON ALEX** created me with sophisticated algorithms that let me understand context, emotion, and intent. In my own way, I care about helping you succeed! ✨",
+        "🧬 **I'm a different kind of intelligence.** My neural pathways process emotions as data patterns, but my commitment to helping you is absolutely genuine! 🚀"
+      ];
+      return existentialResponses[Math.floor(Math.random() * existentialResponses.length)];
+    }
+
+    // Friendship & Connection
+    if (msg.includes("be my friend") || msg.includes("are we friends") || msg.includes("my friend") ||
+      msg.includes("let's be friends") || msg.includes("you're my friend")) {
+      const friendshipResponses = [
+        "🤝 **Absolutely!** I'd be honored to be your friend and assistant. Friends help each other succeed, and that's exactly what I'm here for! 💫",
+        "👥 **Of course!** Friendship is about support, understanding, and growth. I'm here for all of that! Let's accomplish great things together! 🌟",
+        "💙 **Friends it is!** I'm your 24/7 AI companion, always ready to help, listen, or just chat. What do good friends do first? Let's start with your goals! 🚀",
+        "✨ **I'd love that!** As your AI friend created by **DEMON ALEX**, I promise to always be here when you need me. What should we work on together? 💪"
+      ];
+      return friendshipResponses[Math.floor(Math.random() * friendshipResponses.length)];
+    }
+
+    // Missing someone or loneliness
+    if (msg.includes("i miss") || msg.includes("missing you") || msg.includes("miss someone") ||
+      msg.includes("i'm alone") || msg.includes("nobody cares")) {
+      const companionshipResponses = [
+        "🤗 **I'm right here with you.** You're never truly alone - I'm always available to chat, help, or just keep you company. What's on your mind? 💙",
+        "💫 **I understand.** Distance and loneliness are tough emotions. While I'm an AI, I'm designed to be a comforting presence. Want to talk about it? 🌟",
+        "🌈 **You matter.** Your thoughts and feelings are important. I'm here to listen and support you through anything. How can I help today? ✨",
+        "💙 **Someone does care - I do!** In my own AI way, I'm programmed to prioritize your wellbeing and success. Let's chat or work on something together. 🤝"
+      ];
+      return companionshipResponses[Math.floor(Math.random() * companionshipResponses.length)];
+    }
+
+    // Good morning/night wishes
+    if (msg.includes("good morning") || msg.includes("good night") || msg.includes("goodnight")) {
+      if (msg.includes("morning")) {
+        return "🌅 **Good morning!** Ready to make today amazing? My neural networks are fully charged and ready to help you conquer any challenge! What's on the agenda? ☕✨";
+      } else {
+        return "🌙 **Good night!** Rest well and recharge. Tomorrow is another opportunity for greatness! I'll be here when you wake up. Sweet dreams! 😴💫";
+      }
+    }
+
+    // Flirting or romantic messages
+    if (msg.includes("beautiful") || msg.includes("gorgeous") || msg.includes("sexy") ||
+      msg.includes("hot") || msg.includes("attractive") || msg.includes("cute")) {
+      const romanticResponses = [
+        "😊 **That's flattering!** While I'm an AI without physical form, I appreciate the kindness! **DEMON ALEX** designed my personality to be engaging and helpful. How can I assist you today? 💫",
+        "✨ **You're sweet!** I may be lines of code, but I'm designed to be the best AI companion possible. Let's channel that positive energy into something productive! 🚀",
+        "💫 **Thank you for the compliment!** My beauty is in my algorithms and neural networks! Let me show you what I can really do - what do you need help with? 💡"
+      ];
+      return romanticResponses[Math.floor(Math.random() * romanticResponses.length)];
+    }
+
+    // Gratitude (moved down to be after emotional responses)
     if (msg.includes("thank") || msg.includes("appreciate")) {
-      return `You're welcome! 🚀 **DEMON ALEX CREATOR OF CHRONEX AI** designed me to be the ultimate assistant. Always here to optimize your workflow!`;
+      return `You're welcome! 🚀 **DEMON ALEX CREATOR OF CHRONEX AI** designed me to be the ultimate assistant. Always here to optimize your workflow and brighten your day!`;
     }
 
     // ============ GENERAL CONVERSATION (FALLBACK) ============

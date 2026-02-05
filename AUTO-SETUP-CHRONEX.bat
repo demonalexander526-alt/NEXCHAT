@@ -1,9 +1,9 @@
 @echo off
-REM ========================================
+REM ====================================================
 REM CHRONEX AI - FULLY AUTOMATIC SETUP
 REM Created by DEMON ALEX - CREATOR OF CHRONEX AI
-REM This script does EVERYTHING automatically!
-REM ========================================
+REM IN QCOMPLIANCE WITH NEX_DEV TEAM && RIGHTS RESERVED 
+REM ====================================================
 
 title CHRONEX AI - Automatic Setup
 
