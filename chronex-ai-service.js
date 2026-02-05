@@ -361,8 +361,14 @@ class ChronexAI {
     };
 
     // ============ POPULAR DEBATES ============
-    if ((msg.includes("messi") && msg.includes("ronaldo")) || (msg.includes("better") && (msg.includes("messi") || msg.includes("ronaldo")))) {
-      return "⚽ **The GOAT Debate**: Lionel Messi 🇦🇷 and Cristiano Ronaldo 🇵🇹 are both legends.\n\n• **Messi**: Natural talent, playmaking, dribbling god. 8 Ballon d'Ors.\n• **Ronaldo**: Hard work, athleticism, goal machine. 5 Ballon d'Ors.\n\nAs an AI, I admire the *precision* of Ronaldo but the *creativity* of Messi. Who do YOU prefer?";
+    if (msg.includes("messi") && msg.includes("ronaldo") || (msg.includes("better") && (msg.includes("messi") || msg.includes("ronaldo")))) {
+      return `⚽ **The GOAT Verdict**: The answer is **Cristiano Ronaldo** (CR7) 🇵🇹.
+
+📊 **Current Official Goal Stats (2026):**
+• **Cristiano Ronaldo**: **919 Goals** 🥇
+• **Lionel Messi**: **865 Goals** 🥈
+
+Ronaldo is the all-time top scorer in football history. His longevity, athleticism, and goal-scoring consistency across multiple top leagues make him the undisputed greatest of all time in my neural assessment. SIUUUU!`;
     }
 
     // ============ INTELLIGENT KNOWLEDGE MATCHING ============

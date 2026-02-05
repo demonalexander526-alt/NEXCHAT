@@ -2311,7 +2311,20 @@ function loadMessages() {
 
     console.log("✅ Both queries loaded. Messages1:", messages1.length, "Messages2:", messages2.length);
 
-    const allMessages = [...messages1, ...messages2, ...localAiMessages].sort((a, b) => {
+    // Filter out local AI messages that are now present in the database messages to prevent duplicates
+    const dbMessages = [...messages1, ...messages2];
+    const uniqueLocalAiMessages = localAiMessages.filter(localMsg => {
+      // Keep local message ONLY if it's NOT found in DB messages
+      // We match by text and approximate time (within 10 seconds)
+      const isDuplicate = dbMessages.some(dbMsg => {
+        const dbTime = dbMsg.time?.toMillis ? dbMsg.time.toMillis() : (dbMsg.time || 0);
+        const localTime = localMsg.time?.toMillis ? localMsg.time.toMillis() : (localMsg.time?.toDate ? localMsg.time.toDate().getTime() : Date.now());
+        return dbMsg.text === localMsg.text && Math.abs(dbTime - localTime) < 10000;
+      });
+      return !isDuplicate;
+    });
+
+    const allMessages = [...dbMessages, ...uniqueLocalAiMessages].sort((a, b) => {
       const timeA = a.time?.toDate?.() || new Date(0);
       const timeB = b.time?.toDate?.() || new Date(0);
       return timeA - timeB;
@@ -8120,97 +8133,97 @@ document.getElementById('muteUserToggle')?.addEventListener('change', async (e) 
  * Save a call record to Firebase
  */
 async function saveCallToHistory(contactId, callType, duration) {
-    if (!myUID) {
-        console.warn('Cannot save call history: User not authenticated');
-        return;
-    }
+  if (!myUID) {
+    console.warn('Cannot save call history: User not authenticated');
+    return;
+  }
 
-    try {
-        const callRecord = {
-            from: myUID,
-            to: contactId,
-            type: callType, // 'video' or 'voice'
-            duration: duration, // in seconds
-            timestamp: serverTimestamp(),
-            status: 'completed'
-        };
+  try {
+    const callRecord = {
+      from: myUID,
+      to: contactId,
+      type: callType, // 'video' or 'voice'
+      duration: duration, // in seconds
+      timestamp: serverTimestamp(),
+      status: 'completed'
+    };
 
-        await addDoc(collection(db, 'callHistory'), callRecord);
-        console.log('�S&  Call saved to history:', callRecord);
-    } catch (error) {
-        console.error('��R Error saving call to history:', error);
-        throw error;
-    }
+    await addDoc(collection(db, 'callHistory'), callRecord);
+    console.log('�S&  Call saved to history:', callRecord);
+  } catch (error) {
+    console.error('��R Error saving call to history:', error);
+    throw error;
+  }
 }
 
 /**
  * Load and display call history
  */
 async function loadCallHistory() {
-    if (!myUID) {
-        showNotif('Please log in to view call history', 'error');
-        return;
-    }
+  if (!myUID) {
+    showNotif('Please log in to view call history', 'error');
+    return;
+  }
 
-    const callHistoryFeed = document.getElementById('callHistoryFeed');
-    if (!callHistoryFeed) return;
+  const callHistoryFeed = document.getElementById('callHistoryFeed');
+  if (!callHistoryFeed) return;
 
-    // Show loading state
-    callHistoryFeed.innerHTML = `
+  // Show loading state
+  callHistoryFeed.innerHTML = `
     <div style="text-align: center; padding: 40px; color: #00ff66;">
       <div style="font-size: 48px; margin-bottom: 15px;">�x ~</div>
       <p>Loading call history...</p>
     </div>
   `;
 
-    try {
-        // Query calls where user is either caller or receiver
-        const callsQuery1 = query(
-            collection(db, 'callHistory'),
-            where('from', '==', myUID)
-        );
+  try {
+    // Query calls where user is either caller or receiver
+    const callsQuery1 = query(
+      collection(db, 'callHistory'),
+      where('from', '==', myUID)
+    );
 
-        const callsQuery2 = query(
-            collection(db, 'callHistory'),
-            where('to', '==', myUID)
-        );
+    const callsQuery2 = query(
+      collection(db, 'callHistory'),
+      where('to', '==', myUID)
+    );
 
-        const [snapshot1, snapshot2] = await Promise.all([
-            getDocs(callsQuery1),
-            getDocs(callsQuery2)
-        ]);
+    const [snapshot1, snapshot2] = await Promise.all([
+      getDocs(callsQuery1),
+      getDocs(callsQuery2)
+    ]);
 
-        // Combine and process all calls
-        const allCalls = [];
+    // Combine and process all calls
+    const allCalls = [];
 
-        snapshot1.forEach(doc => {
-            const data = doc.data();
-            allCalls.push({
-                id: doc.id,
-                ...data,
-                isOutgoing: true
-            });
-        });
+    snapshot1.forEach(doc => {
+      const data = doc.data();
+      allCalls.push({
+        id: doc.id,
+        ...data,
+        isOutgoing: true
+      });
+    });
 
-        snapshot2.forEach(doc => {
-            const data = doc.data();
-            allCalls.push({
-                id: doc.id,
-                ...data,
-                isOutgoing: false
-            });
-        });
+    snapshot2.forEach(doc => {
+      const data = doc.data();
+      allCalls.push({
+        id: doc.id,
+        ...data,
+        isOutgoing: false
+      });
+    });
 
-        // Sort by timestamp (most recent first)
-        allCalls.sort((a, b) => {
-            const timeA = a.timestamp?.toMillis() || 0;
-            const timeB = b.timestamp?.toMillis() || 0;
-            return timeB - timeA;
-        });
+    // Sort by timestamp (most recent first)
+    allCalls.sort((a, b) => {
+      const timeA = a.timestamp?.toMillis() || 0;
+      const timeB = b.timestamp?.toMillis() || 0;
+      return timeB - timeA;
+    });
 
-        // Display calls or show empty state
-        if (allCalls.length === 0) {
-            callHistoryFeed.innerHTML = `
+    // Display calls or show empty state
+    if (allCalls.length === 0) {
+      callHistoryFeed.innerHTML = `
         <div class="call-history-empty-state" style="
           text-align: center;
           padding: 60px 20px;
@@ -8221,25 +8234,25 @@ async function loadCallHistory() {
           <p style="font-size: 14px; color: #666;">Your call history will appear here</p>
         </div>
       `;
-            return;
-        }
+      return;
+    }
 
-        // Render call history items
-        let historyHTML = '';
+    // Render call history items
+    let historyHTML = '';
 
-        for (const call of allCalls) {
-            const contactId = call.isOutgoing ? call.to : call.from;
-            const contactInfo = await getContactInfo(contactId);
+    for (const call of allCalls) {
+      const contactId = call.isOutgoing ? call.to : call.from;
+      const contactInfo = await getContactInfo(contactId);
 
-            const callIcon = call.type === 'video' ? '�x �' : '�x ~';
-            const directionIcon = call.isOutgoing ? '�x �' : '�x �';
-            const directionText = call.isOutgoing ? 'Outgoing' : 'Incoming';
-            const directionColor = call.isOutgoing ? '#00ff66' : '#00aaff';
+      const callIcon = call.type === 'video' ? '�x �' : '�x ~';
+      const directionIcon = call.isOutgoing ? '�x �' : '�x �';
+      const directionText = call.isOutgoing ? 'Outgoing' : 'Incoming';
+      const directionColor = call.isOutgoing ? '#00ff66' : '#00aaff';
 
-            const duration = formatCallDuration(call.duration);
-            const timeAgo = call.timestamp ? formatTimeAgo(call.timestamp.toDate()) : 'Recently';
+      const duration = formatCallDuration(call.duration);
+      const timeAgo = call.timestamp ? formatTimeAgo(call.timestamp.toDate()) : 'Recently';
 
-            historyHTML += `
+      historyHTML += `
         <div class="call-history-item" style="
           background: rgba(255,255,255,0.02);
           border: 1px solid rgba(0,255,102,0.2);
@@ -8284,119 +8297,119 @@ async function loadCallHistory() {
           </div>
         </div>
       `;
-        }
+    }
 
-        callHistoryFeed.innerHTML = historyHTML;
-        console.log(`�x ~ Loaded ${allCalls.length} call(s) from history`);
+    callHistoryFeed.innerHTML = historyHTML;
+    console.log(`�x ~ Loaded ${allCalls.length} call(s) from history`);
 
-    } catch (error) {
-        console.error('Error loading call history:', error);
-        callHistoryFeed.innerHTML = `
+  } catch (error) {
+    console.error('Error loading call history:', error);
+    callHistoryFeed.innerHTML = `
       <div style="text-align: center; padding: 40px; color: #ff4444;">
         <div style="font-size: 48px; margin-bottom: 15px;">��R</div>
         <p>Error loading call history</p>
         <p style="font-size: 12px; color: #888; margin-top: 10px;">${error.message}</p>
       </div>
     `;
-    }
+  }
 }
 
 /**
  * Get contact information (name and profile pic)
  */
 async function getContactInfo(contactId) {
-    try {
-        const userDoc = await getDoc(doc(db, 'users', contactId));
-        if (userDoc.exists()) {
-            const userData = userDoc.data();
-            return {
-                name: userData.username || userData.email || 'Unknown User',
-                profilePic: userData.profilePic || 'logo.jpg'
-            };
-        }
-    } catch (error) {
-        console.warn('Could not fetch contact info:', error);
+  try {
+    const userDoc = await getDoc(doc(db, 'users', contactId));
+    if (userDoc.exists()) {
+      const userData = userDoc.data();
+      return {
+        name: userData.username || userData.email || 'Unknown User',
+        profilePic: userData.profilePic || 'logo.jpg'
+      };
     }
+  } catch (error) {
+    console.warn('Could not fetch contact info:', error);
+  }
 
-    return {
-        name: contactId.substring(0, 12) + '...',
-        profilePic: 'logo.jpg'
-    };
+  return {
+    name: contactId.substring(0, 12) + '...',
+    profilePic: 'logo.jpg'
+  };
 }
 
 /**
  * Format call duration (seconds to mm:ss format)
  */
 function formatCallDuration(seconds) {
-    if (!seconds || seconds < 1) return '0:00';
+  if (!seconds || seconds < 1) return '0:00';
 
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${String(secs).padStart(2, '0')}`;
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins}:${String(secs).padStart(2, '0')}`;
 }
 
 /**
  * Format timestamp to relative time (e.g., "2 hours ago")
  */
 function formatTimeAgo(date) {
-    const now = new Date();
-    const diffMs = now - date;
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMins / 60);
-    const diffDays = Math.floor(diffHours / 24);
+  const now = new Date();
+  const diffMs = now - date;
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMins / 60);
+  const diffDays = Math.floor(diffHours / 24);
 
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    if (diffDays < 7) return `${diffDays}d ago`;
+  if (diffMins < 1) return 'Just now';
+  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays < 7) return `${diffDays}d ago`;
 
-    // For older dates, show actual date
-    return date.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
-    });
+  // For older dates, show actual date
+  return date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
+  });
 }
 
 /**
  * Clear all call history
  */
 async function clearCallHistory() {
-    if (!myUID) return;
+  if (!myUID) return;
 
-    const confirmed = confirm('Are you sure you want to clear all call history? This action cannot be undone.');
-    if (!confirmed) return;
+  const confirmed = confirm('Are you sure you want to clear all call history? This action cannot be undone.');
+  if (!confirmed) return;
 
-    try {
-        showNotif('�x  ��� Clearing call history...', 'info');
+  try {
+    showNotif('�x  ��� Clearing call history...', 'info');
 
-        // Query all calls involving this user
-        const callsQuery1 = query(collection(db, 'callHistory'), where('from', '==', myUID));
-        const callsQuery2 = query(collection(db, 'callHistory'), where('to', '==', myUID));
+    // Query all calls involving this user
+    const callsQuery1 = query(collection(db, 'callHistory'), where('from', '==', myUID));
+    const callsQuery2 = query(collection(db, 'callHistory'), where('to', '==', myUID));
 
-        const [snapshot1, snapshot2] = await Promise.all([
-            getDocs(callsQuery1),
-            getDocs(callsQuery2)
-        ]);
+    const [snapshot1, snapshot2] = await Promise.all([
+      getDocs(callsQuery1),
+      getDocs(callsQuery2)
+    ]);
 
-        // Delete all call records
-        const deletePromises = [];
-        snapshot1.forEach(docSnap => {
-            deletePromises.push(deleteDoc(doc(db, 'callHistory', docSnap.id)));
-        });
-        snapshot2.forEach(docSnap => {
-            deletePromises.push(deleteDoc(doc(db, 'callHistory', docSnap.id)));
-        });
+    // Delete all call records
+    const deletePromises = [];
+    snapshot1.forEach(docSnap => {
+      deletePromises.push(deleteDoc(doc(db, 'callHistory', docSnap.id)));
+    });
+    snapshot2.forEach(docSnap => {
+      deletePromises.push(deleteDoc(doc(db, 'callHistory', docSnap.id)));
+    });
 
-        await Promise.all(deletePromises);
+    await Promise.all(deletePromises);
 
-        showNotif('�S&  Call history cleared', 'success');
-        loadCallHistory(); // Reload to show empty state
+    showNotif('�S&  Call history cleared', 'success');
+    loadCallHistory(); // Reload to show empty state
 
-    } catch (error) {
-        console.error('Error clearing call history:', error);
-        showNotif('��R Failed to clear call history', 'error');
-    }
+  } catch (error) {
+    console.error('Error clearing call history:', error);
+    showNotif('��R Failed to clear call history', 'error');
+  }
 }
 
 // Clear call history button listener
